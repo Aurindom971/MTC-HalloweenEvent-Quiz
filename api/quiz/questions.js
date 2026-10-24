@@ -29,10 +29,6 @@ export default async function handler(req, res) {
       .order('seal_number', { ascending: true })
       .order('display_order', { ascending: true });
 
-    console.log(
-      `[questions] Supabase query: ${Date.now() - queryStartedAt}ms`
-    );
-
     if (error) {
       console.error('Error fetching questions from Supabase');
       return res.status(500).json({ error: 'Unable to retrieve quiz questions at this time.' });
@@ -70,8 +66,6 @@ export default async function handler(req, res) {
     }
 
     // Assemble the complete 4-seal response structure
-    const formattingStartedAt = Date.now();
-
     const seals = SEAL_METADATA.map(meta => {
       const sealQs = questionsBySeal[meta.sealNumber] || [];
       return {
@@ -84,14 +78,6 @@ export default async function handler(req, res) {
         questions: sealQs
       };
     });
-
-    console.log(
-      `[questions] formatting: ${Date.now() - formattingStartedAt}ms`
-    );
-
-    console.log(
-      `[questions] total handler: ${Date.now() - handlerStartedAt}ms`
-    );
 
     return res.status(200).json({ seals });
   } catch (err) {
