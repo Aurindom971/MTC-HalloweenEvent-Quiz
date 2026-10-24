@@ -29,7 +29,7 @@ Create a `.env` file in the root directory (this file is ignored by Git):
 ```env
 SUPABASE_URL=https://<your-project-ref>.supabase.co
 SUPABASE_SECRET_KEY=sb_secret_...
-SESSION_SECRET=a_random_32_character_string_for_session_encryption
+
 ```
 
 > **Note:** Never commit the `.env` file or expose your `SUPABASE_SECRET_KEY`.
