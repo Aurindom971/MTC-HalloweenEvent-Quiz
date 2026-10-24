@@ -1,9 +1,11 @@
-﻿import http from 'k6/http';
+﻿
+import http from 'k6/http';
 import { check, sleep } from 'k6';
 
 const BASE_URL = __ENV.BASE_URL;
 const TEST_EMAIL = __ENV.TEST_EMAIL;
 const TEST_PHONE = __ENV.TEST_PHONE;
+const VERCEL_BYPASS_SECRET = __ENV.VERCEL_BYPASS_SECRET;
 
 export const options = {
   stages: [
@@ -20,17 +22,26 @@ export const options = {
   },
 };
 
-
+const headers = {
+  'Content-Type': 'application/json',
+  'x-vercel-protection-bypass': VERCEL_BYPASS_SECRET,
+};
 
 export function setup() {
+  if (!BASE_URL || !TEST_EMAIL || !TEST_PHONE || !VERCEL_BYPASS_SECRET) {
+    throw new Error('Required test environment variables are missing');
+  }
+
   const login = http.post(
     `${BASE_URL}/api/auth/verify`,
     JSON.stringify({ email: TEST_EMAIL, phone: TEST_PHONE }),
-    { headers: { 'Content-Type': 'application/json' } }
+    { headers }
   );
 
   if (login.status !== 200) {
-    throw new Error(`Login failed: HTTP ${login.status}`);
+    throw new Error(
+      `Login failed: HTTP ${login.status}; body=${String(login.body).slice(0, 300)}`
+    );
   }
 
   const cookie = login.headers['Set-Cookie'];
@@ -42,7 +53,12 @@ export function setup() {
 export default function (data) {
   const response = http.get(
     `${BASE_URL}/api/quiz/questions`,
-    { headers: { Cookie: data.cookie } }
+    {
+      headers: {
+        Cookie: data.cookie,
+        'x-vercel-protection-bypass': VERCEL_BYPASS_SECRET,
+      },
+    }
   );
 
   check(response, {
@@ -54,8 +70,7 @@ export default function (data) {
         return false;
       }
     },
-    'answer keys not exposed': (r) =>
-      !r.body.includes('answer_key'),
+    'answer keys not exposed': (r) => !r.body.includes('answer_key'),
   });
 
   sleep(1);

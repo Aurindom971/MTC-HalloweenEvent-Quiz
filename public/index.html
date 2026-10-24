@@ -142,8 +142,8 @@
 
   <!-- ============ HEADER ============ -->
   <header class="quiz-header">
-    <a class="brand" href="./" aria-label="Microsoft Tech Community home">
-      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+    <a class="brand" href="./" aria-label="MTC home">
+      <img class="brand-logo" src="assets/mtc-logo.png" alt="MTC">
       <span class="brand-text">Microsoft Tech Community<small>Amity Noida</small></span>
     </a>
     <div class="header-tools">
@@ -172,6 +172,38 @@
         </div>
         <p class="auth-status" id="auth-status" role="alert" aria-live="assertive" hidden></p>
       </form>
+
+      <!-- Verified Team Details Card (Revealed after successful credential check) -->
+      <div class="team-details-panel" id="team-details-panel" hidden aria-live="polite">
+        <div class="team-panel-header">
+          <span class="team-panel-badge">CLEARANCE VERIFIED</span>
+          <h2 class="team-panel-name" id="team-display-name">Team Name</h2>
+          <p class="team-panel-sub" id="team-display-sub">Roster verified in crypt registry</p>
+        </div>
+
+        <div class="team-info-grid">
+          <div class="team-info-item">
+            <span class="team-info-label">TEAM LEADER</span>
+            <span class="team-info-value" id="team-display-leader">—</span>
+          </div>
+          <div class="team-info-item">
+            <span class="team-info-label">MEMBERS REGISTERED</span>
+            <span class="team-info-value" id="team-display-size">1</span>
+          </div>
+        </div>
+
+        <div class="team-roster">
+          <span class="team-roster-title">VERIFIED SQUAD ROSTER</span>
+          <ul class="team-members-list" id="team-members-list">
+            <!-- Dynamic member list items -->
+          </ul>
+        </div>
+
+        <div class="team-details-actions">
+          <button class="secondary" id="auth-switch-btn" type="button">Switch account ↺</button>
+          <button class="primary" id="proceed-quiz-btn" type="button">Enter Crypt Trials <span>→</span></button>
+        </div>
+      </div>
     </section>
 
     <section class="opening" id="opening" hidden aria-labelledby="opening-title">
@@ -309,22 +341,6 @@
         <h2 class="entity-escaped" id="entity-escaped" hidden>ENTITY ESCAPED</h2>
       </div>
       <button class="secondary skip-story" id="skip-ending" type="button">Skip sequence</button>
-    </section>
-
-    <section class="result" id="result" hidden aria-labelledby="result-title">
-      <p class="eyebrow">PHANTOM PROTOCOL · FINAL REPORT</p>
-      <div class="result-symbol" aria-hidden="true">✦</div>
-      <h2 id="result-title" tabindex="-1">ENTITY ESCAPED</h2>
-      <p class="lead" id="result-copy"></p>
-      <p class="score" id="score"></p>
-      <p class="demo-note">Practice mission · This score is not an event qualification.</p>
-      <div class="final-seals" id="final-seals" aria-label="All security seals"></div>
-      <div id="review"></div>
-      <div class="result-actions">
-        <button class="primary" id="restart" type="button">Restart protocol ↻</button>
-        <button class="secondary" id="share-btn" type="button">Copy Fate 📋</button>
-      </div>
-      <div id="share-toast" class="share-toast" role="status" aria-live="polite" hidden>Fate sealed to clipboard!</div>
     </section>
   </main>
 

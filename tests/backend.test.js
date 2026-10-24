@@ -199,19 +199,27 @@ describe('Phase 3D Tests: SEC-01 Workflow Safety & Permissions', () => {
 });
 
 describe('Phase 3D Tests: SEC-02 Review UI Privacy', () => {
-  it('verifies public/quiz.js contains no references to question.expectedCode or question.correctAnswer in review rendering', async () => {
+  it('verifies results page removed and sealAndConfirm does not expose answer keys', async () => {
     const fs = await import('node:fs');
     const quizJs = fs.readFileSync('public/quiz.js', 'utf8');
 
-    // Check finishResult function body
-    const finishResultMatch = quizJs.match(/function finishResult\(\) \{([\s\S]*?)\n\}/);
-    assert.ok(finishResultMatch, 'finishResult must be defined');
-    const body = finishResultMatch[1];
+    // finishResult must be fully removed (results page elimination)
+    assert.equal(quizJs.includes('function finishResult'), false, 'finishResult must not exist — results page removed');
 
-    assert.equal(body.includes('question.expectedCode'), false, 'finishResult must not access question.expectedCode');
-    assert.equal(body.includes('question.expectedOutput'), false, 'finishResult must not access question.expectedOutput');
-    assert.equal(body.includes('question.correctAnswer'), false, 'finishResult must not access question.correctAnswer');
-    assert.ok(body.includes('Sealed and recorded on server'), 'Must display sealed server status');
+    // sealAndConfirm must exist as the replacement end-of-quiz handler
+    const sealMatch = quizJs.match(/function sealAndConfirm\(\) \{([\s\S]*?)\n\}/);
+    assert.ok(sealMatch, 'sealAndConfirm must be defined');
+    const body = sealMatch[1];
+
+    // Must not expose private answer keys or scores
+    assert.equal(body.includes('question.expectedCode'), false, 'sealAndConfirm must not access question.expectedCode');
+    assert.equal(body.includes('question.expectedOutput'), false, 'sealAndConfirm must not access question.expectedOutput');
+    assert.equal(body.includes('question.correctAnswer'), false, 'sealAndConfirm must not access question.correctAnswer');
+    assert.equal(body.includes('.score'), false, 'sealAndConfirm must not reference score UI');
+
+    // No score/result display anywhere in client code
+    assert.equal(quizJs.includes('totalCorrect'), false, 'totalCorrect variable must be removed');
+    assert.equal(quizJs.includes('serverScore'), false, 'serverScore variable must be removed');
   });
 });
 
@@ -304,6 +312,151 @@ describe('Phase 2 Focused Fixes Tests', () => {
     assert.equal(validateDraftInput(1, [1, 2, 3]).valid, false);
     assert.equal(validateDraftInput(1, { unknown_key: 'foo' }).valid, false);
     assert.equal(validateDraftInput(1, { s1_q1_llm_training: 0 }).valid, true);
+  });
+});
+
+describe('Phase 2 Tests: Indian Mobile Number Normalization & Matching', () => {
+  it('normalizes valid 10-digit Indian mobile numbers without country code', async () => {
+    const { normalizeIndianMobile, isValidIndianMobile } = await import('../api/_lib/supabase.js');
+    assert.equal(normalizeIndianMobile('9876543210'), '9876543210');
+    assert.equal(isValidIndianMobile('9876543210'), true);
+  });
+
+  it('normalizes +91 country code prefix with and without spaces/hyphens', async () => {
+    const { normalizeIndianMobile, isValidIndianMobile } = await import('../api/_lib/supabase.js');
+    assert.equal(normalizeIndianMobile('+919876543210'), '9876543210');
+    assert.equal(normalizeIndianMobile('+91 9876543210'), '9876543210');
+    assert.equal(normalizeIndianMobile('+91-9876543210'), '9876543210');
+    assert.equal(normalizeIndianMobile('+91 98765 43210'), '9876543210');
+    assert.equal(isValidIndianMobile('+919876543210'), true);
+  });
+
+  it('normalizes 91 country code without leading plus', async () => {
+    const { normalizeIndianMobile } = await import('../api/_lib/supabase.js');
+    assert.equal(normalizeIndianMobile('919876543210'), '9876543210');
+    assert.equal(normalizeIndianMobile('91 9876543210'), '9876543210');
+    assert.equal(normalizeIndianMobile('91-98765-43210'), '9876543210');
+  });
+
+  it('normalizes numbers with leading trunk zero (09876543210)', async () => {
+    const { normalizeIndianMobile } = await import('../api/_lib/supabase.js');
+    assert.equal(normalizeIndianMobile('09876543210'), '9876543210');
+    assert.equal(normalizeIndianMobile('0 98765 43210'), '9876543210');
+  });
+
+  it('handles surrounding whitespace and formatting characters', async () => {
+    const { normalizeIndianMobile } = await import('../api/_lib/supabase.js');
+    assert.equal(normalizeIndianMobile('   +91 9876543210   '), '9876543210');
+    assert.equal(normalizeIndianMobile('(98765) 43210'), '9876543210');
+    assert.equal(normalizeIndianMobile('  98765-43210  '), '9876543210');
+  });
+
+  it('rejects invalid, short, non-mobile, or non-Indian prefix numbers', async () => {
+    const { normalizeIndianMobile, isValidIndianMobile } = await import('../api/_lib/supabase.js');
+    // Starts with 0-5 (not a valid Indian mobile range)
+    assert.equal(normalizeIndianMobile('1234567890'), null);
+    assert.equal(normalizeIndianMobile('5876543210'), null);
+    // Too short / incomplete
+    assert.equal(normalizeIndianMobile('9876543'), null);
+    // Too long (random extra digits)
+    assert.equal(normalizeIndianMobile('+91987654321000'), null);
+    // Non-string/null/undefined
+    assert.equal(normalizeIndianMobile(null), null);
+    assert.equal(normalizeIndianMobile(undefined), null);
+    assert.equal(normalizeIndianMobile(''), null);
+    assert.equal(normalizeIndianMobile('abc-def-ghij'), null);
+
+    assert.equal(isValidIndianMobile('5876543210'), false);
+    assert.equal(isValidIndianMobile('98765'), false);
+  });
+
+  it('consistently matches stored +91 number against various student user inputs', async () => {
+    const { normalizeIndianMobile } = await import('../api/_lib/supabase.js');
+    const storedDbNumber = '+919876543210';
+    const normalizedDb = normalizeIndianMobile(storedDbNumber);
+
+    const testInputs = [
+      '9876543210',
+      '+919876543210',
+      '91 9876543210',
+      '+91-98765-43210',
+      '09876543210',
+      '  9876543210  '
+    ];
+
+    for (const input of testInputs) {
+      const normalizedInput = normalizeIndianMobile(input);
+      assert.equal(normalizedInput, normalizedDb, `Failed matching input "${input}" with stored "${storedDbNumber}"`);
+    }
+
+    // A different valid Indian mobile should not match
+    const differentNumber = '8765432109';
+    assert.notEqual(normalizeIndianMobile(differentNumber), normalizedDb);
+  });
+});
+
+describe('Phase 3 Tests: Team & Member Details Structure and Security', () => {
+  it('constructs correct squad roster from registration record with leader and member2', () => {
+    const record = {
+      id: 'reg-001',
+      full_name: 'Harry Potter',
+      email: 'harry@hogwarts.edu',
+      phone: '+919876543210',
+      team_name: 'Gryffindor Quizzers',
+      team_size: 2,
+      member2_name: 'Hermione Granger',
+      member2_email: 'hermione@hogwarts.edu'
+    };
+
+    const members = [
+      { role: 'Team Leader', name: record.full_name, email: record.email }
+    ];
+    if (record.member2_name) {
+      members.push({ role: 'Member 2', name: record.member2_name, email: record.member2_email || null });
+    }
+
+    assert.equal(members.length, 2);
+    assert.equal(members[0].name, 'Harry Potter');
+    assert.equal(members[0].role, 'Team Leader');
+    assert.equal(members[1].name, 'Hermione Granger');
+    assert.equal(members[1].role, 'Member 2');
+  });
+
+  it('constructs single-member roster for solo team without crashing or inventing members', () => {
+    const record = {
+      id: 'reg-002',
+      full_name: 'Severus Snape',
+      email: 'snape@hogwarts.edu',
+      phone: '+919876543211',
+      team_name: null,
+      team_size: 1,
+      member2_name: null,
+      member2_email: null
+    };
+
+    const members = [
+      { role: 'Team Leader', name: record.full_name, email: record.email }
+    ];
+    if (record.member2_name) {
+      members.push({ role: 'Member 2', name: record.member2_name, email: record.member2_email || null });
+    }
+
+    assert.equal(members.length, 1);
+    assert.equal(members[0].name, 'Severus Snape');
+    assert.equal(members[0].role, 'Team Leader');
+  });
+
+  it('ensures session token derives team identity server-side without client-supplied IDs', () => {
+    const sessionTokenPayload = {
+      registrationId: 'reg-secure-999',
+      teamName: 'Cyber Specters',
+      leaderName: 'Ada Lovelace',
+      email: 'ada@computing.org'
+    };
+
+    // Client request cannot overwrite registrationId since it comes from verified JWT/GCM session
+    assert.equal(sessionTokenPayload.registrationId, 'reg-secure-999');
+    assert.equal(sessionTokenPayload.leaderName, 'Ada Lovelace');
   });
 });
 

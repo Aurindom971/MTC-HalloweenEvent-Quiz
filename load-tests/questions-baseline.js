@@ -21,6 +21,7 @@ export function setup() {
     {
       headers: {
         'Content-Type': 'application/json',
+        'x-vercel-protection-bypass': __ENV.VERCEL_BYPASS_SECRET,
       },
     }
   );
@@ -48,6 +49,7 @@ export default function (data) {
     {
       headers: {
         Cookie: data.cookie,
+        'x-vercel-protection-bypass': __ENV.VERCEL_BYPASS_SECRET,
       },
     }
   );

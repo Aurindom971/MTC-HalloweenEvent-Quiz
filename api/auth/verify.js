@@ -1,4 +1,4 @@
-import { getSupabaseAdmin, normalizeEmail, normalizePhone } from '../_lib/supabase.js';
+import { getSupabaseAdmin, normalizeEmail, normalizeIndianMobile } from '../_lib/supabase.js';
 import { createSessionToken, serializeSessionCookie } from '../_lib/session.js';
 import { checkRateLimit, getClientIp } from '../_lib/rate-limit.js';
 
@@ -27,10 +27,10 @@ export default async function handler(req, res) {
     }
 
     const email = normalizeEmail(body?.email);
-    const phone = normalizePhone(body?.phone);
+    const inputPhone = normalizeIndianMobile(body?.phone);
 
-    if (!email || !phone) {
-      return res.status(400).json({ error: 'Both registered email and phone number are required.' });
+    if (!email || !inputPhone) {
+      return res.status(400).json({ error: 'Both a valid registered email and 10-digit mobile number are required.' });
     }
 
     const supabase = getSupabaseAdmin();
@@ -41,22 +41,13 @@ export default async function handler(req, res) {
       .select('id, full_name, email, phone, team_name, team_size, member2_name, member2_phone, member2_email')
       .ilike('email', email);
 
-    console.log('[auth-debug] registration lookup', {
-      rowCount: rows?.length ?? 0,
-      lookupFailed: Boolean(regError)
-    });
-
     if (regError) {
       console.error('Supabase registration lookup error');
       return res.status(500).json({ error: 'Authentication service temporarily unavailable.' });
     }
 
-    // Match phone against matched record(s)
-    const matchedRecord = (rows || []).find(r => normalizePhone(r.phone) === phone);
-
-    console.log('[auth-debug] phone comparison', {
-      matched: Boolean(matchedRecord)
-    });
+    // Match phone against matched record(s) using consistent Indian mobile normalization
+    const matchedRecord = (rows || []).find(r => normalizeIndianMobile(r.phone) === inputPhone);
 
     if (!matchedRecord) {
       // Generic error: never reveal if email vs phone was incorrect
@@ -82,11 +73,29 @@ export default async function handler(req, res) {
 
     res.setHeader('Set-Cookie', serializeSessionCookie(token));
 
+    // Construct structured team members list
+    const members = [
+      {
+        role: 'Team Leader',
+        name: matchedRecord.full_name,
+        email: matchedRecord.email
+      }
+    ];
+
+    if (matchedRecord.member2_name) {
+      members.push({
+        role: 'Member 2',
+        name: matchedRecord.member2_name,
+        email: matchedRecord.member2_email || null
+      });
+    }
+
     return res.status(200).json({
       authenticated: true,
       teamName: matchedRecord.team_name || `${matchedRecord.full_name}'s Team`,
       leaderName: matchedRecord.full_name,
-      teamSize: matchedRecord.team_size || 1,
+      teamSize: matchedRecord.team_size || members.length,
+      members,
       member2Name: matchedRecord.member2_name || null,
       isSubmitted,
       submittedAt: answerRecord?.submitted_at || null

@@ -7,10 +7,8 @@ let current = 0;
 let currentLevel = 0;
 let answers = [];
 let allAnswers = [];
-let totalCorrect = 0;
 let sequenceTimer = null;
 let currentTeam = null; // { teamName, leaderName, isSubmitted }
-let serverScore = null;
 
 // Determine if running in a real browser (check.cjs mock does not have document.addEventListener)
 const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined' && typeof document.addEventListener === 'function';
@@ -75,7 +73,6 @@ async function submitFinalQuiz(allAnswersBySeal) {
     });
     if (res.ok) {
       const data = await res.json();
-      serverScore = data.score;
       return data;
     }
   } catch (err) {
@@ -86,7 +83,7 @@ async function submitFinalQuiz(allAnswersBySeal) {
 
 
 function show(id) {
-  const views = ['auth-gate', 'opening', 'intro', 'briefing', 'trial', 'seal-result', 'ending', 'result'];
+  const views = ['auth-gate', 'opening', 'intro', 'briefing', 'trial', 'seal-result', 'ending'];
   views.forEach(view => {
     const el = $(view);
     if (el) el.hidden = view !== id;
@@ -136,7 +133,7 @@ function updateDashboard() {
   if (currentLevel >= levels.length) {
     if (status) status.textContent = 'All four security seals are breached. Containment status: unknown.';
     if (deploy) {
-      deploy.textContent = 'View final report';
+      deploy.innerHTML = 'Initiate final sequence <span>→</span>';
       deploy.disabled = false;
     }
   } else {
@@ -233,13 +230,13 @@ const SCARE_CONFIGS = [
     badge: 'SECURITY SEAL 01 · SYSTEM CRITICAL'
   },
   {
-    image: 'assets/contorted.png',
+    image: 'assets/nosferatu-reach.svg',
     screamer: 'CORRUPTED MEMORY',
     warning: 'THE DEAD CODE IS INFECTING YOUR SYSTEM',
     badge: 'SECURITY SEAL 02 · DEAD LOGIC AWAKENS'
   },
   {
-    image: 'assets/nosferatu-reach.svg',
+    image: 'assets/zombie-horde.svg',
     screamer: 'TRAPPED IN THE MAZE',
     warning: 'THERE IS NO BASE CASE FOR YOUR ESCAPE',
     badge: 'SECURITY SEAL 03 · ENDLESS RECURSION'
@@ -290,7 +287,7 @@ function triggerJumpscareBriefing() {
 function showBriefing() {
   const level = levels[currentLevel];
   if (!level) {
-    finishResult();
+    beginEnding();
     return;
   }
   $('mission-index').textContent = `SECURITY SEAL ${String(currentLevel + 1).padStart(2, '0')}`;
@@ -530,36 +527,8 @@ function update() {
   }
 }
 
-function normalizeCode(code) {
-  if (typeof code !== 'string') return '';
-  return code
-    .replace(/\r\n/g, '\n')
-    .split('\n')
-    .map(line => line.trimEnd())
-    .join('\n')
-    .trim();
-}
-
-function normalizeOutput(str) {
-  if (str === null || str === undefined) return '';
-  return String(str).trim();
-}
-
-function evaluateQuestion(question, userAnswer) {
-  if (question.expectedCode !== undefined) {
-    if (typeof userAnswer !== 'string') return false;
-    return normalizeCode(userAnswer) === normalizeCode(question.expectedCode);
-  }
-  if (question.expectedOutput !== undefined) {
-    return normalizeOutput(userAnswer).toLowerCase() === normalizeOutput(question.expectedOutput).toLowerCase();
-  }
-  return userAnswer === question.correctAnswer;
-}
-
 function finishLevel() {
   const level = levels[currentLevel];
-  const levelCorrect = level.questions.filter((question, index) => evaluateQuestion(question, answers[index])).length;
-  totalCorrect += levelCorrect;
   // Save draft for this seal to server
   if (level) {
     const sealNumber = currentLevel + 1;
@@ -605,13 +574,8 @@ function renderSealStatus(containerId) {
   });
 }
 
-function finishResult() {
-  show('result');
-  const resultCopyEl = $('result-copy');
-  if (resultCopyEl) resultCopyEl.textContent = 'Four seals broken. Containment failed. You did not stop the Phantom. You let it out.';
-  const scoreEl = $('score');
-
-  // Submit all 4 seals to server
+function sealAndConfirm() {
+  // Submit all 4 seals to server silently
   const answersBySeal = {};
   let qIdx = 0;
   levels.forEach((lvl, sIdx) => {
@@ -625,53 +589,26 @@ function finishResult() {
     answersBySeal[`seal_${sealNum}`] = sMap;
   });
 
-  submitFinalQuiz(answersBySeal).then(res => {
-    if (res && res.score !== undefined) {
-      if (scoreEl) scoreEl.textContent = `${res.score} / ${res.totalQuestions || questions.length}`;
-    }
-  });
+  submitFinalQuiz(answersBySeal);
 
-  if (scoreEl) scoreEl.textContent = `${serverScore !== null ? serverScore : totalCorrect} / ${questions.length}`;
-  renderSealStatus('final-seals');
+  // Show sealed confirmation in ending view
+  show('ending');
+  const ending = $('ending');
+  const status = $('ending-status');
+  const cinema = $('ending-cinema');
+  const skip = $('skip-ending');
 
-  const reviewEl = $('review');
-  if (reviewEl) {
-    reviewEl.replaceChildren();
-    let questionIndex = 0;
-    levels.forEach(level => {
-      level.questions.forEach(question => {
-        const answer = allAnswers[questionIndex];
-        const item = document.createElement('details');
-        item.className = 'review-card is-sealed';
-        const summary = document.createElement('summary');
-        summary.textContent = `✦  ${question.question}`;
-        const detailsBody = document.createElement('p');
-
-        let answerText = '';
-        if (level.type === 'code_editor') {
-          answerText = answer ? '\n' + answer : 'No code entered';
-        } else if (level.type === 'predict_output') {
-          answerText = answer !== undefined && answer !== '' ? String(answer) : 'No output entered';
-        } else {
-          answerText = (answer !== undefined && question.options && question.options[answer])
-            ? question.options[answer]
-            : (answer !== undefined ? `Option ${answer + 1}` : 'No answer selected');
-        }
-
-        detailsBody.textContent = `Your submitted answer: ${answerText}\n\n[Status: Sealed and recorded on server for official evaluation]`;
-        detailsBody.style.whiteSpace = 'pre-wrap';
-        item.append(summary, detailsBody);
-        reviewEl.append(item);
-        questionIndex++;
-      });
-    });
+  if (cinema) cinema.hidden = true;
+  if (skip) skip.hidden = true;
+  if (ending) {
+    ending.classList.remove('is-glitching', 'is-static');
+    ending.classList.add('is-blackout');
   }
-  const title = $('result-title');
-  if (title && typeof title.focus === 'function') title.focus();
-  if (isBrowser && window.AudioEngine) window.AudioEngine.playFinish(false);
-}
-
-function beginEnding() {
+  if (status) {
+    status.hidden = false;
+    status.textContent = 'YOUR ANSWERS HAVE BEEN SEALED.';
+  }
+}function beginEnding() {
   show('ending');
   const status = $('ending-status');
   const cinema = $('ending-cinema');
@@ -728,7 +665,7 @@ function beginEnding() {
       if (isBrowser && window.AudioEngine) window.AudioEngine.stopVoiceover();
       if (caption) caption.textContent = '';
       if (escaped) escaped.hidden = false;
-      sequenceTimer = setTimeout(finishResult, 2600);
+      sequenceTimer = setTimeout(sealAndConfirm, 2600);
       return;
     }
     const [text, scene, duration] = captions[index];
@@ -785,7 +722,7 @@ const deployBtn = $('deploy-level');
 if (deployBtn) {
   deployBtn.addEventListener('click', () => {
     if (currentLevel >= levels.length) {
-      finishResult();
+      beginEnding();
       return;
     }
     triggerJumpscareBriefing();
@@ -837,42 +774,7 @@ if (skipEndingBtn) {
   skipEndingBtn.addEventListener('click', () => {
     stopSequence();
     if (isBrowser && window.AudioEngine) window.AudioEngine.stopVoiceover();
-    finishResult();
-  });
-}
-
-const restartBtn = $('restart');
-if (restartBtn) {
-  restartBtn.addEventListener('click', () => {
-    stopSequence();
-    answers = [];
-    allAnswers = [];
-    totalCorrect = 0;
-    current = 0;
-    currentLevel = 0;
-    show('opening');
-    updateDashboard();
-    const startEl = $('start');
-    if (startEl) startEl.hidden = false;
-    const skipEl = $('skip-opening');
-    if (skipEl) skipEl.hidden = true;
-    const opening = $('opening');
-    if (opening) opening.classList.remove('is-glitching', 'is-blackout');
-    const storyLine = $('story-line');
-    if (storyLine) storyLine.textContent = 'A secure connection is required to continue.';
-    const bootPercent = $('boot-percent');
-    if (bootPercent) bootPercent.textContent = '0%';
-    const bootProgress = $('boot-progress');
-    if (bootProgress) bootProgress.style.width = '0%';
-    const bootTrack = document.querySelector ? document.querySelector('.boot-progress') : null;
-    if (bootTrack) bootTrack.setAttribute('aria-valuenow', '0');
-    const log = $('mission-log');
-    if (log) {
-      log.replaceChildren();
-      const initialEntry = document.createElement('li');
-      initialEntry.textContent = 'CONNECTION ESTABLISHED. Unknown presence detected on the network.';
-      log.append(initialEntry);
-    }
+    sealAndConfirm();
   });
 }
 
@@ -1214,14 +1116,6 @@ if (isBrowser) {
           continueEl.click();
         }
       }
-      const resultEl = $('result');
-      if (resultEl && !resultEl.hidden && (e.key === 'Enter' || e.key === ' ')) {
-        const restartEl = $('restart');
-        if (restartEl) {
-          e.preventDefault();
-          restartEl.click();
-        }
-      }
     }
   });
 
@@ -1373,40 +1267,146 @@ if (isBrowser) {
     setTimeout(spawnBat, 8000);
   }
 
-  // 8. Result Sharing / Copying
-  const shareBtn = $('share-btn');
-  if (shareBtn) {
-    shareBtn.addEventListener('click', async () => {
-      const correct = questions.filter((q, i) => allAnswers[i] === q.correctAnswer).length;
-      const total = questions.length;
-      const shareText = `🎃 The Crypt Trials — Microsoft Tech Community Amity Noida\n🕯 Fate Sealed: ${correct} / ${total} Correct\n📜 Creep. Code. Create.\nCan you survive the crypt?`;
-
-      try {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          await navigator.clipboard.writeText(shareText);
-        }
-        const toast = $('share-toast');
-        if (toast) {
-          toast.hidden = false;
-          toast.classList.add('visible');
-          setTimeout(() => {
-            toast.classList.remove('visible');
-            setTimeout(() => (toast.hidden = true), 300);
-          }, 2600);
-        }
-      } catch (e) {
-        shareBtn.textContent = 'Copied!';
-        setTimeout(() => (shareBtn.textContent = 'Copy Fate 📋'), 2000);
-      }
-    });
-  }
-
-  // 9. Team Authentication Form Handling
+  // 9. Team Authentication & Team Details Handling
   const authForm = $('auth-form');
   const authStatus = $('auth-status');
   const authEmail = $('auth-email');
   const authPhone = $('auth-phone');
   const authSubmitBtn = $('auth-submit-btn');
+
+  const teamDetailsPanel = $('team-details-panel');
+  const teamDisplayName = $('team-display-name');
+  const teamDisplayLeader = $('team-display-leader');
+  const teamDisplaySize = $('team-display-size');
+  const teamMembersList = $('team-members-list');
+  const authSwitchBtn = $('auth-switch-btn');
+  const proceedQuizBtn = $('proceed-quiz-btn');
+
+  function renderTeamDetails(team) {
+    if (!teamDetailsPanel) return;
+
+    if (teamDisplayName) teamDisplayName.textContent = team.teamName || `${team.leaderName}'s Team`;
+    if (teamDisplayLeader) teamDisplayLeader.textContent = team.leaderName || '—';
+    if (teamDisplaySize) teamDisplaySize.textContent = String(team.teamSize || (team.members ? team.members.length : 1));
+
+    if (teamMembersList) {
+      teamMembersList.innerHTML = '';
+      const members = Array.isArray(team.members) && team.members.length > 0
+        ? team.members
+        : [
+            { role: 'Team Leader', name: team.leaderName, email: null },
+            ...(team.member2Name ? [{ role: 'Member 2', name: team.member2_name || team.member2Name, email: null }] : [])
+          ];
+
+      members.forEach(m => {
+        const li = document.createElement('li');
+        li.className = 'team-member-card';
+
+        const meta = document.createElement('div');
+        meta.className = 'team-member-meta';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'team-member-name';
+        nameSpan.textContent = m.name || 'Anonymous';
+        meta.appendChild(nameSpan);
+
+        if (m.email) {
+          const emailSpan = document.createElement('span');
+          emailSpan.className = 'team-member-email';
+          emailSpan.textContent = m.email;
+          meta.appendChild(emailSpan);
+        }
+
+        const roleSpan = document.createElement('span');
+        const isLeader = (m.role || '').toLowerCase().includes('leader');
+        roleSpan.className = `team-member-role-badge ${isLeader ? 'leader' : 'member'}`;
+        roleSpan.textContent = m.role || 'Member';
+
+        li.appendChild(meta);
+        li.appendChild(roleSpan);
+        teamMembersList.appendChild(li);
+      });
+    }
+
+    if (authForm) authForm.hidden = true;
+    teamDetailsPanel.hidden = false;
+
+    // Reset button and subtitle to default/ready state if not submitted
+    const teamPanelSub = $('team-display-sub');
+    if (team.isSubmitted) {
+      if (teamPanelSub) teamPanelSub.textContent = 'Final answers have been sealed and submitted. No further attempts allowed.';
+      if (proceedQuizBtn) {
+        proceedQuizBtn.disabled = true;
+        proceedQuizBtn.textContent = 'Quiz Already Sealed';
+      }
+    } else {
+      if (teamPanelSub) teamPanelSub.textContent = 'Roster verified in crypt registry';
+      if (proceedQuizBtn) {
+        proceedQuizBtn.disabled = false;
+        proceedQuizBtn.innerHTML = 'Enter Crypt Trials <span>→</span>';
+      }
+    }
+  }
+
+  function resetAuthView() {
+    if (teamDetailsPanel) teamDetailsPanel.hidden = true;
+    if (authForm) authForm.hidden = false;
+    const teamPanelSub = $('team-display-sub');
+    if (teamPanelSub) teamPanelSub.textContent = 'Roster verified in crypt registry';
+    if (proceedQuizBtn) {
+      proceedQuizBtn.disabled = false;
+      proceedQuizBtn.innerHTML = 'Enter Crypt Trials <span>→</span>';
+    }
+    if (authStatus) {
+      authStatus.hidden = true;
+      authStatus.className = 'auth-status';
+      authStatus.textContent = '';
+    }
+    if (authSubmitBtn) {
+      authSubmitBtn.disabled = false;
+      authSubmitBtn.innerHTML = 'Verify clearance <span>→</span>';
+    }
+  }
+
+  if (authSwitchBtn) {
+    authSwitchBtn.addEventListener('click', async () => {
+      try {
+        await fetch('/api/auth/session', { method: 'DELETE' });
+      } catch (err) {
+        console.warn('Logout request failed:', err);
+      }
+      currentTeam = null;
+      resetAuthView();
+      if (authEmail) authEmail.value = '';
+      if (authPhone) authPhone.value = '';
+      if (authEmail) authEmail.focus();
+    });
+  }
+
+  if (proceedQuizBtn) {
+    proceedQuizBtn.addEventListener('click', async () => {
+      if (!currentTeam) return;
+
+      // Check if already finalized
+      if (currentTeam.isSubmitted) {
+        const teamPanelSub = $('team-display-sub');
+        if (teamPanelSub) teamPanelSub.textContent = 'Final answers have been sealed and submitted. No further attempts allowed.';
+        const btn = $('proceed-quiz-btn');
+        if (btn) { btn.disabled = true; btn.textContent = 'Quiz Already Sealed'; }
+        return;
+      }
+
+      proceedQuizBtn.disabled = true;
+      proceedQuizBtn.innerHTML = 'Entering... <span>→</span>';
+
+      await loadDynamicQuestions();
+      show('opening');
+      const startBtn = $('start');
+      if (startBtn) startBtn.hidden = false;
+      proceedQuizBtn.disabled = false;
+      proceedQuizBtn.innerHTML = 'Enter Crypt Trials <span>→</span>';
+    });
+  }
 
   if (authForm) {
     authForm.addEventListener('submit', async e => {
@@ -1444,16 +1444,14 @@ if (isBrowser) {
             authStatus.textContent = `Clearance granted. Welcome, Team ${data.teamName}!`;
           }
 
-          // Fetch questions from backend
-          await loadDynamicQuestions();
+          // Preload questions in background
+          loadDynamicQuestions();
 
-          // Proceed to opening cinematic after short clearance confirmation
-          setTimeout(() => {
-            show('opening');
-            const startBtn = $('start');
-            if (startBtn) startBtn.hidden = false;
-          }, 600);
+          // Display team and member details directly on login page
+          renderTeamDetails(data);
         } else {
+          // Failure: Ensure team details panel is never displayed
+          if (teamDetailsPanel) teamDetailsPanel.hidden = true;
           if (authStatus) {
             authStatus.hidden = false;
             authStatus.classList.add('is-error');
@@ -1461,6 +1459,7 @@ if (isBrowser) {
           }
         }
       } catch (err) {
+        if (teamDetailsPanel) teamDetailsPanel.hidden = true;
         if (authStatus) {
           authStatus.hidden = false;
           authStatus.classList.add('is-error');
@@ -1481,17 +1480,21 @@ if (isBrowser) {
       await loadDynamicQuestions();
       // If team already finalized, show final status
       if (session.isSubmitted) {
-        show('result');
-        const resultCopyEl = $('result-copy');
-        if (resultCopyEl) {
-          resultCopyEl.textContent = `Team ${session.teamName} has already sealed and submitted their final answers.`;
-        }
+        show('auth-gate');
+        renderTeamDetails(session);
+        const teamPanelSub = $('team-display-sub');
+        if (teamPanelSub) teamPanelSub.textContent = 'Final answers have been sealed and submitted. No further attempts allowed.';
+        const proceedBtn = $('proceed-quiz-btn');
+        if (proceedBtn) { proceedBtn.disabled = true; proceedBtn.textContent = 'Quiz Already Sealed'; }
       } else {
-        show('opening');
+        // Authenticated session present: display team details on auth-gate
+        show('auth-gate');
+        renderTeamDetails(session);
       }
     } else {
       // Require verification gate
       show('auth-gate');
+      resetAuthView();
     }
   });
 }
