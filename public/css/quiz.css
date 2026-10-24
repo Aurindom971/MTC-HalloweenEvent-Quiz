@@ -1458,6 +1458,17 @@ body.ending-active .quiz-main {
   animation: textFlicker 0.2s steps(2, end) 4;
 }
 
+.ending-sealed {
+  margin: 14px 0 0;
+  color: var(--bone, #f4e3d7);
+  font-family: var(--f-type, "Oswald", sans-serif);
+  font-size: clamp(14px, 2.5vw, 18px);
+  letter-spacing: 3px;
+  opacity: 0.9;
+  text-shadow: 0 0 12px rgba(255, 60, 40, 0.5);
+  animation: textFlicker 0.3s steps(2, end) 3;
+}
+
 
 
 @media (max-width: 768px) {
