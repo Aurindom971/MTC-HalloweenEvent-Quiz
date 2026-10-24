@@ -26,7 +26,9 @@ export function setup() {
   );
 
   if (login.status !== 200) {
-    throw new Error(`Login failed: HTTP ${login.status}`);
+    throw new Error(
+      `Login failed: HTTP ${login.status}; body=${String(login.body).slice(0, 500)}`
+    );
   }
 
   const cookie = login.headers['Set-Cookie'];
