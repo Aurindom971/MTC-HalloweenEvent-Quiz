@@ -3,6 +3,8 @@ import { getSupabaseAdmin } from '../_lib/supabase.js';
 import { SEAL_METADATA, QUESTION_PRESENTATION } from '../../server/questions.master.js';
 
 export default async function handler(req, res) {
+  const handlerStartedAt = Date.now();
+
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET');
     return res.status(405).json({ error: 'Method not allowed' });
@@ -18,13 +20,18 @@ export default async function handler(req, res) {
     const supabase = getSupabaseAdmin();
 
     // Query active questions from public.questions
-    // STRICT RULE: answer_key column is NEVER selected or returned
+    const queryStartedAt = Date.now();
+
     const { data: dbQuestions, error } = await supabase
       .from('questions')
       .select('id, seal_number, question_key, question_type, question_text, options, display_order, points')
       .eq('is_active', true)
       .order('seal_number', { ascending: true })
       .order('display_order', { ascending: true });
+
+    console.log(
+      `[questions] Supabase query: ${Date.now() - queryStartedAt}ms`
+    );
 
     if (error) {
       console.error('Error fetching questions from Supabase');
@@ -63,6 +70,8 @@ export default async function handler(req, res) {
     }
 
     // Assemble the complete 4-seal response structure
+    const formattingStartedAt = Date.now();
+
     const seals = SEAL_METADATA.map(meta => {
       const sealQs = questionsBySeal[meta.sealNumber] || [];
       return {
@@ -75,6 +84,14 @@ export default async function handler(req, res) {
         questions: sealQs
       };
     });
+
+    console.log(
+      `[questions] formatting: ${Date.now() - formattingStartedAt}ms`
+    );
+
+    console.log(
+      `[questions] total handler: ${Date.now() - handlerStartedAt}ms`
+    );
 
     return res.status(200).json({ seals });
   } catch (err) {

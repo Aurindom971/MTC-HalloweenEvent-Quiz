@@ -41,6 +41,11 @@ export default async function handler(req, res) {
       .select('id, full_name, email, phone, team_name, team_size, member2_name, member2_phone, member2_email')
       .ilike('email', email);
 
+    console.log('[auth-debug] registration lookup', {
+      rowCount: rows?.length ?? 0,
+      lookupFailed: Boolean(regError)
+    });
+
     if (regError) {
       console.error('Supabase registration lookup error');
       return res.status(500).json({ error: 'Authentication service temporarily unavailable.' });
@@ -48,6 +53,10 @@ export default async function handler(req, res) {
 
     // Match phone against matched record(s)
     const matchedRecord = (rows || []).find(r => normalizePhone(r.phone) === phone);
+
+    console.log('[auth-debug] phone comparison', {
+      matched: Boolean(matchedRecord)
+    });
 
     if (!matchedRecord) {
       // Generic error: never reveal if email vs phone was incorrect
