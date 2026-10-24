@@ -591,24 +591,38 @@ function sealAndConfirm() {
 
   submitFinalQuiz(answersBySeal);
 
-  // Show sealed confirmation in ending view
+  // Keep ending view with ENTITY ESCAPED visible, show sealed message below it
   show('ending');
   const ending = $('ending');
   const status = $('ending-status');
   const cinema = $('ending-cinema');
   const skip = $('skip-ending');
+  const escaped = $('entity-escaped');
+  const sealed = $('ending-sealed');
+  const cinemaArt = cinema ? cinema.querySelector('.cinema-art') : null;
+  const caption = $('voiceover-caption');
 
-  if (cinema) cinema.hidden = true;
+  // Hide skip button and prelude status text
   if (skip) skip.hidden = true;
+  if (status) status.hidden = true;
+
+  // Keep cinema container visible but hide the animation art
+  if (cinema) cinema.hidden = false;
+  if (cinemaArt) cinemaArt.hidden = true;
+  if (caption) caption.textContent = '';
+
+  // Ensure ENTITY ESCAPED heading stays visible
+  if (escaped) escaped.hidden = false;
+
+  // Reveal the sealed confirmation beneath the escaped title
+  if (sealed) sealed.hidden = false;
+
   if (ending) {
-    ending.classList.remove('is-glitching', 'is-static');
-    ending.classList.add('is-blackout');
+    ending.classList.remove('is-glitching', 'is-static', 'is-blackout');
   }
-  if (status) {
-    status.hidden = false;
-    status.textContent = 'YOUR ANSWERS HAVE BEEN SEALED.';
-  }
-}function beginEnding() {
+}
+
+function beginEnding() {
   show('ending');
   const status = $('ending-status');
   const cinema = $('ending-cinema');
