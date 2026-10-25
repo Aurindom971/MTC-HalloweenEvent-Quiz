@@ -1,159 +1,216 @@
-// Question bank for MTC Crypt Trials - Phantom Protocol
-// Seal 1: Tech Trivia (MCQ)
-// Seal 2: Debug the Dead (Code Editor with starterCode & fixed code verification)
-// Seal 3: DSA After Dark (MCQ)
-// Seal 4: Predict the Output (Terminal text input prediction)
+// Safe public question definitions for offline development & fallback.
+// NOTICE: Private answer keys, expected code, expected output, and explanations
+// have been removed to protect the integrity of the live quiz.
+// In production, questions are delivered dynamically via /api/quiz/questions.
+
 
 window.QUIZ_LEVELS = [
   {
     title: 'Tech Trivia',
-    topics: 'AI · CYBERSECURITY · WEB DEVELOPMENT · COMPUTER FUNDAMENTALS',
-    briefing: "The first seal guards the knowledge firewall. To pass, you must understand the very systems the Phantom has corrupted: AI, cybersecurity, web development, and the fundamentals of computing. Let's see whether your knowledge can survive the breach.",
+    topics: 'CYBERSECURITY · WEB DEVELOPMENT · GIT · OOPS',
+    briefing: "The first seal guards the knowledge firewall. To pass, you must understand the systems the Phantom has corrupted. Let's see whether your knowledge can survive the breach.",
     whisper: 'UNKNOWN: Your firewall is only as strong as its operator.',
     type: 'mcq',
     questions: [
       {
-        question: 'Which technology is commonly used to train a large language model?',
-        options: ['Machine learning', 'Rasterization', 'Packet switching only', 'Disk defragmentation'],
-        correctAnswer: 0,
-        explanation: 'Large language models learn patterns from data using machine-learning techniques.'
+        questionKey: 's1_q1_http_forbidden',
+        question: 'A mischievous phantom tries to access a restricted crypt on a web server without proper clearance. Which HTTP status code will the server return?',
+        options: [
+          '404 Not Found',
+          '403 Forbidden',
+          '500 Internal Server Error',
+          '302 Found'
+        ]
       },
       {
-        question: 'What does multi-factor authentication add to a sign-in?',
-        options: ['A faster internet connection', 'A second verification factor', 'A public password', 'An extra browser tab'],
-        correctAnswer: 1,
-        explanation: 'MFA asks for an additional factor, such as an authenticator code or security key.'
+        questionKey: 's1_q2_css_animation',
+        question: 'In modern web development, which CSS properties are primarily responsible for smooth, hardware-accelerated transitions and floating hover animations?',
+        options: [
+          'margin and padding',
+          'transform and opacity',
+          'float and clear',
+          'display: inline-block'
+        ]
       },
       {
-        question: 'Which language provides the structure of a web page?',
-        options: ['CSS', 'HTML', 'SQL', 'Bash'],
-        correctAnswer: 1,
-        explanation: 'HTML defines the structure and content of a web page.'
+        questionKey: 's1_q3_css_rem',
+        question: 'Which CSS unit is relative to the font size of the root HTML element?',
+        options: ['em', 'rem', 'vh', 'px']
       },
       {
-        question: 'Which CPU component performs arithmetic and logical operations?',
-        options: ['RAM', 'Network interface', 'ALU', 'Power supply'],
-        correctAnswer: 2,
-        explanation: 'The arithmetic logic unit performs arithmetic calculations and logical operations.'
+        questionKey: 's1_q4_git_commit_push',
+        question: 'Which statement correctly explains the difference between git commit and git push?',
+        options: [
+          'git commit uploads files to GitHub, while git push saves them locally.',
+          'git commit saves staged changes in local repository history, while git push uploads local commits to a remote server.',
+          'git push prepares files and git commit deletes untracked files.',
+          'Both commands do exactly the same thing.'
+        ]
+      },
+      {
+        questionKey: 's1_q5_oops_pillars',
+        question: 'Which core OOP pillar allows a function name or operator to behave differently depending on context, and which access specifier restricts members to the same class?',
+        options: [
+          'Inheritance | Public',
+          'Polymorphism | Private',
+          'Encapsulation | Protected',
+          'Abstraction | Friend'
+        ]
       }
     ]
   },
+
   {
     title: 'Debug the Dead',
-    topics: 'SYNTAX ERRORS · LOGICAL BUGS · MISSING INDENTATION · CODE REPAIR',
-    briefing: 'The code is dying. Lines are corrupted. Logic is broken. Something has rewritten the rules of your programs. Find the bug in the code editor, repair the program with proper syntax, and restore the dead code.',
-    whisper: 'UNKNOWN: I broke one line in every script. Can your code editor fix it?',
+    topics: 'PYTHON · C++ · C · LOGICAL BUGS · CODE REPAIR',
+    briefing: 'The code is dying. Lines are corrupted. Logic is broken. Find the bugs, repair the programs, and restore the dead code.',
+    whisper: 'UNKNOWN: I broke the code. Can you repair it?',
     type: 'code_editor',
     questions: [
       {
-        question: 'Fix the syntax error in this Python script so that it correctly prints "Boo" to stdout.',
+        questionKey: 's2_q1_python_average_even',
+        question: 'Fix the Python function so it calculates the average of all even numbers in nums. Correct the loop range, comparison operator, indentation, and handling of a zero count.',
         language: 'python',
-        filename: 'spooky_print.py',
-        hint: 'Check parentheses and string quoting around the print argument.',
-        starterCode: 'def scream():\n    print "Boo"\n\nscream()',
-        expectedCode: 'def scream():\n    print("Boo")\n\nscream()',
-        explanation: 'In Python 3, print is a function and requires parentheses around its arguments: print("Boo").'
+        filename: 'crypt_averages.py',
+        hint: 'Check the loop start, use == for comparison, place return outside the loop, and handle count == 0.',
+        starterCode: 'def average_even_numbers(nums):\n    total = 0\n    count = 0\n    for i in range(1, len(nums)):\n        if nums[i] % 2 = 0:\n            total += nums[i]\n            count += 1\n        return total / count'
       },
       {
-        question: 'Fix the JavaScript function bug so that it calculates the correct mathematical sum of a and b (numeric addition, not string concatenation).',
-        language: 'javascript',
-        filename: 'safe_add.js',
-        hint: 'Use Number() or parseInt() to ensure numeric addition when b might be passed as a string.',
-        starterCode: 'function addValues(a, b) {\n    // Bug: concatenates string instead of adding numbers\n    return a + b;\n}',
-        expectedCode: 'function addValues(a, b) {\n    return Number(a) + Number(b);\n}',
-        explanation: 'Converting both operands to Number(a) + Number(b) or +a + +b ensures numeric addition instead of string concatenation.'
+        questionKey: 's2_q2_bhoothnath_trivia',
+        question: 'In Bhoothnath, what sweet dish does the ghost Banku’s grandfather, played by Amitabh Bachchan, love? Enter the answer in the editor.',
+        language: 'text',
+        filename: 'ghost_trivia.txt',
+        hint: 'Answer with the name of the sweet dish.',
+        starterCode: ''
       },
       {
-        question: 'Fix the Python range and comparison bug in is_in_range so that it returns True only when x is between 1 and 10 inclusive.',
-        language: 'python',
-        filename: 'containment_bounds.py',
-        hint: 'Use chained comparison (1 <= x <= 10) or (x >= 1 and x <= 10).',
-        starterCode: 'def is_in_range(x):\n    # Bug: incorrect operator logic\n    return 1 < x > 10',
-        expectedCode: 'def is_in_range(x):\n    return 1 <= x <= 10',
-        explanation: 'Inclusive range checking in Python is written as 1 <= x <= 10 or (x >= 1 and x <= 10).'
+        questionKey: 's2_q3_cpp_average',
+        question: 'Fix the C++ function so it calculates the average of a, b, and c correctly using floating-point arithmetic.',
+        language: 'cpp',
+        filename: 'spooky_average.cpp',
+        hint: 'Calculate the sum first, then divide by 3.0f.',
+        starterCode: 'float get_average(int a, int b, int c) {\n    int sum = a + b + c / 3;\n    float avg = sum / 2;\n    return avg;\n}'
       },
       {
-        question: 'Fix the broken Python loop so it iterates through every item in the items list and prints it.',
-        language: 'python',
-        filename: 'corrupted_loop.py',
-        hint: 'Use a proper for ... in items: statement followed by an indented block.',
-        starterCode: 'def process_souls(items):\n    # Bug: invalid loop header\n    loop items:\n        print(item)',
-        expectedCode: 'def process_souls(items):\n    for item in items:\n        print(item)',
-        explanation: 'A standard iteration loop in Python uses `for item in items:`.'
+        questionKey: 's2_q4_cpp_array_loop',
+        question: 'Fix the C++ function so it prints every array element exactly once. Correct the element count and remove the unintended increment inside the array index.',
+        language: 'cpp',
+        filename: 'phantom_memory.cpp',
+        hint: 'Use sizeof(arr) / sizeof(arr[0]) and print arr[i] without incrementing i inside the expression.',
+        starterCode: '#include <iostream>\nusing namespace std;\n\nvoid print_elements() {\n    int arr[] = {1, 2, 3, 4, 5};\n    int limit = sizeof(arr);\n\n    for (int i = 0; i < limit; i++) {\n        cout << arr[i++] << " ";\n    }\n}'
+      },
+      {
+        questionKey: 's2_q5_c_sorted_array',
+        question: 'Fix the C function so it checks whether an array is sorted in ascending order without accessing elements outside the array.',
+        language: 'c',
+        filename: 'monster_sorting.c',
+        hint: 'Compare arr[i] with arr[i + 1] only while i is less than n - 1.',
+        starterCode: '#include <stdio.h>\n\nint is_sorted(int arr[], int n) {\n    for (int i = 0; i <= n; i++) {\n        if (arr[i] > arr[i + 1]) {\n            return 0;\n        }\n    }\n    return 1;\n}'
       }
     ]
   },
+
   {
     title: 'DSA After Dark',
-    topics: 'ARRAYS · STRINGS · SORTING · TIME COMPLEXITY',
-    briefing: "You have entered the Phantom's algorithmic maze. Every path looks correct until it isn't. Every decision has a consequence. Think carefully, because one wrong answer could leave you trapped in an endless loop.",
+    topics: 'ANAGRAMS · SORTING · STACKS · ALGORITHMS',
+    briefing: "You have entered the Phantom's algorithmic maze. Think carefully, because one wrong answer could leave you trapped in an endless loop.",
     whisper: 'UNKNOWN: The shortest path is not always the safest.',
     type: 'mcq',
     questions: [
       {
-        question: 'In a zero-indexed array of length n, what is the index of its final element?',
-        options: ['n', '1', 'n - 1', 'n + 1'],
-        correctAnswer: 2,
-        explanation: 'Zero-based indexing starts at 0, so the last valid position is n - 1.'
+        questionKey: 's3_q1_anagram_complexity',
+        question: 'Two lowercase strings of length N must be checked for anagrams. What is the optimal time complexity using a character-frequency array?',
+        options: [
+          'O(N²) using nested loops',
+          'O(N) using a character-frequency array, or O(N log N) by sorting',
+          'O(2^N) using recursive backtracking',
+          'O(1) using bitwise XOR'
+        ]
       },
       {
-        question: 'Which sorting algorithm repeatedly compares and swaps adjacent out-of-order elements?',
-        options: ['Binary search', 'Depth-first search', 'Hashing', 'Bubble sort'],
-        correctAnswer: 3,
-        explanation: 'Bubble sort compares adjacent pairs and swaps them until the list is ordered.'
+        questionKey: 's3_q2_golmaal_trivia',
+        question: 'In Golmaal Again (Golmaal 4), which character’s body gets possessed by the spirit of Damini?',
+        options: [
+          'Laxman',
+          'Gopal',
+          'Madhav',
+          'Lucky'
+        ]
       },
       {
-        question: 'What is the time complexity of binary search on a sorted array?',
-        options: ['O(n²)', 'O(n)', 'O(log n)', 'O(1) in every case'],
-        correctAnswer: 2,
-        explanation: 'Binary search halves the remaining search interval on each step.'
+        questionKey: 's3_q3_bubble_sort',
+        question: 'Which sorting algorithm compares adjacent elements and swaps them when they are in the wrong order? What is its best-case time complexity with early-exit optimization on an already-sorted array?',
+        options: [
+          'Selection Sort | O(N²)',
+          'Bubble Sort | O(N)',
+          'Insertion Sort | O(N log N)',
+          'Bubble Sort | O(N²)'
+        ]
       },
       {
-        question: 'What does the Python string slice "crypt"[::-1] produce?',
-        options: ['crypt', 'tpyrc', 'rypc', 'A syntax error'],
-        correctAnswer: 1,
-        explanation: 'A slice step of -1 traverses the string from right to left.'
+        questionKey: 's3_q4_stack_postfix',
+        question: 'Which data structure is used for postfix evaluation and balanced brackets, and what is the postfix notation for A + B * C?',
+        options: [
+          'Queue | A B + C *',
+          'Stack | A B C * +',
+          'Stack | (A + B) * C',
+          'Hash Map | A B + C *'
+        ]
+      },
+      {
+        questionKey: 's3_q5_sorting_stability',
+        question: 'What defines a stable sorting algorithm, and which of these is a classic example of an unstable sorting algorithm?',
+        options: [
+          'Guarantees O(N log N) time | Merge Sort',
+          'Preserves the relative order of equal elements | Quick Sort',
+          'Requires zero extra memory | Insertion Sort',
+          'Does not compare elements directly | Bubble Sort'
+        ]
       }
     ]
   },
+
   {
     title: 'Predict the Output',
-    topics: 'OUTPUT TRACING · C · C++ · PYTHON · JAVASCRIPT',
-    briefing: 'The final seal is different. You cannot fix the code. You cannot change the logic. You can only predict what happens next. Read every line. Type the exact output produced by the program into the terminal prompt.',
-    whisper: 'UNKNOWN: No edits. No escape. Tell me what prints to the screen.',
+    topics: 'PYTHON · C++ · STRING SLICING · C',
+    briefing: 'The final seal is different. Read every line carefully and determine the exact output or answer requested.',
+    whisper: 'UNKNOWN: Tell me what happens next.',
     type: 'predict_output',
     questions: [
       {
-        question: 'Trace the C program execution and predict the exact printed output.',
-        language: 'c',
-        codeSnippet: '#include <stdio.h>\n\nint main() {\n    int x = 4;\n    printf("%d", x + 3);\n    return 0;\n}',
-        expectedOutput: '7',
-        hint: 'Evaluate 4 + 3 formatted as an integer %d.',
-        explanation: 'The expression 4 + 3 evaluates to 7, which printf("%d", ...) outputs without newline.'
-      },
-      {
-        question: 'Trace the C++ integer division logic and predict the exact printed output.',
-        language: 'cpp',
-        codeSnippet: '#include <iostream>\nusing namespace std;\n\nint main() {\n    int n = 5;\n    cout << n / 2;\n    return 0;\n}',
-        expectedOutput: '2',
-        hint: 'Remember: integer divided by integer in C++ truncates the decimal part.',
-        explanation: 'In C++, 5 / 2 performs integer division, discarding the fractional part (.5) to output 2.'
-      },
-      {
-        question: 'Trace the Python string slicing and predict the exact printed output.',
+        questionKey: 's4_q1_python_even_sum',
+        question: 'Predict the exact output of this Python program.',
         language: 'python',
-        codeSnippet: 'word = "crypt"\nprint(word[1:4])',
-        expectedOutput: 'ryp',
-        hint: 'Python slices are [start:stop] where start is included (1) and stop is excluded (4).',
-        explanation: 'Indices 1, 2, 3 correspond to letters "r", "y", "p". The stop index 4 is excluded.'
+        codeSnippet: 'total = 0\n\nfor i in range(1, 5):\n    if i % 2 == 0:\n        total += i\n\nprint(total)',
+        hint: 'range(1, 5) generates 1, 2, 3, and 4. Add only the even numbers.'
       },
       {
-        question: 'Trace the JavaScript type coercion expression and predict the exact printed output.',
-        language: 'javascript',
-        codeSnippet: 'const val = 3 + "2";\nconsole.log(val);',
-        expectedOutput: '32',
-        hint: 'When a number is added to a string with +, JavaScript converts the number to string and concatenates.',
-        explanation: 'Number 3 is coerced into "3", and concatenation with "2" results in "32".'
+        questionKey: 's4_q2_bulbbul_trivia',
+        question: 'In the movie Bulbbul, what physical trait or sign was traditionally used by village folk to identify a Chudail? Type the answer.',
+        language: 'text',
+        codeSnippet: '// Answer the question in the response field.',
+        hint: 'Think about the direction of the feet.'
+      },
+      {
+        questionKey: 's4_q3_cpp_nested_sum',
+        question: 'Predict the exact output of this C++ program.',
+        language: 'cpp',
+        codeSnippet: '#include <iostream>\nusing namespace std;\n\nint main() {\n    int sum = 0;\n    for (int i = 1; i <= 3; i++) {\n        for (int j = 1; j <= 2; j++) {\n            sum += i * j;\n        }\n    }\n    cout << sum;\n    return 0;\n}',
+        hint: 'Trace both loops and add i + j during every iteration.'
+      },
+      {
+        questionKey: 's4_q4_python_slicing',
+        question: 'What is printed by this Python code snippet?',
+        language: 'python',
+        codeSnippet: 's = "SUPERNATURAL"\nprint(s[7:1:-2])',
+        hint: 'Start at index 7, move backward by 2, and stop before index 1.'
+      },
+      {
+        questionKey: 's4_q5_c_post_increment',
+        question: 'Predict the exact output of this C program.',
+        language: 'c',
+        codeSnippet: '#include <stdio.h>\n\nint main() {\n    int x = 5;\n    int y = x++;\n    printf("%d %d", x, y);\n    return 0;\n}',
+        hint: 'Post-increment assigns the old value to y before increasing x.'
       }
     ]
   }
