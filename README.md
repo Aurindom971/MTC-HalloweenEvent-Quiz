@@ -40,11 +40,6 @@ SUPABASE_SECRET_KEY=sb_secret_...
 
 The server-side question definitions live in `server/questions.master.js`.
 
-### Dry-run (Validation only, no database writes):
-```bash
-npm run sync:questions:dry
-```
-
 ### Active sync (Populate questions into Supabase):
 ```bash
 npm run sync:questions
