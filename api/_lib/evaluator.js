@@ -49,7 +49,9 @@ export function evaluateAnswer(questionDef, userAnswer) {
   if (question_type === 'predict_output') {
     // Predict output expects case-insensitive trimmed string match
     const expected = answer_key.expectedOutput;
-    return normalizeOutput(userAnswer) === normalizeOutput(expected);
+    const accepted = Array.isArray(answer_key.acceptedAnswers) ? answer_key.acceptedAnswers : [];
+    const userNorm = normalizeOutput(userAnswer);
+    return [expected, ...accepted].some(candidate => normalizeOutput(candidate) === userNorm);
   }
 
   return false;

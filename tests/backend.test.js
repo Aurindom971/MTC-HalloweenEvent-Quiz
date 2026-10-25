@@ -92,34 +92,38 @@ describe('Unit Tests: Code & Output Evaluator', () => {
   it('grades full submission across all 4 seals correctly', () => {
     const answersBySeal = {
       seal_1: {
-        s1_q1_llm_training: 0,
-        s1_q2_mfa_factor: 1,
-        s1_q3_html_structure: 1,
-        s1_q4_alu_operation: 2
+        s1_q1_http_403: 1,
+        s1_q2_css_transform_opacity: 1,
+        s1_q3_css_rem: 1,
+        s1_q4_git_commit_push: 1,
+        s1_q5_oops_polymorphism_private: 1
       },
       seal_2: {
-        s2_q1_py_scream: 'def scream():\n    print("Boo")\n\nscream()',
-        s2_q2_js_safe_add: 'function addValues(a, b) {\n    return Number(a) + Number(b);\n}',
-        s2_q3_py_containment: 'def is_in_range(x):\n    return 1 <= x <= 10',
-        s2_q4_py_loop: 'def process_souls(items):\n    for item in items:\n        print(item)'
+        s2_q1_py_average_even: 'def average_even_numbers(nums):\n    total = 0\n    count = 0\n    for i in range(len(nums)):\n        if nums[i] % 2 == 0:\n            total += nums[i]\n            count += 1\n    if count == 0:\n        return 0\n    return total / count',
+        s2_q2_bhoothnath_jalebis: 'Jalebis',
+        s2_q3_cpp_get_average: 'float get_average(int a, int b, int c) {\n    float sum = (a + b + c);\n    float avg = sum / 3.0f;\n    return avg;\n}',
+        s2_q4_cpp_print_elements: '#include <iostream>\nusing namespace std;\n\nvoid print_elements() {\n    int arr[] = {1, 2, 3, 4, 5};\n    int limit = sizeof(arr) / sizeof(arr[0]);\n\n    for (int i = 0; i < limit; i++) {\n        cout << arr[i] << " ";\n    }\n}',
+        s2_q5_c_is_sorted: '#include <stdio.h>\n\nint is_sorted(int arr[], int n) {\n    for (int i = 0; i < n - 1; i++) {\n        if (arr[i] > arr[i + 1]) {\n            return 0;\n        }\n    }\n    return 1;\n}'
       },
       seal_3: {
-        s3_q1_zero_index: 2,
-        s3_q2_bubble_sort: 3,
-        s3_q3_binary_search_complexity: 2,
-        s3_q4_py_slice_reverse: 1
+        s3_q1_anagram_complexity: 1,
+        s3_q2_golmaal_laxman: 'Laxman',
+        s3_q3_bubble_sort_best_case: 1,
+        s3_q4_stack_postfix: 1,
+        s3_q5_stable_sort_quicksort: 1
       },
       seal_4: {
-        s4_q1_c_output: '7',
-        s4_q2_cpp_division: '2',
-        s4_q3_py_slice_crypt: 'ryp',
-        s4_q4_js_coercion: '32'
+        s4_q1_py_even_sum: '6',
+        s4_q2_bulbbul_ulte_pair: 'Ulte pair',
+        s4_q3_cpp_nested_sum: '24',
+        s4_q4_py_slice_supernatural: 'TNE',
+        s4_q5_c_post_increment: '6 5'
       }
     };
 
     const graded = gradeSubmission(QUESTION_DEFINITIONS, answersBySeal);
-    assert.equal(graded.score, 16);
-    assert.equal(graded.totalQuestions, 16);
+    assert.equal(graded.score, 20);
+    assert.equal(graded.totalQuestions, 20);
   });
 });
 
@@ -137,11 +141,11 @@ describe('Unit Tests: Rate Limiter', () => {
 });
 
 describe('Integrity Tests: Question Definitions & Privacy', () => {
-  it('contains exactly 16 questions (4 per seal)', () => {
-    assert.equal(QUESTION_DEFINITIONS.length, 16);
+  it('contains exactly 20 questions (5 per seal)', () => {
+    assert.equal(QUESTION_DEFINITIONS.length, 20);
     for (let s = 1; s <= 4; s++) {
       const sealQs = QUESTION_DEFINITIONS.filter(q => q.seal_number === s);
-      assert.equal(sealQs.length, 4, `Seal ${s} must have exactly 4 questions`);
+      assert.equal(sealQs.length, 5, `Seal ${s} must have exactly 5 questions`);
     }
   });
 
@@ -150,9 +154,9 @@ describe('Integrity Tests: Question Definitions & Privacy', () => {
     assert.equal(keys.size, QUESTION_DEFINITIONS.length);
   });
 
-  it('enforces that all 8 MCQ questions have a plain array of choice strings', () => {
+  it('enforces that all MCQ questions have a plain array of choice strings', () => {
     const mcqQs = QUESTION_DEFINITIONS.filter(q => q.question_type === 'mcq');
-    assert.equal(mcqQs.length, 8);
+    assert.equal(mcqQs.length, 9);
     for (const q of mcqQs) {
       assert.ok(Array.isArray(q.options), `MCQ question ${q.question_key} options must be an array`);
       assert.ok(q.options.length >= 2, `MCQ question ${q.question_key} must have at least 2 choices`);
@@ -162,9 +166,9 @@ describe('Integrity Tests: Question Definitions & Privacy', () => {
     }
   });
 
-  it('enforces that all 8 non-MCQ questions (code & predict_output) have options: null', () => {
+  it('enforces that all non-MCQ questions (code & predict_output) have options: null', () => {
     const nonMcqQs = QUESTION_DEFINITIONS.filter(q => q.question_type !== 'mcq');
-    assert.equal(nonMcqQs.length, 8);
+    assert.equal(nonMcqQs.length, 11);
     for (const q of nonMcqQs) {
       assert.equal(q.options, null, `Non-MCQ question ${q.question_key} options must be null`);
     }
@@ -270,23 +274,21 @@ describe('Phase 2 Focused Fixes Tests', () => {
     }
   });
 
-  it('confirms all 8 non-MCQ questions possess non-empty presentation metadata', async () => {
+  it('confirms all non-MCQ questions possess non-empty presentation metadata', async () => {
     const { QUESTION_PRESENTATION } = await import('../server/questions.master.js');
-    const nonMcqKeys = QUESTION_DEFINITIONS
-      .filter(q => q.question_type !== 'mcq')
-      .map(q => q.question_key);
+    const nonMcqQs = QUESTION_DEFINITIONS.filter(q => q.question_type !== 'mcq');
 
-    assert.equal(nonMcqKeys.length, 8);
-    for (const key of nonMcqKeys) {
-      const pres = QUESTION_PRESENTATION[key];
-      assert.ok(pres, `Missing presentation metadata for ${key}`);
-      assert.ok(pres.language, `Missing language for ${key}`);
-      if (key.startsWith('s2_')) {
-        assert.ok(pres.starterCode && pres.starterCode.length > 0, `Missing starterCode for ${key}`);
-        assert.ok(pres.filename, `Missing filename for ${key}`);
+    assert.equal(nonMcqQs.length, 11);
+    for (const q of nonMcqQs) {
+      const pres = QUESTION_PRESENTATION[q.question_key];
+      assert.ok(pres, `Missing presentation metadata for ${q.question_key}`);
+      assert.ok(pres.language, `Missing language for ${q.question_key}`);
+      if (q.question_type === 'code') {
+        assert.ok(pres.starterCode && pres.starterCode.length > 0, `Missing starterCode for ${q.question_key}`);
+        assert.ok(pres.filename, `Missing filename for ${q.question_key}`);
       }
-      if (key.startsWith('s4_')) {
-        assert.ok(pres.codeSnippet && pres.codeSnippet.length > 0, `Missing codeSnippet for ${key}`);
+      if (q.question_type === 'predict_output') {
+        assert.ok(pres.codeSnippet && pres.codeSnippet.length > 0, `Missing codeSnippet for ${q.question_key}`);
       }
     }
   });
@@ -311,7 +313,7 @@ describe('Phase 2 Focused Fixes Tests', () => {
     assert.equal(validateDraftInput(1, null).valid, false);
     assert.equal(validateDraftInput(1, [1, 2, 3]).valid, false);
     assert.equal(validateDraftInput(1, { unknown_key: 'foo' }).valid, false);
-    assert.equal(validateDraftInput(1, { s1_q1_llm_training: 0 }).valid, true);
+    assert.equal(validateDraftInput(1, { s1_q1_http_403: 0 }).valid, true);
   });
 });
 

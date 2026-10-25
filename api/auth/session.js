@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     const [regRes, ansRes] = await Promise.all([
       supabase
         .from('registrations')
-        .select('id, full_name, email, team_name, team_size, member2_name, member2_email')
+      .select('id, full_name, email, team_name, team_size, member2_name, member2_email')
         .eq('id', session.registrationId)
         .maybeSingle(),
       supabase
@@ -65,12 +65,14 @@ export default async function handler(req, res) {
       authenticated: true,
       teamName: registration.team_name || `${registration.full_name}'s Team`,
       leaderName: registration.full_name,
+      email: registration.email || session.email || null,
       teamSize: registration.team_size || members.length,
       members,
       member2Name: registration.member2_name || null,
       isSubmitted,
       submittedAt: answerRecord?.submitted_at || null,
-      hasDraft: !isSubmitted && Boolean(answerRecord?.answers && Object.keys(answerRecord.answers).length > 0)
+      hasDraft: !isSubmitted && Boolean(answerRecord?.answers && Object.keys(answerRecord.answers).length > 0),
+      answers: !isSubmitted ? answerRecord?.answers || {} : {}
     });
   } catch (err) {
     console.error('Session check error:', err.message);

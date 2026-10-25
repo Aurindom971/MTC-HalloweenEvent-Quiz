@@ -9,6 +9,9 @@ let answers = [];
 let allAnswers = [];
 let sequenceTimer = null;
 let currentTeam = null; // { teamName, leaderName, isSubmitted }
+let draftSaveQueue = Promise.resolve();
+let draftSaveTimer = null;
+let isFinishingLevel = false;
 
 // Determine if running in a real browser (check.cjs mock does not have document.addEventListener)
 const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined' && typeof document.addEventListener === 'function';
@@ -48,18 +51,138 @@ async function loadDynamicQuestions() {
 }
 
 async function saveSealDraft(sealNumber, answersMap) {
+  const save = async () => {
+    try {
+      const res = await fetch('/api/quiz/save-draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        keepalive: true,
+        body: JSON.stringify({
+          sealNumber,
+          answers: answersMap
+        })
+      });
+      if (res.ok) clearSyncedLocalDraft(sealNumber, answersMap);
+      else console.warn('Draft save notice:', (await res.json().catch(() => ({}))).error || res.statusText);
+      return res.ok;
+    } catch (err) {
+      console.warn('Draft save notice:', err.message);
+      return false;
+    }
+  };
+  // Keep requests ordered so a delayed earlier snapshot cannot replace newer edits.
+  draftSaveQueue = draftSaveQueue.then(save, save);
+  return draftSaveQueue;
+}
+
+function localDraftStorageKey(team = currentTeam) {
+  const identity = team && (team.email || team.teamName || team.leaderName);
+  return identity ? `mtc-quiz-draft:${String(identity).trim().toLowerCase()}` : null;
+}
+
+function readLocalDraft(team = currentTeam) {
+  const key = localDraftStorageKey(team);
+  if (!key || !isBrowser) return {};
   try {
-    await fetch('/api/quiz/save-draft', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sealNumber,
-        answers: answersMap
-      })
-    });
-  } catch (err) {
-    console.warn('Draft save notice:', err.message);
+    const parsed = JSON.parse(window.localStorage.getItem(key) || '{}');
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
   }
+}
+
+function writeLocalDraft(answersBySeal, team = currentTeam) {
+  const key = localDraftStorageKey(team);
+  if (!key || !isBrowser) return;
+  try {
+    if (Object.keys(answersBySeal).length) window.localStorage.setItem(key, JSON.stringify(answersBySeal));
+    else window.localStorage.removeItem(key);
+  } catch (err) {
+    console.warn('Local draft backup unavailable:', err.message);
+  }
+}
+
+function clearSyncedLocalDraft(sealNumber, savedAnswers) {
+  const pending = readLocalDraft();
+  const sealKey = `seal_${sealNumber}`;
+  const remaining = { ...(pending[sealKey] || {}) };
+  Object.entries(savedAnswers).forEach(([key, value]) => {
+    if (Object.prototype.hasOwnProperty.call(remaining, key) && remaining[key] === value) delete remaining[key];
+  });
+  if (Object.keys(remaining).length) pending[sealKey] = remaining;
+  else delete pending[sealKey];
+  writeLocalDraft(pending);
+}
+
+function questionKey(question, sealNumber, index) {
+  return question.questionKey || `seal${sealNumber}_q${index + 1}`;
+}
+
+function hasUsableAnswer(value) {
+  return typeof value === 'number' || (typeof value === 'string' && value.trim().length > 0);
+}
+
+function syncLocalDraft() {
+  const localAnswers = readLocalDraft();
+  for (let index = 0; index < levels.length; index++) {
+    const sealNumber = index + 1;
+    const localSeal = localAnswers[`seal_${sealNumber}`];
+    if (localSeal && Object.keys(localSeal).length) saveSealDraft(sealNumber, localSeal);
+  }
+}
+
+function hydrateDraftProgress(team = currentTeam) {
+  const merged = {};
+  const serverAnswers = team?.answers || {};
+  const localAnswers = readLocalDraft(team);
+  for (let sealNumber = 1; sealNumber <= levels.length; sealNumber++) {
+    const sealKey = `seal_${sealNumber}`;
+    merged[sealKey] = { ...(serverAnswers[sealKey] || {}), ...(localAnswers[sealKey] || {}) };
+    const level = levels[sealNumber - 1];
+    level.questions.forEach((question, index) => {
+      const key = questionKey(question, sealNumber, index);
+      if (Object.prototype.hasOwnProperty.call(merged[sealKey], key)) {
+        const allIndex = levels.slice(0, sealNumber - 1).reduce((sum, item) => sum + item.questions.length, index);
+        allAnswers[allIndex] = merged[sealKey][key];
+      }
+    });
+  }
+  // Resume at the first unfinished seal; begin at its first question, retaining
+  // any saved answers in that seal so the team can review them.
+  currentLevel = levels.findIndex((level, index) => level.questions.some((question, qIndex) => {
+    const value = merged[`seal_${index + 1}`]?.[questionKey(question, index + 1, qIndex)];
+    return !hasUsableAnswer(value);
+  }));
+  if (currentLevel < 0) currentLevel = levels.length;
+
+  // Push any offline-only answers back to the database as soon as possible.
+  syncLocalDraft();
+}
+
+function collectCurrentSealAnswers() {
+  const level = levels[currentLevel];
+  if (!level) return {};
+  const sealNumber = currentLevel + 1;
+  const sealAnswers = {};
+  level.questions.forEach((question, index) => {
+    if (answers[index] !== undefined) sealAnswers[questionKey(question, sealNumber, index)] = answers[index];
+  });
+  return sealAnswers;
+}
+
+function persistCurrentAnswer(immediate = false) {
+  const level = levels[currentLevel];
+  if (!level || answers[current] === undefined) return;
+  const sealNumber = currentLevel + 1;
+  const sealKey = `seal_${sealNumber}`;
+  const local = readLocalDraft();
+  local[sealKey] = { ...(local[sealKey] || {}), ...collectCurrentSealAnswers() };
+  writeLocalDraft(local);
+
+  if (draftSaveTimer) clearTimeout(draftSaveTimer);
+  const save = () => saveSealDraft(sealNumber, collectCurrentSealAnswers());
+  if (immediate) save();
+  else draftSaveTimer = setTimeout(save, 350);
 }
 
 async function submitFinalQuiz(allAnswersBySeal) {
@@ -322,7 +445,7 @@ function render() {
 
   const questionEl = $('question');
   if (questionEl) {
-    questionEl.textContent = q.question;
+    questionEl.textContent = formatQuestionText(q.question);
     if (typeof questionEl.focus === 'function') questionEl.focus();
   }
 
@@ -337,8 +460,9 @@ function render() {
   }
 
   const hintEl = $('trial-hint');
-  const isCode = level.type === 'code_editor';
-  const isPredict = level.type === 'predict_output';
+  const questionMode = getQuestionMode(level, q);
+  const isCode = questionMode === 'code';
+  const isPredict = questionMode === 'predict';
 
   if (hintEl) {
     hintEl.textContent = isCode
@@ -388,6 +512,7 @@ function render() {
           answers[current] = editorInput.value;
           const allIndex = levels.slice(0, currentLevel).reduce((sum, item) => sum + item.questions.length, current);
           allAnswers[allIndex] = editorInput.value;
+          persistCurrentAnswer();
           updateEditorLineNumbers();
           update();
         }
@@ -450,6 +575,7 @@ function render() {
           answers[current] = index;
           const allIndex = levels.slice(0, currentLevel).reduce((sum, item) => sum + item.questions.length, current);
           allAnswers[allIndex] = index;
+          persistCurrentAnswer(true);
           update();
           if (isBrowser && window.AudioEngine) {
             window.AudioEngine.playSelect();
@@ -498,9 +624,10 @@ function update() {
   const ans = answers[current];
   let isAnswered = false;
 
-  if (level && level.type === 'code_editor') {
+  const questionMode = getQuestionMode(level, q);
+  if (questionMode === 'code') {
     isAnswered = typeof ans === 'string' && ans.trim().length > 0;
-  } else if (level && level.type === 'predict_output') {
+  } else if (questionMode === 'predict') {
     isAnswered = typeof ans === 'string' && ans.trim().length > 0;
   } else {
     isAnswered = ans !== undefined;
@@ -512,33 +639,56 @@ function update() {
   const statusEl = $('selection-status');
   if (statusEl) {
     if (!isAnswered) {
-      statusEl.textContent = level && level.type === 'code_editor'
+      statusEl.textContent = questionMode === 'code'
         ? 'Code required'
-        : level && level.type === 'predict_output'
+        : questionMode === 'predict'
         ? 'Type output above'
         : 'Select an answer';
     } else {
-      statusEl.textContent = level && level.type === 'code_editor'
+      statusEl.textContent = questionMode === 'code'
         ? 'Code ready to submit'
-        : level && level.type === 'predict_output'
+        : questionMode === 'predict'
         ? 'Prediction entered'
         : 'Answer sealed';
     }
   }
 }
 
-function finishLevel() {
-  const level = levels[currentLevel];
-  // Save draft for this seal to server
-  if (level) {
-    const sealNumber = currentLevel + 1;
-    const sealAnswerMap = {};
-    level.questions.forEach((q, idx) => {
-      const qKey = q.questionKey || `seal${sealNumber}_q${idx + 1}`;
-      sealAnswerMap[qKey] = answers[idx];
-    });
-    saveSealDraft(sealNumber, sealAnswerMap);
+function formatQuestionText(text) {
+  return String(text || '')
+    .replace(/\r\n/g, '\n')
+    .replace(/[ \t]*\n+[ \t]*/g, '\n\n')
+    .replace(/\s+(Part\s*2:)/gi, '\n\n$1')
+    .trim();
+}
+
+function getQuestionMode(level, q) {
+  if (!q) {
+    if (level && level.type === 'code_editor') return 'code';
+    if (level && level.type === 'predict_output') return 'predict';
+    return 'mcq';
   }
+  if (q.questionType === 'code' || q.questionType === 'code_editor') return 'code';
+  if (q.questionType === 'predict_output') return 'predict';
+  if (q.questionType === 'mcq') return 'mcq';
+  if (Array.isArray(q.options) && q.options.length) return 'mcq';
+  if (typeof q.starterCode === 'string') return 'code';
+  if (typeof q.codeSnippet === 'string') return 'predict';
+  if (level && level.type === 'code_editor') return 'code';
+  if (level && level.type === 'predict_output') return 'predict';
+  return 'mcq';
+}
+
+async function finishLevel() {
+  if (isFinishingLevel) return;
+  isFinishingLevel = true;
+  const level = levels[currentLevel];
+  // Ensure the last answer in this seal has reached the server before advancing.
+  if (level) {
+    if (draftSaveTimer) clearTimeout(draftSaveTimer);
+    await saveSealDraft(currentLevel + 1, collectCurrentSealAnswers());
+  }
+  isFinishingLevel = false;
 
   currentLevel++;
   setCorruption([8, 31, 54, 77, 100][currentLevel] || 100);
@@ -716,7 +866,11 @@ const beginLevelBtn = $('begin-level');
 if (beginLevelBtn) {
   beginLevelBtn.addEventListener('click', () => {
     current = 0;
-    answers = [];
+    const level = levels[currentLevel];
+    answers = level ? level.questions.map((question, index) => {
+      const allIndex = levels.slice(0, currentLevel).reduce((sum, item) => sum + item.questions.length, index);
+      return allAnswers[allIndex];
+    }) : [];
     show('trial');
     render();
     if (isBrowser && window.AudioEngine) window.AudioEngine.playAdvance();
@@ -808,6 +962,7 @@ if (codeEditorInput) {
       answers[current] = codeEditorInput.value;
       const allIndex = levels.slice(0, currentLevel).reduce((sum, item) => sum + item.questions.length, current);
       allAnswers[allIndex] = codeEditorInput.value;
+      persistCurrentAnswer();
       updateEditorLineNumbers();
       update();
     }
@@ -817,6 +972,7 @@ if (codeEditorInput) {
     answers[current] = codeEditorInput.value;
     const allIndex = levels.slice(0, currentLevel).reduce((sum, item) => sum + item.questions.length, current);
     allAnswers[allIndex] = codeEditorInput.value;
+    persistCurrentAnswer();
     updateEditorLineNumbers();
     update();
   });
@@ -829,6 +985,7 @@ if (terminalUserInput) {
     answers[current] = terminalUserInput.value;
     const allIndex = levels.slice(0, currentLevel).reduce((sum, item) => sum + item.questions.length, current);
     allAnswers[allIndex] = terminalUserInput.value;
+    persistCurrentAnswer();
     update();
   });
 }
@@ -868,6 +1025,14 @@ if (soundBtn) {
 // Flashlight, Lightning, Spider, Keyboard Shortcuts & Share
 // =========================================================
 if (isBrowser) {
+  window.addEventListener('online', () => {
+    syncLocalDraft();
+    if (levels[currentLevel]) persistCurrentAnswer(true);
+  });
+  window.addEventListener('pagehide', () => {
+    if (levels[currentLevel]) persistCurrentAnswer(true);
+  });
+
   // 1. Audio Engine (Pure Web Audio API Synthesizer)
   let audioCtx = null;
   let audioEnabled = false;
@@ -1077,6 +1242,7 @@ if (isBrowser) {
             answers[current] = optionIndex;
             const allIndex = levels.slice(0, currentLevel).reduce((sum, item) => sum + item.questions.length, current);
             allAnswers[allIndex] = optionIndex;
+            persistCurrentAnswer(true);
             update();
             if (window.AudioEngine) window.AudioEngine.playSelect();
           }
@@ -1414,6 +1580,7 @@ if (isBrowser) {
       proceedQuizBtn.innerHTML = 'Entering... <span>→</span>';
 
       await loadDynamicQuestions();
+      hydrateDraftProgress(currentTeam);
       show('opening');
       const startBtn = $('start');
       if (startBtn) startBtn.hidden = false;
@@ -1459,7 +1626,7 @@ if (isBrowser) {
           }
 
           // Preload questions in background
-          loadDynamicQuestions();
+          await loadDynamicQuestions();
 
           // Display team and member details directly on login page
           renderTeamDetails(data);
@@ -1492,6 +1659,7 @@ if (isBrowser) {
   checkSession().then(async session => {
     if (session && session.authenticated) {
       await loadDynamicQuestions();
+      hydrateDraftProgress(session);
       // If team already finalized, show final status
       if (session.isSubmitted) {
         show('auth-gate');

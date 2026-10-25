@@ -57,7 +57,7 @@ export default async function handler(req, res) {
     // Check if team already has an answers record
     const { data: answerRecord } = await supabase
       .from('team_answers')
-      .select('status, submitted_at')
+      .select('status, submitted_at, answers')
       .eq('registration_id', matchedRecord.id)
       .maybeSingle();
 
@@ -94,11 +94,14 @@ export default async function handler(req, res) {
       authenticated: true,
       teamName: matchedRecord.team_name || `${matchedRecord.full_name}'s Team`,
       leaderName: matchedRecord.full_name,
+      email: matchedRecord.email,
       teamSize: matchedRecord.team_size || members.length,
       members,
       member2Name: matchedRecord.member2_name || null,
       isSubmitted,
-      submittedAt: answerRecord?.submitted_at || null
+      submittedAt: answerRecord?.submitted_at || null,
+      hasDraft: !isSubmitted && Boolean(answerRecord?.answers && Object.keys(answerRecord.answers).length > 0),
+      answers: !isSubmitted ? answerRecord?.answers || {} : {}
     });
   } catch (err) {
     console.error('Verification handler error:', err.message);

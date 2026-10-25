@@ -60,7 +60,12 @@ export default async function handler(req, res) {
 
     // Merge answers into the single JSONB answers object
     const currentAnswers = existing?.answers || {};
-    currentAnswers[`seal_${sealNumber}`] = sealAnswers;
+    // Merge only supplied question keys so incremental answer saves cannot erase
+    // earlier answers from the same seal.
+    currentAnswers[`seal_${sealNumber}`] = {
+      ...(currentAnswers[`seal_${sealNumber}`] || {}),
+      ...sealAnswers
+    };
 
     const now = new Date().toISOString();
 

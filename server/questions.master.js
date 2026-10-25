@@ -8,58 +8,82 @@ export const QUESTION_DEFINITIONS = [
   // ==========================================
   {
     seal_number: 1,
-    question_key: 's1_q1_llm_training',
+    question_key: 's1_q1_http_403',
     question_type: 'mcq',
     display_order: 1,
     points: 1,
     is_active: true,
-    question_text: 'Which technology is commonly used to train a large language model?',
-    options: ['Machine learning', 'Rasterization', 'Packet switching only', 'Disk defragmentation'],
+    question_text: 'A mischievous phantom tries to access a restricted crypt on a web server without proper clearance. Which HTTP status code will the server return?',
+    options: ['404 Not Found', '403 Forbidden', '500 Internal Server Error', '302 Found'],
     answer_key: {
-      correctIndex: 0,
-      explanation: 'Large language models learn patterns from data using machine-learning techniques.'
+      correctIndex: 1,
+      explanation: '403 Forbidden is returned when the client is authenticated or known but not allowed to access the resource.'
     }
   },
   {
     seal_number: 1,
-    question_key: 's1_q2_mfa_factor',
+    question_key: 's1_q2_css_transform_opacity',
     question_type: 'mcq',
     display_order: 2,
     points: 1,
     is_active: true,
-    question_text: 'What does multi-factor authentication add to a sign-in?',
-    options: ['A faster internet connection', 'A second verification factor', 'A public password', 'An extra browser tab'],
+    question_text: 'In modern web development for a spooky UI/UX design, which CSS property is primarily responsible for creating smooth, hardware-accelerated transitions or spooky floating hover animations without triggering heavy layout repaints?',
+    options: ['margin and padding', 'transform and opacity', 'float and clear', 'display: inline-block'],
     answer_key: {
       correctIndex: 1,
-      explanation: 'MFA asks for an additional factor, such as an authenticator code or security key.'
+      explanation: 'Animating properties like transform and opacity allows the browser GPU to handle rendering smoothly, avoiding expensive layout reflows on the DOM.'
     }
   },
   {
     seal_number: 1,
-    question_key: 's1_q3_html_structure',
+    question_key: 's1_q3_css_rem',
     question_type: 'mcq',
     display_order: 3,
     points: 1,
     is_active: true,
-    question_text: 'Which language provides the structure of a web page?',
-    options: ['CSS', 'HTML', 'SQL', 'Bash'],
+    question_text: 'In HTML/CSS styling for a haunted web portfolio, which unit of measurement is relative to the font size of the root element (<html>), making it ideal for scalable, responsive design?',
+    options: ['em', 'rem', 'vh', 'px'],
     answer_key: {
       correctIndex: 1,
-      explanation: 'HTML defines the structure and content of a web page.'
+      explanation: 'rem is relative to the root html font size, so it scales consistently across the document.'
     }
   },
   {
     seal_number: 1,
-    question_key: 's1_q4_alu_operation',
+    question_key: 's1_q4_git_commit_push',
     question_type: 'mcq',
     display_order: 4,
     points: 1,
     is_active: true,
-    question_text: 'Which CPU component performs arithmetic and logical operations?',
-    options: ['RAM', 'Network interface', 'ALU', 'Power supply'],
+    question_text: 'While collaborating on a haunted mansion codebase repository with your team, which of the following statements accurately explains the difference between git commit and git push?',
+    options: [
+      'git commit uploads your files to GitHub, while git push saves them to your local computer.',
+      'git commit saves your staged changes to your local repository history, while git push uploads your local commits to a remote server (like GitHub) so others can pull them.',
+      'git push prepares the files, and git commit deletes untracked files from the workspace.',
+      'Both commands do the exact same thing; git push is just an older alias for git commit.'
+    ],
     answer_key: {
-      correctIndex: 2,
-      explanation: 'The arithmetic logic unit performs arithmetic calculations and logical operations.'
+      correctIndex: 1,
+      explanation: 'git commit records staged changes in local history. git push uploads those local commits to a remote so teammates can pull them.'
+    }
+  },
+  {
+    seal_number: 1,
+    question_key: 's1_q5_oops_polymorphism_private',
+    question_type: 'mcq',
+    display_order: 5,
+    points: 1,
+    is_active: true,
+    question_text: 'Part 1: Which core pillar of Object-Oriented Programming allows a single function name or operator to behave differently depending on the context (e.g., function overloading)?\n\nPart 2: Which access specifier restricts data visibility so that members can only be accessed from within the same class?',
+    options: [
+      'Part 1: Inheritance | Part 2: Public',
+      'Part 1: Polymorphism | Part 2: Private',
+      'Part 1: Encapsulation | Part 2: Protected',
+      'Part 1: Abstraction | Part 2: Friend'
+    ],
+    answer_key: {
+      correctIndex: 1,
+      explanation: 'Polymorphism lets one name behave differently by context (overloading/overriding). Private members are visible only inside the same class.'
     }
   },
 
@@ -68,58 +92,105 @@ export const QUESTION_DEFINITIONS = [
   // ==========================================
   {
     seal_number: 2,
-    question_key: 's2_q1_py_scream',
+    question_key: 's2_q1_py_average_even',
     question_type: 'code',
     display_order: 1,
     points: 1,
     is_active: true,
-    question_text: 'Fix the syntax error in this Python script so that it correctly prints "Boo" to stdout.',
+    question_text: 'Fix this Python function so it correctly returns the average of all even numbers in the list. Iterate over every element, use a comparison (not assignment), and return 0 when there are no even numbers.',
     options: null,
     answer_key: {
-      expectedCode: 'def scream():\n    print("Boo")\n\nscream()',
-      explanation: 'In Python 3, print is a function and requires parentheses around its arguments: print("Boo").'
+      expectedCode: `def average_even_numbers(nums):
+    total = 0
+    count = 0
+    for i in range(len(nums)):
+        if nums[i] % 2 == 0:
+            total += nums[i]
+            count += 1
+    if count == 0:
+        return 0
+    return total / count`,
+      explanation: 'Start the loop at index 0, use == for comparison, keep return outside the loop, and guard against division by zero.'
     }
   },
   {
     seal_number: 2,
-    question_key: 's2_q2_js_safe_add',
-    question_type: 'code',
+    question_key: 's2_q2_bhoothnath_jalebis',
+    question_type: 'predict_output',
     display_order: 2,
     points: 1,
     is_active: true,
-    question_text: 'Fix the JavaScript function bug so that it calculates the correct mathematical sum of a and b (numeric addition, not string concatenation).',
+    question_text: 'In Bhoothnath, what sweet dish does the ghost Banku’s grandfather (played by Amitabh Bachchan) love?',
     options: null,
     answer_key: {
-      expectedCode: 'function addValues(a, b) {\n    return Number(a) + Number(b);\n}',
-      explanation: 'Converting both operands to Number(a) + Number(b) or +a + +b ensures numeric addition instead of string concatenation.'
+      expectedOutput: 'Jalebis',
+      acceptedAnswers: ['Jalebi', 'Jalebis'],
+      explanation: 'Banku’s grandfather is famously fond of jalebis.'
     }
   },
   {
     seal_number: 2,
-    question_key: 's2_q3_py_containment',
+    question_key: 's2_q3_cpp_get_average',
     question_type: 'code',
     display_order: 3,
     points: 1,
     is_active: true,
-    question_text: 'Fix the Python range and comparison bug in is_in_range so that it returns True only when x is between 1 and 10 inclusive.',
+    question_text: 'Fix this C++ function so it returns the true average of a, b, and c as a float.',
     options: null,
     answer_key: {
-      expectedCode: 'def is_in_range(x):\n    return 1 <= x <= 10',
-      explanation: 'Inclusive range checking in Python is written as 1 <= x <= 10 or (x >= 1 and x <= 10).'
+      expectedCode: `float get_average(int a, int b, int c) {
+    float sum = (a + b + c);
+    float avg = sum / 3.0f;
+    return avg;
+}`,
+      explanation: 'Add all three values first, then divide by 3.0f so the result is a floating-point average.'
     }
   },
   {
     seal_number: 2,
-    question_key: 's2_q4_py_loop',
+    question_key: 's2_q4_cpp_print_elements',
     question_type: 'code',
     display_order: 4,
     points: 1,
     is_active: true,
-    question_text: 'Fix the broken Python loop so it iterates through every item in the items list and prints it.',
+    question_text: 'Fix this C++ function so it prints each array element once. Correct the element count and remove the extra increment inside the subscript.',
     options: null,
     answer_key: {
-      expectedCode: 'def process_souls(items):\n    for item in items:\n        print(item)',
-      explanation: 'A standard iteration loop in Python uses `for item in items:`.'
+      expectedCode: `#include <iostream>
+using namespace std;
+
+void print_elements() {
+    int arr[] = {1, 2, 3, 4, 5};
+    int limit = sizeof(arr) / sizeof(arr[0]);
+
+    for (int i = 0; i < limit; i++) {
+        cout << arr[i] << " ";
+    }
+}`,
+      explanation: 'sizeof(arr) is bytes, not element count. Divide by sizeof(arr[0]) and print arr[i] without incrementing i again.'
+    }
+  },
+  {
+    seal_number: 2,
+    question_key: 's2_q5_c_is_sorted',
+    question_type: 'code',
+    display_order: 5,
+    points: 1,
+    is_active: true,
+    question_text: 'Fix this C function so it correctly checks whether an array of n integers is sorted in non-decreasing order, without reading past the last valid index.',
+    options: null,
+    answer_key: {
+      expectedCode: `#include <stdio.h>
+
+int is_sorted(int arr[], int n) {
+    for (int i = 0; i < n - 1; i++) {
+        if (arr[i] > arr[i + 1]) {
+            return 0;
+        }
+    }
+    return 1;
+}`,
+      explanation: 'Compare adjacent pairs only through i < n - 1 so arr[i + 1] stays in bounds.'
     }
   },
 
@@ -128,58 +199,99 @@ export const QUESTION_DEFINITIONS = [
   // ==========================================
   {
     seal_number: 3,
-    question_key: 's3_q1_zero_index',
+    question_key: 's3_q1_anagram_complexity',
     question_type: 'mcq',
     display_order: 1,
     points: 1,
     is_active: true,
-    question_text: 'In a zero-indexed array of length n, what is the index of its final element?',
-    options: ['n', '1', 'n - 1', 'n + 1'],
+    question_text: 'Kapidhwaj Innovations has just deployed the backend for a brand-new Ghostbnb platform. The system needs to quickly check if a newly listed haunted house ID string (S1) is a valid anagram of a verified paranormal zone hash (S2). Assuming both strings consist of lowercase English letters and have a length of N, what is the optimal time complexity to determine if they are anagrams?',
+    options: [
+      'O(N^2) using nested loops',
+      'O(N) using a character frequency hash map/array (or O(N log N) by sorting)',
+      'O(2^N) using recursive backtracking',
+      'O(1) constant time using bitwise XOR'
+    ],
     answer_key: {
-      correctIndex: 2,
-      explanation: 'Zero-based indexing starts at 0, so the last valid position is n - 1.'
+      correctIndex: 1,
+      explanation: 'Counting character frequencies via a frequency array achieves an optimal linear time complexity of O(N). Sorting both strings is O(N log N).'
     }
   },
   {
     seal_number: 3,
-    question_key: 's3_q2_bubble_sort',
-    question_type: 'mcq',
+    question_key: 's3_q2_golmaal_laxman',
+    question_type: 'predict_output',
     display_order: 2,
     points: 1,
     is_active: true,
-    question_text: 'Which sorting algorithm repeatedly compares and swaps adjacent out-of-order elements?',
-    options: ['Binary search', 'Depth-first search', 'Hashing', 'Bubble sort'],
+    question_text: 'In Golmaal Again (Golmaal 4), which character’s body gets possessed by the spirit of Damini?',
+    options: null,
     answer_key: {
-      correctIndex: 3,
-      explanation: 'Bubble sort compares adjacent pairs and swaps them until the list is ordered.'
+      expectedOutput: 'Laxman',
+      acceptedAnswers: [
+        'Laxman',
+        'Laxman Prasad',
+        'Shreyas Talpade',
+        'Laxman (played by Shreyas Talpade)',
+        'Laxman played by Shreyas Talpade'
+      ],
+      explanation: 'Damini possesses Laxman, played by Shreyas Talpade.'
     }
   },
   {
     seal_number: 3,
-    question_key: 's3_q3_binary_search_complexity',
+    question_key: 's3_q3_bubble_sort_best_case',
     question_type: 'mcq',
     display_order: 3,
     points: 1,
     is_active: true,
-    question_text: 'What is the time complexity of binary search on a sorted array?',
-    options: ['O(n²)', 'O(n)', 'O(log n)', 'O(1) in every case'],
+    question_text: 'Part 1: Which sorting algorithm repeatedly steps through the list, compares adjacent elements, and swaps them if they are in the wrong order?\n\nPart 2: What is the best-case time complexity of this algorithm when an early-exit optimization flag is used on an array that is already sorted?',
+    options: [
+      'Part 1: Selection Sort | Part 2: O(N^2)',
+      'Part 1: Bubble Sort | Part 2: O(N)',
+      'Part 1: Insertion Sort | Part 2: O(N log N)',
+      'Part 1: Bubble Sort | Part 2: O(N^2)'
+    ],
     answer_key: {
-      correctIndex: 2,
-      explanation: 'Binary search halves the remaining search interval on each step.'
+      correctIndex: 1,
+      explanation: 'Bubble Sort swaps adjacent elements. With a swap flag, an already-sorted array finishes in one pass, so best-case time is O(N).'
     }
   },
   {
     seal_number: 3,
-    question_key: 's3_q4_py_slice_reverse',
+    question_key: 's3_q4_stack_postfix',
     question_type: 'mcq',
     display_order: 4,
     points: 1,
     is_active: true,
-    question_text: 'What does the Python string slice "crypt"[::-1] produce?',
-    options: ['crypt', 'tpyrc', 'rypc', 'A syntax error'],
+    question_text: 'Part 1: Which data structure is classically used to evaluate postfix mathematical expressions and check for balanced nested brackets in code editors?\n\nPart 2: What is the correct postfix (RPN) notation for the infix expression A + B * C?',
+    options: [
+      'Part 1: Queue | Part 2: A B + C *',
+      'Part 1: Stack | Part 2: A B C * +',
+      'Part 1: Stack | Part 2: (A + B) * C',
+      'Part 1: Hash Map | Part 2: A B + C *'
+    ],
     answer_key: {
       correctIndex: 1,
-      explanation: 'A slice step of -1 traverses the string from right to left.'
+      explanation: 'Stacks manage nested structures and operator precedence. Multiplication binds first, so A + B * C becomes A B C * +.'
+    }
+  },
+  {
+    seal_number: 3,
+    question_key: 's3_q5_stable_sort_quicksort',
+    question_type: 'mcq',
+    display_order: 5,
+    points: 1,
+    is_active: true,
+    question_text: 'Part 1: What property defines a stable sorting algorithm?\n\nPart 2: Which of the following is a classic example of an unstable sorting algorithm?',
+    options: [
+      'Part 1: It guarantees O(N log N) time | Part 2: Merge Sort',
+      'Part 1: It preserves the relative order of duplicate elements | Part 2: Quick Sort',
+      'Part 1: It requires zero extra memory space | Part 2: Insertion Sort',
+      'Part 1: It works without comparing elements directly | Part 2: Bubble Sort'
+    ],
+    answer_key: {
+      correctIndex: 1,
+      explanation: 'Stability preserves the original order of equal keys. Quick Sort is classically unstable because partitioning can swap distant equal elements.'
     }
   },
 
@@ -188,58 +300,80 @@ export const QUESTION_DEFINITIONS = [
   // ==========================================
   {
     seal_number: 4,
-    question_key: 's4_q1_c_output',
+    question_key: 's4_q1_py_even_sum',
     question_type: 'predict_output',
     display_order: 1,
     points: 1,
     is_active: true,
-    question_text: 'Trace the C program execution and predict the exact printed output.',
+    question_text: 'What is the output of the following Python code?',
     options: null,
     answer_key: {
-      expectedOutput: '7',
-      explanation: 'The expression 4 + 3 evaluates to 7, which printf("%d", ...) outputs without newline.'
+      expectedOutput: '6',
+      explanation: 'range(1, 5) generates 1, 2, 3, 4. Even numbers are 2 and 4. Sum = 6.'
     }
   },
   {
     seal_number: 4,
-    question_key: 's4_q2_cpp_division',
+    question_key: 's4_q2_bulbbul_ulte_pair',
     question_type: 'predict_output',
     display_order: 2,
     points: 1,
     is_active: true,
-    question_text: 'Trace the C++ integer division logic and predict the exact printed output.',
+    question_text: 'In the movie Bulbbul, what physical trait/sign was traditionally used by village folk to identify a Chudail?',
     options: null,
     answer_key: {
-      expectedOutput: '2',
-      explanation: 'In C++, 5 / 2 performs integer division, discarding the fractional part (.5) to output 2.'
+      expectedOutput: 'Ulte pair',
+      acceptedAnswers: [
+        'Ulte pair',
+        'Ulta pair',
+        'Inverted feet',
+        'Backward feet',
+        'Inverted/Backward feet',
+        'Inverted backward feet'
+      ],
+      explanation: 'Village folk identified a Chudail by ulte pair — inverted/backward feet.'
     }
   },
   {
     seal_number: 4,
-    question_key: 's4_q3_py_slice_crypt',
+    question_key: 's4_q3_cpp_nested_sum',
     question_type: 'predict_output',
     display_order: 3,
     points: 1,
     is_active: true,
-    question_text: 'Trace the Python string slicing and predict the exact printed output.',
+    question_text: 'Trace the nested C++ loops and predict the exact printed output.',
     options: null,
     answer_key: {
-      expectedOutput: 'ryp',
-      explanation: 'Indices 1, 2, 3 correspond to letters "r", "y", "p". The stop index 4 is excluded.'
+      expectedOutput: '24',
+      explanation: 'i=1: 2; i=2: 5 then 9; i=3: 13, 18, 24.'
     }
   },
   {
     seal_number: 4,
-    question_key: 's4_q4_js_coercion',
+    question_key: 's4_q4_py_slice_supernatural',
     question_type: 'predict_output',
     display_order: 4,
     points: 1,
     is_active: true,
-    question_text: 'Trace the JavaScript type coercion expression and predict the exact printed output.',
+    question_text: 'What is printed by this Python slicing snippet?',
     options: null,
     answer_key: {
-      expectedOutput: '32',
-      explanation: 'Number 3 is coerced into "3", and concatenation with "2" results in "32".'
+      expectedOutput: 'TNE',
+      explanation: 'Slice [7:1:-2] starts at index 7 (T), then 5 (N), then 3 (E), stopping before index 1.'
+    }
+  },
+  {
+    seal_number: 4,
+    question_key: 's4_q5_c_post_increment',
+    question_type: 'predict_output',
+    display_order: 5,
+    points: 1,
+    is_active: true,
+    question_text: 'What is the output of this C program?',
+    options: null,
+    answer_key: {
+      expectedOutput: '6 5',
+      explanation: 'Post-increment assigns the current value of x (5) to y first, then increments x to 6.'
     }
   }
 ];
@@ -249,15 +383,15 @@ export const SEAL_METADATA = [
   {
     sealNumber: 1,
     title: 'Tech Trivia',
-    topics: 'AI · CYBERSECURITY · WEB DEVELOPMENT · COMPUTER FUNDAMENTALS',
-    briefing: "The first seal guards the knowledge firewall. To pass, you must understand the very systems the Phantom has corrupted: AI, cybersecurity, web development, and the fundamentals of computing. Let's see whether your knowledge can survive the breach.",
+    topics: 'CYBERSECURITY · WEB DEVELOPMENT · GIT · OOPS IN C++',
+    briefing: "The first seal guards the knowledge firewall. To pass, you must understand the very systems the Phantom has corrupted: cybersecurity, web development, version control, and object-oriented programming. Let's see whether your knowledge can survive the breach.",
     whisper: 'UNKNOWN: Your firewall is only as strong as its operator.',
     type: 'mcq'
   },
   {
     sealNumber: 2,
     title: 'Debug the Dead',
-    topics: 'SYNTAX ERRORS · LOGICAL BUGS · MISSING INDENTATION · CODE REPAIR',
+    topics: 'PYTHON · C++ · C · SYNTAX ERRORS · LOGICAL BUGS',
     briefing: 'The code is dying. Lines are corrupted. Logic is broken. Something has rewritten the rules of your programs. Find the bug in the code editor, repair the program with proper syntax, and restore the dead code.',
     whisper: 'UNKNOWN: I broke one line in every script. Can your code editor fix it?',
     type: 'code_editor'
@@ -265,7 +399,7 @@ export const SEAL_METADATA = [
   {
     sealNumber: 3,
     title: 'DSA After Dark',
-    topics: 'ARRAYS · STRINGS · SORTING · TIME COMPLEXITY',
+    topics: 'ANAGRAMS · SORTING · STACKS · STABILITY',
     briefing: "You have entered the Phantom's algorithmic maze. Every path looks correct until it isn't. Every decision has a consequence. Think carefully, because one wrong answer could leave you trapped in an endless loop.",
     whisper: 'UNKNOWN: The shortest path is not always the safest.',
     type: 'mcq'
@@ -273,7 +407,7 @@ export const SEAL_METADATA = [
   {
     sealNumber: 4,
     title: 'Predict the Output',
-    topics: 'OUTPUT TRACING · C · C++ · PYTHON · JAVASCRIPT',
+    topics: 'OUTPUT TRACING · PYTHON · C++ · C',
     briefing: 'The final seal is different. You cannot fix the code. You cannot change the logic. You can only predict what happens next. Read every line. Type the exact output produced by the program into the terminal prompt.',
     whisper: 'UNKNOWN: No edits. No escape. Tell me what prints to the screen.',
     type: 'predict_output'
@@ -283,48 +417,118 @@ export const SEAL_METADATA = [
 // Presentation metadata for interactive fields (code editor & terminal predictor)
 // Strictly non-secret frontend presentation attributes needed by the browser UI
 export const QUESTION_PRESENTATION = {
-  s2_q1_py_scream: {
+  s2_q1_py_average_even: {
     language: 'python',
-    filename: 'spooky_print.py',
-    hint: 'Check parentheses and string quoting around the print argument.',
-    starterCode: 'def scream():\n    print "Boo"\n\nscream()'
+    filename: 'crypt_averages.py',
+    hint: 'Check the loop start index, == vs =, where return sits, and division by zero.',
+    starterCode: `def average_even_numbers(nums):
+    total = 0
+    count = 0
+    for i in range(1, len(nums)):
+        if nums[i] % 2 = 0:
+            total += nums[i]
+            count += 1
+        return total / count`
   },
-  s2_q2_js_safe_add: {
-    language: 'javascript',
-    filename: 'safe_add.js',
-    hint: 'Use Number() or parseInt() to ensure numeric addition when b might be passed as a string.',
-    starterCode: 'function addValues(a, b) {\n    // Bug: concatenates string instead of adding numbers\n    return a + b;\n}'
+  s2_q2_bhoothnath_jalebis: {
+    language: 'text',
+    filename: 'bhoothnath.txt',
+    hint: 'Name the sweet dish. Spelling variants like Jalebi/Jalebis are accepted.',
+    codeSnippet: 'Film: Bhoothnath\nClue: Banku’s grandfather (Amitabh Bachchan) has a favorite sweet.'
   },
-  s2_q3_py_containment: {
-    language: 'python',
-    filename: 'containment_bounds.py',
-    hint: 'Use chained comparison (1 <= x <= 10) or (x >= 1 and x <= 10).',
-    starterCode: 'def is_in_range(x):\n    # Bug: incorrect operator logic\n    return 1 < x > 10'
-  },
-  s2_q4_py_loop: {
-    language: 'python',
-    filename: 'corrupted_loop.py',
-    hint: 'Use a proper for ... in items: statement followed by an indented block.',
-    starterCode: 'def process_souls(items):\n    # Bug: invalid loop header\n    loop items:\n        print(item)'
-  },
-  s4_q1_c_output: {
-    language: 'c',
-    codeSnippet: '#include <stdio.h>\n\nint main() {\n    int x = 4;\n    printf("%d", x + 3);\n    return 0;\n}',
-    hint: 'Evaluate 4 + 3 formatted as an integer %d.'
-  },
-  s4_q2_cpp_division: {
+  s2_q3_cpp_get_average: {
     language: 'cpp',
-    codeSnippet: '#include <iostream>\nusing namespace std;\n\nint main() {\n    int n = 5;\n    cout << n / 2;\n    return 0;\n}',
-    hint: 'Remember: integer divided by integer in C++ truncates the decimal part.'
+    filename: 'spooky_average.cpp',
+    hint: 'Operator precedence and integer division both distort the average.',
+    starterCode: `float get_average(int a, int b, int c) {
+    int sum = a + b + c / 3;
+    float avg = sum / 2;
+    return avg;
+}`
   },
-  s4_q3_py_slice_crypt: {
+  s2_q4_cpp_print_elements: {
+    language: 'cpp',
+    filename: 'phantom_memory.cpp',
+    hint: 'sizeof on an array is bytes, and i++ inside arr[i++] skips elements.',
+    starterCode: `#include <iostream>
+using namespace std;
+
+void print_elements() {
+    int arr[] = {1, 2, 3, 4, 5};
+    int limit = sizeof(arr);
+
+    for (int i = 0; i < limit; i++) {
+        cout << arr[i++] << " ";
+    }
+}`
+  },
+  s2_q5_c_is_sorted: {
+    language: 'c',
+    filename: 'monster_sort_check.c',
+    hint: 'The loop bound must stop before the last pair so arr[i + 1] stays in range.',
+    starterCode: `#include <stdio.h>
+int is_sorted(int arr[], int n) {
+    for (int i = 0; i <= n; i++) {
+        if (arr[i] > arr[i + 1]) {
+            return 0;
+        }
+    }
+    return 1;
+}`
+  },
+  s3_q2_golmaal_laxman: {
+    language: 'text',
+    filename: 'golmaal.txt',
+    hint: 'Name the possessed character (actor credit is optional).',
+    codeSnippet: 'Film: Golmaal Again (Golmaal 4)\nClue: Damini’s spirit possesses one of the four friends.'
+  },
+  s4_q1_py_even_sum: {
     language: 'python',
-    codeSnippet: 'word = "crypt"\nprint(word[1:4])',
-    hint: 'Python slices are [start:stop] where start is included (1) and stop is excluded (4).'
+    codeSnippet: `total = 0
+for i in range(1, 5):
+    if i % 2 == 0:
+        total += i
+print(total)`,
+    hint: 'range(1, 5) is 1 through 4. Add the even values.'
   },
-  s4_q4_js_coercion: {
-    language: 'javascript',
-    codeSnippet: 'const val = 3 + "2";\nconsole.log(val);',
-    hint: 'When a number is added to a string with +, JavaScript converts the number to string and concatenates.'
+  s4_q2_bulbbul_ulte_pair: {
+    language: 'text',
+    codeSnippet: 'Film: Bulbbul\nClue: Village folk used a physical sign to identify a Chudail.',
+    hint: 'Think inverted or backward feet — ulte pair.'
+  },
+  s4_q3_cpp_nested_sum: {
+    language: 'cpp',
+    codeSnippet: `#include <iostream>
+using namespace std;
+
+int main() {
+    int sum = 0;
+    for (int i = 1; i <= 3; i++) {
+        for (int j = 1; j <= i; j++) {
+            sum += (i + j);
+        }
+    }
+    cout << sum;
+    return 0;
+}`,
+    hint: 'Trace every (i + j) added by the nested loops.'
+  },
+  s4_q4_py_slice_supernatural: {
+    language: 'python',
+    codeSnippet: `s = "SUPERNATURAL"
+print(s[7:1:-2])`,
+    hint: 'Start at index 7, step -2, and stop before index 1.'
+  },
+  s4_q5_c_post_increment: {
+    language: 'c',
+    codeSnippet: `#include <stdio.h>
+
+int main() {
+    int x = 5;
+    int y = x++;
+    printf("%d %d", x, y);
+    return 0;
+}`,
+    hint: 'x++ assigns first, then increments. printf prints x then y.'
   }
 };

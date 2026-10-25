@@ -77,7 +77,7 @@ async function runSync() {
   // 2. Fetch existing question keys to handle deactivations
   const { data: existingRows, error: fetchErr } = await supabase
     .from('questions')
-    .select('question_key, is_active');
+    .select('id, question_key, is_active, seal_number, display_order');
 
   if (fetchErr) {
     console.error('[Question Sync] Failed to query existing questions:', fetchErr.message);
@@ -86,9 +86,34 @@ async function runSync() {
 
   const existingKeys = new Set((existingRows || []).map(r => r.question_key));
   const masterKeys = new Set(QUESTION_DEFINITIONS.map(q => q.question_key));
-
-  // 3. Upsert active questions by question_key
   const now = new Date().toISOString();
+
+  // 3. Free (seal_number, display_order) slots before upsert.
+  // questions_seal_order_unique applies even to inactive rows, so obsolete
+  // questions must be moved off 1-5 before the new bank is written.
+  const toDeactivateRows = (existingRows || []).filter(r => !masterKeys.has(r.question_key));
+  if (toDeactivateRows.length > 0) {
+    console.log(`[Question Sync] Deactivating ${toDeactivateRows.length} obsolete question(s)...`);
+    for (const row of toDeactivateRows) {
+      const retiredOrder = 100000 + Number(row.id);
+      const { error: deactErr } = await supabase
+        .from('questions')
+        .update({
+          is_active: false,
+          display_order: retiredOrder,
+          updated_at: now
+        })
+        .eq('question_key', row.question_key);
+
+      if (deactErr) {
+        console.error(`[Question Sync] Failed to deactivate ${row.question_key}:`, deactErr.message);
+        process.exit(1);
+      }
+    }
+    console.log(`[Question Sync] Successfully deactivated: ${toDeactivateRows.map(r => r.question_key).join(', ')}`);
+  }
+
+  // 4. Upsert active questions by question_key
   const upsertRows = QUESTION_DEFINITIONS.map(q => ({
     question_key: q.question_key,
     seal_number: q.seal_number,
@@ -112,22 +137,6 @@ async function runSync() {
   }
 
   console.log(`[Question Sync] Successfully upserted ${upsertRows.length} questions.`);
-
-  // 4. Deactivate removed questions rather than deleting them
-  const toDeactivate = [...existingKeys].filter(k => !masterKeys.has(k));
-  if (toDeactivate.length > 0) {
-    console.log(`[Question Sync] Deactivating ${toDeactivate.length} obsolete question(s)...`);
-    const { error: deactErr } = await supabase
-      .from('questions')
-      .update({ is_active: false, updated_at: now })
-      .in('question_key', toDeactivate);
-
-    if (deactErr) {
-      console.warn('[Question Sync] Warning: failed to deactivate obsolete questions:', deactErr.message);
-    } else {
-      console.log(`[Question Sync] Successfully deactivated: ${toDeactivate.join(', ')}`);
-    }
-  }
 
   console.log('[Question Sync] Complete and consistent with master definition.');
 }

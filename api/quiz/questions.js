@@ -44,6 +44,7 @@ export default async function handler(req, res) {
       // Format question for frontend presentation
       const formattedQ = {
         questionKey: q.question_key,
+        questionType: q.question_type,
         question: q.question_text
       };
 
