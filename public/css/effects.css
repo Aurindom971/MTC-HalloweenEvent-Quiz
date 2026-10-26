@@ -91,9 +91,15 @@ body[data-scene="briefing"] .circuit-grid { filter: drop-shadow(0 0 8px #a31a26)
 body.scare-shaking { animation: none; }
 .scare-stage { isolation: isolate; }
 .scare-light {
-  background: radial-gradient(ellipse at 50% 90%, rgba(210, 80, 60, .3), transparent 65%);
-  animation: none;
-  mix-blend-mode: normal;
+  background:
+    radial-gradient(ellipse at 50% 42%, rgba(255, 18, 38, .66) 0%, rgba(238, 0, 24, .48) 38%, rgba(112, 0, 14, .48) 72%, rgba(12, 0, 2, .68) 100%),
+    linear-gradient(180deg, rgba(210, 0, 22, .3), transparent 52%, rgba(255, 12, 32, .2));
+  animation: scareRedPulse .55s ease-in-out infinite alternate;
+  mix-blend-mode: screen;
+}
+@keyframes scareRedPulse {
+  from { opacity: .72; filter: brightness(.95); }
+  to { opacity: 1; filter: brightness(1.22); }
 }
 .scare-grain { opacity: .12; animation-duration: .6s; }
 .scare-creature-wrap {
@@ -111,7 +117,9 @@ body.scare-shaking { animation: none; }
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  filter: contrast(1.15) drop-shadow(0 0 28px rgba(185, 35, 30, .45));
+  filter: brightness(1.22) contrast(1.18) saturate(1.25)
+    drop-shadow(0 0 32px rgba(255, 0, 28, .72))
+    drop-shadow(0 0 90px rgba(220, 0, 22, .62));
   animation: none;
 }
 .scare-stage.is-active .scare-creature { animation: fullCreatureLunge .65s cubic-bezier(.2, .9, .2, 1) both; }
@@ -130,20 +138,30 @@ body.scare-shaking { animation: none; }
   height: 25%;
   transform-origin: top;
   animation: none;
-  opacity: .8;
+  opacity: .94;
+  filter: drop-shadow(0 8px 20px rgba(255, 0, 26, .46));
+  background:
+    radial-gradient(ellipse 25px 90px at 12% 0%, #ff142d 85%, transparent 100%),
+    radial-gradient(ellipse 40px 140px at 28% 0%, #f00022 90%, transparent 100%),
+    radial-gradient(ellipse 20px 80px at 45% 0%, #d9001d 85%, transparent 100%),
+    radial-gradient(ellipse 50px 170px at 64% 0%, #ed001e 90%, transparent 100%),
+    radial-gradient(ellipse 30px 110px at 82% 0%, #f5142b 85%, transparent 100%),
+    radial-gradient(ellipse 45px 150px at 94% 0%, #ff1b34 90%, transparent 100%),
+    linear-gradient(180deg, rgba(255, 0, 22, .94) 0%, rgba(220, 0, 24, .7) 20%, transparent 58%);
 }
 .scare-stage.is-active .scare-blood-curtain { animation: bloodDripFall .8s ease-out both; }
 .scare-blood-splatter {
   z-index: 2;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 12px 30px at 3% 32%, #8b081b 90%, transparent),
-    radial-gradient(ellipse 6px 11px at 7% 38%, #b00d27 90%, transparent),
-    radial-gradient(ellipse 17px 38px at 98% 55%, #8b081b 90%, transparent),
-    radial-gradient(ellipse 5px 9px at 94% 48%, #b00d27 90%, transparent),
-    radial-gradient(ellipse at center, transparent 55%, rgba(90, 0, 12, .6));
+    radial-gradient(ellipse 12px 30px at 3% 32%, rgba(255, 18, 48, .98) 72%, transparent),
+    radial-gradient(ellipse 6px 11px at 7% 38%, rgba(255, 82, 102, .96) 72%, transparent),
+    radial-gradient(ellipse 17px 38px at 98% 55%, rgba(245, 8, 42, .98) 72%, transparent),
+    radial-gradient(ellipse 5px 9px at 94% 48%, rgba(255, 82, 102, .96) 72%, transparent),
+    radial-gradient(ellipse at 50% 44%, transparent 52%, rgba(255, 0, 26, .34));
   animation: none;
-  mix-blend-mode: normal;
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 12px rgba(255, 0, 35, .62));
 }
 
 /* The reference's slow, uneven blood trails beneath display lettering. */
@@ -173,4 +191,5 @@ body.scare-shaking { animation: none; }
 @media (prefers-reduced-motion: reduce) {
   .reveal-letter { opacity: 1; filter: none; }
   .scare-creature { transform: none; opacity: 1; }
+  .scare-light { animation: none; opacity: .9; filter: none; }
 }
