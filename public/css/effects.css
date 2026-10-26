@@ -1,0 +1,176 @@
+/* Presentation only: reference-style reveals, full creatures and blood drips. */
+/* Keep the reference's landscape present across the entire campaign. */
+.sky {
+  background:
+    radial-gradient(55vmax 38vmax at 82% 12%, rgba(210, 40, 25, .26), transparent 60%),
+    radial-gradient(70vmax 50vmax at 10% 0%, rgba(120, 12, 14, .3), transparent 60%),
+    radial-gradient(90vmax 45vmax at 50% 110%, rgba(255, 70, 20, .22), transparent 60%),
+    linear-gradient(180deg, #160305, #080203 55%, #020001);
+}
+.circuit-grid { opacity: .52; }
+.moon-wrap {
+  opacity: .9;
+  width: clamp(110px, 17vw, 230px);
+  height: clamp(110px, 17vw, 230px);
+  top: clamp(90px, 12vh, 140px);
+  right: clamp(-24px, 6vw, 140px);
+  transition: transform 2s ease, opacity 2s ease;
+}
+.fog-back { opacity: 1; }
+.fog-front { opacity: .9; }
+.vignette { background: radial-gradient(ellipse at 50% 45%, transparent 42%, rgba(0, 0, 0, .72)); }
+.quiz-header { z-index: 60; }
+.opening,
+.auth-gate {
+  background: radial-gradient(ellipse at 50% 48%, rgba(18, 3, 5, .82), rgba(10, 2, 3, .35) 65%, transparent);
+}
+.quiz-main { min-height: 0; }
+.opening {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  min-height: max(0px, calc(100dvh - 250px));
+  padding: 24px;
+  box-sizing: border-box;
+  overflow: visible;
+}
+.auth-gate { width: min(680px, 100%); box-sizing: border-box; }
+.trial,
+.briefing,
+.seal-result {
+  background: linear-gradient(155deg, rgba(33, 6, 10, .87), rgba(9, 2, 4, .91));
+  border-color: rgba(200, 60, 48, .48);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+body[data-scene="briefing"] .moon-wrap,
+body[data-scene="ending"] .moon-wrap { transform: scale(1.12); }
+body[data-scene="briefing"] .circuit-grid { filter: drop-shadow(0 0 8px #a31a26); }
+#scene-transition {
+  position: fixed;
+  inset: -10%;
+  z-index: 70;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(ellipse at center, transparent 28%, rgba(190, 22, 34, .45) 45%, #030002 68%),
+    repeating-linear-gradient(0deg, transparent 0 3px, rgba(0, 0, 0, .18) 3px 4px);
+}
+/* Staggered arrival echoes the reference's entry gate. */
+.auth-gate > h1 { animation: cryptArrival 1s .1s both; }
+.auth-gate > .story-line { animation: cryptArrival 1s .2s both; }
+.auth-gate > .auth-form { animation: cryptArrival 1s .3s both; }
+@keyframes cryptArrival {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-height: 650px) {
+  .opening { align-content: start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #scene-transition { display: none; }
+}
+.reveal-accessible {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.reveal-word { display: inline-block; }
+.reveal-letter { animation: cryptLetter .42s ease-out both; }
+@keyframes cryptLetter {
+  from { opacity: 0; filter: blur(3px); }
+  to { opacity: 1; filter: blur(0); }
+}
+
+/* Keep the fixed stage attached to the viewport, including on mobile. */
+body.scare-shaking { animation: none; }
+.scare-stage { isolation: isolate; }
+.scare-light {
+  background: radial-gradient(ellipse at 50% 90%, rgba(210, 80, 60, .3), transparent 65%);
+  animation: none;
+  mix-blend-mode: normal;
+}
+.scare-grain { opacity: .12; animation-duration: .6s; }
+.scare-creature-wrap {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: none;
+  padding: 20px 16px clamp(135px, 22vh, 190px);
+  box-sizing: border-box;
+  z-index: 1;
+}
+.scare-creature {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  filter: contrast(1.15) drop-shadow(0 0 28px rgba(185, 35, 30, .45));
+  animation: none;
+}
+.scare-stage.is-active .scare-creature { animation: fullCreatureLunge .65s cubic-bezier(.2, .9, .2, 1) both; }
+@keyframes fullCreatureLunge {
+  0% { opacity: 0; transform: scale(.75); }
+  35% { opacity: 1; transform: scale(.94); }
+  65% { transform: scale(.98) translateX(-.5%); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.scare-bloody-screamer { bottom: max(20px, env(safe-area-inset-bottom)); padding: 0 16px; }
+.scare-alert-badge, .scare-screamer-text { animation: none; }
+.scare-screamer-text { font-size: clamp(26px, 5vw, 64px); }
+.scare-sub-warning { font-size: clamp(11px, 1.6vw, 17px); letter-spacing: 2px; }
+.scare-blood-curtain {
+  z-index: 2;
+  height: 25%;
+  transform-origin: top;
+  animation: none;
+  opacity: .8;
+}
+.scare-stage.is-active .scare-blood-curtain { animation: bloodDripFall .8s ease-out both; }
+.scare-blood-splatter {
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 12px 30px at 3% 32%, #8b081b 90%, transparent),
+    radial-gradient(ellipse 6px 11px at 7% 38%, #b00d27 90%, transparent),
+    radial-gradient(ellipse 17px 38px at 98% 55%, #8b081b 90%, transparent),
+    radial-gradient(ellipse 5px 9px at 94% 48%, #b00d27 90%, transparent),
+    radial-gradient(ellipse at center, transparent 55%, rgba(90, 0, 12, .6));
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* The reference's slow, uneven blood trails beneath display lettering. */
+.opening h1 em, .intro h1 em, .briefing h2 { position: relative; }
+.opening h1 em::after, .intro h1 em::after, .briefing h2::after {
+  content: '';
+  position: absolute;
+  left: 8%; right: 8%; top: 90%;
+  height: .55em;
+  pointer-events: none;
+  background:
+    radial-gradient(.05em .16em at 10% 0, #c8102e 96%, transparent),
+    radial-gradient(.04em .3em at 27% 0, #b00d27 96%, transparent),
+    radial-gradient(.05em .2em at 46% 0, #c8102e 96%, transparent),
+    radial-gradient(.035em .38em at 63% 0, #a50b22 96%, transparent),
+    radial-gradient(.05em .14em at 81% 0, #c8102e 96%, transparent),
+    radial-gradient(.04em .26em at 94% 0, #b00d27 96%, transparent);
+  transform-origin: top;
+  animation: referenceBloodDrip 7s ease-in infinite;
+}
+@keyframes referenceBloodDrip {
+  0% { transform: scaleY(.15); opacity: .9; }
+  70% { transform: scaleY(1); opacity: .9; }
+  85% { transform: scaleY(1.15) translateY(.05em); opacity: 0; }
+  100% { transform: scaleY(.15); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-letter { opacity: 1; filter: none; }
+  .scare-creature { transform: none; opacity: 1; }
+}

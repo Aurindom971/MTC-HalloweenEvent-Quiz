@@ -13,6 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Rye&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Oswald:wght@400;500;600;700&family=Pixelify+Sans:wght@500;700&family=Special+Elite&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/original.css">
   <link rel="stylesheet" href="css/quiz.css">
+  <link rel="stylesheet" href="css/effects.css">
 </head>
 <body class="opening-active">
   <!-- ============ ATMOSPHERE ============ -->
@@ -148,7 +149,7 @@
     </a>
     <div class="header-tools">
       <span class="edition">HALLOWEEN EDITION / 2026</span>
-      <button id="sound" class="sound" aria-pressed="false" type="button">Sound off ♫</button>
+      <button id="sound" class="sound" aria-pressed="true" aria-label="Turn sound off" title="Sound starts on your first interaction" type="button">Sound on ♫</button>
     </div>
   </header>
 
@@ -346,6 +347,7 @@
   </main>
 
   <!-- ============ BLOODY HORROR JUMPSCARE OVERLAY ============ -->
+  <div id="scene-transition" aria-hidden="true"></div>
   <div class="scare-stage" id="scare-stage" aria-hidden="true">
     <div class="scare-blood-splatter"></div>
     <div class="scare-blood-curtain"></div>
@@ -373,6 +375,7 @@
 
   <audio id="audio" src="assets/creepy-laugh.mp3" preload="none" loop></audio>
   <script src="questions.js"></script>
+  <script src="background-music.js"></script>
   <script src="quiz.js"></script>
 </body>
 </html>

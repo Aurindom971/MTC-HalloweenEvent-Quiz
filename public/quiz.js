@@ -205,7 +205,40 @@ async function submitFinalQuiz(allAnswersBySeal) {
 }
 
 
+// Reveal narrative copy without delaying controls or changing quiz state.
+function revealText(element, text = element?.querySelector?.('.reveal-accessible')?.textContent || element?.textContent, duration = 2400) {
+  if (!element || !text) return;
+  element.textContent = text;
+  if (!isBrowser || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const accessible = document.createElement('span');
+  accessible.className = 'reveal-accessible';
+  accessible.textContent = text;
+  const visual = document.createElement('span');
+  visual.setAttribute('aria-hidden', 'true');
+  let index = 0;
+  const pace = Math.min(38, duration / Math.max(1, Array.from(text).length));
+  text.split(/(\s+)/).forEach(word => {
+    if (/^\s+$/.test(word)) {
+      visual.appendChild(document.createTextNode(word));
+      index += word.length;
+      return;
+    }
+    const group = document.createElement('span');
+    group.className = 'reveal-word';
+    Array.from(word).forEach(letter => {
+      const character = document.createElement('span');
+      character.className = 'reveal-letter';
+      character.textContent = letter;
+      character.style.animationDelay = `${index++ * pace}ms`;
+      group.appendChild(character);
+    });
+    visual.appendChild(group);
+  });
+  element.replaceChildren(accessible, visual);
+}
+
 function show(id) {
+  const entering = $(id)?.hidden;
   const views = ['auth-gate', 'opening', 'intro', 'briefing', 'trial', 'seal-result', 'ending'];
   views.forEach(view => {
     const el = $(view);
@@ -214,6 +247,33 @@ function show(id) {
   if (document.body) {
     document.body.classList.toggle('opening-active', id === 'opening' || id === 'auth-gate');
     document.body.classList.toggle('ending-active', id === 'ending');
+    if (isBrowser) document.body.dataset.scene = id;
+  }
+  if (isBrowser && entering && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const view = $(id);
+    // Animate presentation only: state changes and controls remain immediate.
+    view.getAnimations().forEach(animation => animation.cancel());
+    view.animate([
+      { opacity: 0, transform: 'translateY(18px) scale(.97)', filter: 'blur(6px)' },
+      { opacity: 1, transform: 'translateY(0) scale(1)', filter: 'blur(0)' }
+    ], { duration: 800, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    const veil = $('scene-transition');
+    if (veil) {
+      veil.getAnimations().forEach(animation => animation.cancel());
+      veil.animate([
+        { opacity: .8, transform: 'scale(.8)' },
+        { opacity: .35, offset: .4, transform: 'scale(1.05)' },
+        { opacity: 0, transform: 'scale(1.5)' }
+      ], { duration: 850, easing: 'ease-out' });
+    }
+  }
+  const narrative = {
+    'auth-gate': '#auth-message',
+    intro: '.lead',
+    briefing: '#briefing-copy, #mission-whisper'
+  }[id];
+  if (isBrowser && narrative) {
+    $(id)?.querySelectorAll(narrative).forEach(element => revealText(element));
   }
 }
 
@@ -311,7 +371,7 @@ function beginOpening() {
       return;
     }
     const message = messages[index];
-    if (line) line.textContent = message;
+    revealText(line, message, Math.min(3200, message.length * 38));
     if (message.includes('23%')) {
       if (percent) percent.textContent = '23%';
       if (progress) progress.setAttribute('aria-valuenow', '23');
@@ -340,7 +400,7 @@ function beginOpening() {
     if (opening && message === 'You were wrong.') opening.classList.add('is-glitching');
     if (opening && message === 'WHO GAVE YOU ACCESS?') opening.classList.add('is-blackout');
     index++;
-    sequenceTimer = setTimeout(advance, 1400);
+    sequenceTimer = setTimeout(advance, Math.max(1400, Math.min(3200, message.length * 38) + 850));
   };
   advance();
 }
@@ -990,33 +1050,51 @@ if (terminalUserInput) {
   });
 }
 
-// Sound Button Logic
+// One continuous soundtrack across screens; the existing button controls all sound.
 const soundBtn = $('sound');
-if (soundBtn) {
-  soundBtn.addEventListener('click', async () => {
-    const audio = $('audio');
-    if (!audio) return;
-
-    if (audio.paused) {
-      try {
-        audio.volume = 0.22;
-        await audio.play();
-        soundBtn.textContent = 'Sound on ♫';
-        soundBtn.setAttribute('aria-pressed', 'true');
-        if (isBrowser && window.AudioEngine) {
-          window.AudioEngine.setEnabled(true);
-        }
-      } catch {
-        soundBtn.textContent = 'Sound unavailable';
-      }
-    } else {
-      audio.pause();
-      soundBtn.textContent = 'Sound off ♫';
+let soundEnabled = true;
+let soundChosen = false;
+async function setSoundEnabled(enabled) {
+  soundEnabled = enabled;
+  if (soundBtn) {
+    soundBtn.textContent = enabled ? 'Sound on \u266b' : 'Sound off \u266b';
+    soundBtn.setAttribute('aria-pressed', String(enabled));
+    soundBtn.setAttribute('aria-label', enabled ? 'Turn sound off' : 'Turn sound on');
+  }
+  if (isBrowser && window.AudioEngine) window.AudioEngine.setEnabled(enabled);
+  try {
+    if (isBrowser && window.BackgroundMusic) await window.BackgroundMusic.setEnabled(enabled);
+  } catch {
+    soundEnabled = false;
+    if (isBrowser && window.AudioEngine) window.AudioEngine.setEnabled(false);
+    if (soundBtn) {
+      soundBtn.textContent = 'Retry sound \u266b';
       soundBtn.setAttribute('aria-pressed', 'false');
-      if (isBrowser && window.AudioEngine) {
-        window.AudioEngine.setEnabled(false);
-      }
+      soundBtn.setAttribute('aria-label', 'Retry enabling sound');
     }
+  }
+}
+if (soundBtn) {
+  soundBtn.addEventListener('click', () => {
+    soundChosen = true;
+    setSoundEnabled(!soundEnabled);
+  });
+}
+if (isBrowser) {
+  // Sound is on by default; browsers unlock playback on the first user gesture.
+  const unlockSound = event => {
+    if (soundChosen || !event.isTrusted || event.target?.closest?.('#sound')) return;
+    // Touch/pen activation is granted on release; a mouse can start on press.
+    if (event.type === 'pointerdown' && event.pointerType !== 'mouse') return;
+    if (event.type === 'keydown' && (event.ctrlKey || event.metaKey || event.altKey || event.key === 'Tab')) return;
+    soundChosen = true;
+    setSoundEnabled(true);
+    ['pointerdown', 'pointerup', 'click', 'keydown'].forEach(type => {
+      document.removeEventListener(type, unlockSound, true);
+    });
+  };
+  ['pointerdown', 'pointerup', 'click', 'keydown'].forEach(type => {
+    document.addEventListener(type, unlockSound, { capture: true });
   });
 }
 
@@ -1153,6 +1231,7 @@ if (isBrowser) {
       subOscillator.stop(audioCtx.currentTime + 0.42);
     },
     playJumpscare() {
+      if (!audioEnabled) return;
       initAudio();
       if (!audioCtx) return;
       try {
