@@ -851,6 +851,13 @@
         <button type="button" class="score-chip r2-delay-btn" data-delay="5">5m</button>
         <button type="button" class="score-chip r2-delay-btn" data-delay="0">0m (Unlock Twists Now)</button>
         <span id="r2DelayStatus" style="color: var(--gold);"></span>
+
+        <!-- Host Round 2 Global Gate Control -->
+        <div class="r2-gate-toggle-wrap" style="display:inline-flex; align-items:center; gap:8px; margin-left:14px; padding-left:14px; border-left:1px solid var(--border-dim);">
+          <span>🌐 <strong>Round 2 Access:</strong></span>
+          <span class="badge" id="r2GateStatusBadge" style="font-size:11px; padding:4px 8px; border-radius:4px; font-weight:700;">🔒 LOCKED</span>
+          <button type="button" class="btn btn-sm btn-gold" id="toggleR2GateBtn" style="padding:5px 12px; font-size:12px;">🔓 Allow Access of Round 2</button>
+        </div>
       </div>
       <div id="lastUpdatedLabel">Synced just now</div>
     </section>
@@ -989,6 +996,29 @@
           updateKpis(data.summary || {});
           if (r2DelayStatus && data.r2DelayMinutes != null) {
             r2DelayStatus.textContent = data.r2DelayMinutes === 0 ? "⚡ Unlocked (0m)" : ("⏱ " + data.r2DelayMinutes + "m delay");
+          }
+
+          if (data.round2Unlocked !== undefined) {
+            isR2Unlocked = Boolean(data.round2Unlocked);
+            var gateBadge = $("r2GateStatusBadge");
+            var gateBtn = $("toggleR2GateBtn");
+            if (gateBadge && gateBtn) {
+              if (isR2Unlocked) {
+                gateBadge.textContent = "🔓 OPEN TO ALL TEAMS";
+                gateBadge.style.background = "rgba(56, 224, 112, 0.15)";
+                gateBadge.style.color = "#72f79c";
+                gateBadge.style.border = "1px solid rgba(56, 224, 112, 0.5)";
+                gateBtn.textContent = "🔒 Lock Round 2";
+                gateBtn.className = "btn btn-sm";
+              } else {
+                gateBadge.textContent = "🔒 LOCKED (Wait for Host)";
+                gateBadge.style.background = "rgba(255, 75, 54, 0.15)";
+                gateBadge.style.color = "var(--ember)";
+                gateBadge.style.border = "1px solid rgba(255, 75, 54, 0.5)";
+                gateBtn.textContent = "🔓 Allow Access of Round 2";
+                gateBtn.className = "btn btn-sm btn-gold";
+              }
+            }
           }
 
           var dbStatusBadge = $("dbStatusBadge");
@@ -1405,6 +1435,34 @@
       if (printBoardBtn) {
         printBoardBtn.addEventListener("click", function () {
           window.print();
+        });
+      }
+
+      var isR2Unlocked = false;
+      var toggleR2GateBtn = $("toggleR2GateBtn");
+      var r2GateStatusBadge = $("r2GateStatusBadge");
+
+      if (toggleR2GateBtn) {
+        toggleR2GateBtn.addEventListener("click", async function () {
+          var targetState = !isR2Unlocked;
+          toggleR2GateBtn.disabled = true;
+          toggleR2GateBtn.textContent = "Updating...";
+          try {
+            var res = await fetch("/api/admin", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "set_r2_access", unlocked: targetState })
+            });
+            var data = await res.json();
+            if (res.ok && data.ok) {
+              isR2Unlocked = Boolean(data.round2Unlocked);
+              await fetchAdminData();
+            }
+          } catch (e) {
+            console.error("Failed to update Round 2 gate:", e);
+          } finally {
+            toggleR2GateBtn.disabled = false;
+          }
         });
       }
 

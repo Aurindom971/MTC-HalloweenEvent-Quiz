@@ -19,7 +19,13 @@
 
   var el = {
     ledgerPanel: $("ledgerPanel"), wheelPanel: $("wheelPanel"),
-    form: $("ledgerForm"), teamInput: $("teamInput"), teamError: $("teamError"),
+    form: $("r2QuickEntryForm") || $("ledgerForm"),
+    teamInput: $("quickResumeTeamInput") || $("teamInput"),
+    teamError: $("teamError"),
+    quickResumeBtn: $("quickResumeBtn"),
+    quickResumeLabel: $("quickResumeLabel"),
+    r2HostLockedCard: $("r2HostLockedCard"),
+    r2EnterWrap: $("r2EnterWrap"),
     leaderNameInput: $("leaderNameInput"), leaderYearInput: $("leaderYearInput"), leaderBranchInput: $("leaderBranchInput"),
     leaderPhoneInput: $("leaderPhoneInput"), leaderEmailInput: $("leaderEmailInput"),
     membersContainer: $("membersContainer"), addMemberBtn: $("addMemberBtn"), membersLimitNote: $("membersLimitNote"),
@@ -493,6 +499,41 @@
     el.spinnerLine.appendChild(cnt);
   }, 1000);
 
+  var isRound2Unlocked = false;
+
+  function updateGateUI() {
+    var lockedCard = el.r2HostLockedCard || $("r2HostLockedCard");
+    var enterWrap = el.r2EnterWrap || $("r2EnterWrap");
+    if (!lockedCard || !enterWrap) return;
+    if (!isRound2Unlocked) {
+      lockedCard.hidden = false;
+      enterWrap.hidden = true;
+    } else {
+      lockedCard.hidden = true;
+      enterWrap.hidden = false;
+    }
+  }
+
+  async function checkRound2Gate() {
+    try {
+      var res = await fetch("/api/round2/state");
+      if (res.ok) {
+        var data = await res.json();
+        if (typeof data.round2Unlocked === "boolean") {
+          var prev = isRound2Unlocked;
+          isRound2Unlocked = data.round2Unlocked;
+          if (data.delayMinutes != null && $("rulesDelay")) {
+            $("rulesDelay").textContent = data.delayMinutes;
+          }
+          if (prev !== isRound2Unlocked) {
+            updateGateUI();
+            if (session) render();
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
   function render(animate) {
     document.body.classList.toggle("in-ritual", !!session);
     if (!session) {
@@ -504,8 +545,18 @@
       stopTimer();
       stopBuildTimer();
       document.title = baseTitle;
+      updateGateUI();
       return;
     }
+
+    if (!isRound2Unlocked) {
+      el.ledgerPanel.hidden = false;
+      el.wheelPanel.hidden = true;
+      if (el.viewTabs) el.viewTabs.hidden = true;
+      updateGateUI();
+      return;
+    }
+
     el.ledgerPanel.hidden = true;
     el.wheelPanel.hidden = false;
     startBuildTimer();
@@ -1207,6 +1258,10 @@
       return { ok: true, special: true };
     }
 
+    if (!isRound2Unlocked) {
+      return { ok: false, error: "Round 2 has not been opened yet by the event host. Wait for access to be granted!" };
+    }
+
     try {
       var bRes = await fetch("/api/round2/state", {
         method: "POST",
@@ -1216,6 +1271,14 @@
           teamName: cleaned
         })
       });
+      if (!bRes.ok) {
+        var errJson = await bRes.json().catch(function () { return {}; });
+        if (errJson && errJson.round2Unlocked === false) {
+          isRound2Unlocked = false;
+          updateGateUI();
+          return { ok: false, error: errJson.error || "Round 2 is currently locked by the event organizers." };
+        }
+      }
       if (bRes.ok) {
         var bData = await bRes.json();
         if (bData && bData.teamName) {
@@ -1248,216 +1311,93 @@
     return { ok: false, error: "Could not find Team \"" + cleaned + "\" in the ledger. Sign the ledger below or check spelling." };
   }
 
-  var quickResumeInput = $("quickResumeTeamInput");
-  var quickResumeBtn = $("quickResumeBtn");
+  var quickResumeInput = $("quickResumeTeamInput") || el.teamInput;
+  var quickResumeBtn = $("quickResumeBtn") || el.quickResumeBtn;
   var quickResumeLabel = $("quickResumeLabel");
-  var quickResumeNote = $("quickResumeNote");
-
-  if (quickResumeBtn && quickResumeInput) {
-    var handleQuickResume = async function () {
-      var val = quickResumeInput.value.trim();
-      if (!val) {
-        quickResumeInput.focus();
-        return;
-      }
-      quickResumeBtn.disabled = true;
-      if (quickResumeLabel) quickResumeLabel.textContent = "Locating…";
-      var out = await tryResumeByTeamName(val);
-      quickResumeBtn.disabled = false;
-      if (quickResumeLabel) quickResumeLabel.textContent = "Resume Team →";
-      if (!out.ok && quickResumeNote) {
-        quickResumeNote.textContent = "⚠ " + out.error;
-        quickResumeNote.style.color = "#ff7864";
-      }
-    };
-    quickResumeBtn.addEventListener("click", handleQuickResume);
-    quickResumeInput.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleQuickResume();
-      }
-    });
-  }
 
   var signing = false;
-  el.form.addEventListener("submit", async function (e) {
-    e.preventDefault();
-    if (signing || session) return;
-    var name = el.teamInput.value.replace(/\s+/g, " ").trim();
 
-    // the host word opens the host panel (the only way in, on phones too)
+  async function handleTeamEntry(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (signing || session) return;
+
+    var name = (quickResumeInput ? quickResumeInput.value : "").replace(/\s+/g, " ").trim();
+
+    // Host secret passphrase
     if (D.hostKey && window.Store.secret(name) === D.hostKey) {
-      el.teamInput.value = "";
-      el.teamError.textContent = "";
-      el.teamInput.blur();
+      if (quickResumeInput) quickResumeInput.value = "";
+      if (el.teamError) el.teamError.textContent = "";
+      if (quickResumeInput) quickResumeInput.blur();
       openHost();
       return;
     }
 
-    // the judges' secret name opens their board instead of registering a team
+    // Judges secret passphrase
     if (window.Store.secret(name) === D.judgeKey) {
       window.Store.setJudgePass(D.judgeKey);
-      el.teamInput.value = "";
-      el.teamError.textContent = "";
-      if (window.Sound.farBell) window.Sound.farBell();
-      document.body.classList.add("judge-door");
-      setTimeout(function () { location.href = "/admin.html"; }, 900);
-      return;
-    }
-
-    if (name.length < 2) { el.teamError.textContent = "The ledger needs a real team name — at least two letters."; el.teamInput.focus(); return; }
-
-    // If this team name already exists in the ledger (e.g. from Round 1 or another device), resume it directly!
-    if (window.Ledger.teamExists(name)) {
-      var resumedOut = await tryResumeByTeamName(name);
-      if (resumedOut && resumedOut.ok) return;
-    }
-
-    var leaderName = (el.leaderNameInput ? el.leaderNameInput.value : "").replace(/\s+/g, " ").trim();
-    var leaderYear = (el.leaderYearInput ? el.leaderYearInput.value : "").replace(/\s+/g, " ").trim();
-    var leaderBranch = (el.leaderBranchInput ? el.leaderBranchInput.value : "").replace(/\s+/g, " ").trim();
-
-    if (leaderName.length < 2) {
-      el.teamError.textContent = "Please enter the team leader's name (or use Quick Resume above if you already registered in Round 1).";
-      if (el.leaderNameInput) el.leaderNameInput.focus();
-      return;
-    }
-    if (!leaderYear) {
-      el.teamError.textContent = "Please enter the team leader's year of college.";
-      if (el.leaderYearInput) el.leaderYearInput.focus();
-      return;
-    }
-    if (!leaderBranch) {
-      el.teamError.textContent = "Please enter the team leader's branch.";
-      if (el.leaderBranchInput) el.leaderBranchInput.focus();
-      return;
-    }
-    var leaderPhone = cleanPhone(el.leaderPhoneInput ? el.leaderPhoneInput.value : "");
-    var leaderEmail = cleanEmail(el.leaderEmailInput ? el.leaderEmailInput.value : "");
-    if (!leaderPhone) {
-      el.teamError.textContent = "Please enter the team leader's 10-digit mobile number.";
-      if (el.leaderPhoneInput) el.leaderPhoneInput.focus();
-      return;
-    }
-    if (!leaderEmail) {
-      el.teamError.textContent = "Please enter a valid email for the team leader.";
-      if (el.leaderEmailInput) el.leaderEmailInput.focus();
-      return;
-    }
-
-    var memberCards = el.membersContainer ? el.membersContainer.querySelectorAll(".member-card") : [];
-    var members = [];
-    for (var i = 0; i < memberCards.length; i++) {
-      var card = memberCards[i];
-      var mNameInput = card.querySelector(".member-name-input");
-      var mYearInput = card.querySelector(".member-year-input");
-      var mBranchInput = card.querySelector(".member-branch-input");
-      var mName = (mNameInput ? mNameInput.value : "").replace(/\s+/g, " ").trim();
-      var mYear = (mYearInput ? mYearInput.value : "").replace(/\s+/g, " ").trim();
-      var mBranch = (mBranchInput ? mBranchInput.value : "").replace(/\s+/g, " ").trim();
-      var studentNum = i + 2;
-
-      if (mName.length < 2) {
-        el.teamError.textContent = "Please enter Member " + studentNum + "'s name (or remove this member).";
-        if (mNameInput) mNameInput.focus();
-        return;
-      }
-      if (!mYear) {
-        el.teamError.textContent = "Please enter Member " + studentNum + "'s year of college.";
-        if (mYearInput) mYearInput.focus();
-        return;
-      }
-      if (!mBranch) {
-        el.teamError.textContent = "Please enter Member " + studentNum + "'s branch.";
-        if (mBranchInput) mBranchInput.focus();
-        return;
-      }
-      var mPhoneInput = card.querySelector(".member-phone-input");
-      var mEmailInput = card.querySelector(".member-email-input");
-      var mPhone = cleanPhone(mPhoneInput ? mPhoneInput.value : "");
-      var mEmail = cleanEmail(mEmailInput ? mEmailInput.value : "");
-      if (!mPhone) {
-        el.teamError.textContent = "Please enter Member " + studentNum + "'s 10-digit mobile number.";
-        if (mPhoneInput) mPhoneInput.focus();
-        return;
-      }
-      if (mPhone === leaderPhone) {
-        el.teamError.textContent = "Member " + studentNum + " needs their own phone number, not the leader's.";
-        if (mPhoneInput) mPhoneInput.focus();
-        return;
-      }
-      if (!mEmail) {
-        el.teamError.textContent = "Please enter a valid email for Member " + studentNum + ".";
-        if (mEmailInput) mEmailInput.focus();
-        return;
-      }
-      if (mEmail === leaderEmail) {
-        el.teamError.textContent = "Member " + studentNum + " needs their own email, not the leader's.";
-        if (mEmailInput) mEmailInput.focus();
-        return;
-      }
-      members.push({ name: mName, year: mYear, branch: mBranch, phone: mPhone, email: mEmail });
-    }
-
-    if (members.length > 1) {
-      el.teamError.textContent = "Maximum team size is 2 (Leader + 1 Member).";
-      return;
-    }
-
-    var leaderObj = { name: leaderName, year: leaderYear, branch: leaderBranch, phone: leaderPhone, email: leaderEmail };
-    el.teamError.textContent = "";
-
-    var btn = el.form.querySelector("button[type=submit] span");
-    var label = btn.textContent;
-    signing = true;
-    btn.textContent = "Inscribing…";
-    var res;
-    try {
-      await window.Ledger.ready();
-      if (session) res = { ok: false, error: "" };
-      else res = await window.Ledger.registerTeam(name, { leader: leaderObj, members: members });
-    } catch (err) {
-      res = { ok: false, error: window.Ledger.friendly(err) };
-    }
-    signing = false;
-    btn.textContent = label;
-    if (session) return;
-    if (!res.ok) { el.teamError.textContent = res.error; el.teamInput.focus(); return; }
-
-    if (res.resumed && res.teamRecord) {
-      applyRestoredTeamRecord(res.teamRecord, false);
-      return;
-    }
-
-    session = {
-      team: name,
-      teamKey: res.key,
-      leader: leaderObj,
-      members: members,
-      stage: "soul",
-      startedAt: Date.now(),
-      eggs: []
-    };
-    window.Store.lockDevice(name, res.key, { leader: leaderObj, members: members });
-    save();
-    saveProgress();
-    resetIdle();
-    window.Sound.whoosh();
-    render(true);
-    if (el.prologueModal) {
-      el.prologueModal.hidden = false;
+      if (quickResumeInput) quickResumeInput.value = "";
+      if (el.teamError) el.teamError.textContent = "";
       if (window.Sound && window.Sound.farBell) window.Sound.farBell();
+      document.body.classList.add("judge-door");
+      setTimeout(function () { location.href = "/admin.html"; }, 800);
+      return;
     }
-    el.stage.scrollIntoView({ behavior: "smooth", block: "center" });
-  });
 
-  el.teamInput.addEventListener("input", function () { el.teamError.textContent = ""; });
-  if (el.leaderNameInput) el.leaderNameInput.addEventListener("input", function () { el.teamError.textContent = ""; });
-  if (el.leaderYearInput) el.leaderYearInput.addEventListener("input", function () { el.teamError.textContent = ""; });
-  if (el.leaderBranchInput) el.leaderBranchInput.addEventListener("input", function () { el.teamError.textContent = ""; });
-  if (el.leaderPhoneInput) el.leaderPhoneInput.addEventListener("input", function () { el.teamError.textContent = ""; });
-  if (el.leaderEmailInput) el.leaderEmailInput.addEventListener("input", function () { el.teamError.textContent = ""; });
-  if (el.membersContainer) el.membersContainer.addEventListener("input", function () { el.teamError.textContent = ""; });
+    if (!isRound2Unlocked) {
+      if (el.teamError) {
+        el.teamError.textContent = "Round 2 has not been opened yet by the event host. Please wait for the host to continue.";
+        el.teamError.style.color = "#ff7864";
+      }
+      updateGateUI();
+      return;
+    }
+
+    if (name.length < 2) {
+      if (el.teamError) {
+        el.teamError.textContent = "The altar requires a registered Team Name — at least two letters.";
+        el.teamError.style.color = "#ff7864";
+      }
+      if (quickResumeInput) quickResumeInput.focus();
+      return;
+    }
+
+    signing = true;
+    if (quickResumeBtn) quickResumeBtn.disabled = true;
+    if (quickResumeLabel) quickResumeLabel.textContent = "Entering Altar…";
+    if (el.teamError) el.teamError.textContent = "";
+
+    var out = await tryResumeByTeamName(name);
+
+    signing = false;
+    if (quickResumeBtn) quickResumeBtn.disabled = false;
+    if (quickResumeLabel) quickResumeLabel.textContent = "Enter the Wheel of Curses →";
+
+    if (!out || !out.ok) {
+      if (el.teamError) {
+        el.teamError.textContent = (out && out.error) || "Could not find Team \"" + name + "\". Please check spelling or verify your team in Round 1.";
+        el.teamError.style.color = "#ff7864";
+      }
+      if (quickResumeInput) quickResumeInput.focus();
+    }
+  }
+
+  if (el.form) {
+    el.form.addEventListener("submit", handleTeamEntry);
+  }
+  if (quickResumeBtn && quickResumeBtn !== el.form) {
+    quickResumeBtn.addEventListener("click", handleTeamEntry);
+  }
+  if (quickResumeInput) {
+    quickResumeInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleTeamEntry();
+      }
+    });
+    quickResumeInput.addEventListener("input", function () {
+      if (el.teamError) el.teamError.textContent = "";
+    });
+  }
 
   /* ---------- controls ---------- */
 
@@ -2321,6 +2261,14 @@
     requestAnimationFrame(function () {
       liveQueued = false;
       $("rulesDelay").textContent = delayMinutes();
+      if (typeof window.Ledger.isUnlocked === "function") {
+        var unlocked = window.Ledger.isUnlocked();
+        if (unlocked !== isRound2Unlocked) {
+          isRound2Unlocked = unlocked;
+          updateGateUI();
+          if (session) render(false);
+        }
+      }
       // keep this phone's wheel in step with the shared ledger
       if (session && !busy && el.reveal.hidden && (session.stage === "soul" || session.stage === "curse")) render(false);
       if (!el.host.hidden) renderHost();
@@ -2584,6 +2532,10 @@
         var r2StateRes = await fetch("/api/round2/state");
         if (r2StateRes.ok) {
           var r2State = await r2StateRes.json();
+          if (typeof r2State.round2Unlocked === "boolean") {
+            isRound2Unlocked = r2State.round2Unlocked;
+            updateGateUI();
+          }
           if (r2State && r2State.authenticated && r2State.teamName) {
             await window.Ledger.ready();
             var key = window.Ledger.teamKey(r2State.teamName);
@@ -2632,4 +2584,16 @@
       });
     })();
   }
+
+  // Periodic gate poller (2.8s when locked, 10s when unlocked, paused when tab hidden)
+  setInterval(function () {
+    if (document.hidden) return;
+    checkRound2Gate();
+  }, 2800);
+
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) checkRound2Gate();
+  });
+
+  checkRound2Gate();
 })();

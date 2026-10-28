@@ -2113,21 +2113,25 @@ img.sponsor-logo {
 .btn-ap-ig {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  background: linear-gradient(135deg, #c13584, #e1306c, #fd1d1d, #f56040);
-  color: #ffffff;
-  padding: 10px 20px;
-  border-radius: 6px;
+  gap: 10px;
+  background: linear-gradient(135deg, #8a151b 0%, #b82619 45%, #d9531e 100%);
+  color: #fff8f0;
+  padding: 11px 22px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 187, 51, 0.45);
   font-size: 13.5px;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.5px;
   text-decoration: none;
-  box-shadow: 0 4px 14px rgba(225, 48, 108, 0.45);
-  transition: all 0.2s ease;
+  box-shadow: 0 4px 18px rgba(184, 38, 25, 0.45), 0 0 10px rgba(255, 150, 40, 0.25);
+  transition: all 0.25s ease;
 }
 
 .btn-ap-ig:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(225, 48, 108, 0.65);
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #a81a20 0%, #cf2e1b 45%, #f39c12 100%);
+  box-shadow: 0 6px 24px rgba(217, 83, 30, 0.6), 0 0 18px rgba(255, 187, 51, 0.45);
+  border-color: rgba(255, 215, 0, 0.85);
   color: #ffffff;
 }
 

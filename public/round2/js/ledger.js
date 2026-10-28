@@ -137,7 +137,10 @@
     return Object.assign({}, r.data || {}, { key: r.key, name: r.name, uid: r.owner, at: Date.parse(r.created_at) || Date.now() });
   }
   function rowToConfig(r) {
-    return r && r.delay_minutes != null ? { delayMinutes: Number(r.delay_minutes) } : {};
+    var out = {};
+    if (r && r.delay_minutes != null) out.delayMinutes = Number(r.delay_minutes);
+    if (r && typeof r.round2_unlocked === "boolean") out.round2Unlocked = r.round2_unlocked;
+    return out;
   }
 
   /** Who is this phone, and is a host signed in on it? */
@@ -153,7 +156,7 @@
   function refresh() {
     return Promise.all([
       client.from("r2_teams").select("key,name,owner,data,created_at"),
-      client.from("r2_config").select("delay_minutes").eq("id", "event").maybeSingle()
+      client.from("r2_config").select("delay_minutes, round2_unlocked").eq("id", "event").maybeSingle()
     ]).then(function (res) {
       if (res[0].error) throw toErr(res[0].error);
       var t = {};
@@ -550,6 +553,13 @@
       if (state.mode === "cloud" && typeof c === "number") return Math.max(0, c);
       var p = Store.prefs().delay;
       return Math.max(0, typeof p === "number" ? p : fallback);
+    },
+
+    isUnlocked: function () {
+      if (state.config && typeof state.config.round2Unlocked === "boolean") {
+        return state.config.round2Unlocked;
+      }
+      return false;
     },
 
     registerTeam: function (name, meta) { return impl.registerTeam(name, meta); },

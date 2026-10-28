@@ -246,95 +246,49 @@
       </button>
     </nav>
 
-    <!-- ===== Stage: sign the ledger ===== -->
+    <!-- ===== Stage: Round 2 Gate & Entrance ===== -->
     <section class="panel ledger-panel" id="ledgerPanel" hidden>
-      <div class="parchment">
+      <div class="parchment" style="max-width: 640px; margin: 0 auto; text-align: center;">
         <p class="panel-kicker">Round 2 — The Build</p>
-        <h2 class="panel-title">Sign the Ledger</h2>
-        <p class="panel-lede">Transform your character's dilemma into a creative, interactive web experience. Enter your Team Name from Round 1 to resume instantly, or sign the ledger below.</p>
+        <h2 class="panel-title">The Altar of Curses</h2>
 
-        <!-- Quick Resume by Team Name (from Round 1 or existing Round 2 session) -->
-        <div class="ledger-section quick-resume-box" id="quickResumeBox">
-          <div class="ledger-section-head">
-            <span class="ledger-section-title"><span class="badge-icon">⚡</span> Already Verified in Round 1 or Returning?</span>
-            <span class="ledger-section-sub">Instant Resume</span>
+        <!-- 1. HOST ACCESS LOCK BANNER (Shown if Host has not unlocked Round 2 yet) -->
+        <div class="r2-host-locked-card" id="r2HostLockedCard" hidden style="background: rgba(255, 75, 54, 0.08); border: 1px solid rgba(255, 75, 54, 0.45); border-radius: 12px; padding: 24px 20px; margin: 20px 0;">
+          <div style="font-size: 38px; margin-bottom: 10px;">🔒</div>
+          <h3 style="font-family: var(--f-display, serif); font-size: 20px; color: #ff5252; letter-spacing: 1.5px; text-transform: uppercase; margin: 0 0 10px;">
+            Wait for the Event Host to Continue
+          </h3>
+          <p style="font-size: 15px; color: #f4e3d7; line-height: 1.6; margin: 0 0 14px; max-width: 480px; margin-inline: auto;">
+            The Altar of Curses is currently sealed by the event organizers. Please stand by — your fate will be unlocked automatically the moment the host grants access.
+          </p>
+          <div style="display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: #ffb347; font-family: var(--f-mono, monospace); background: rgba(0,0,0,0.35); padding: 6px 14px; border-radius: 20px;">
+            <span class="status-pulse-dot" style="background:#ffb347;"></span> Checking clearance with event server…
           </div>
-          <div class="field-row" style="align-items: flex-end; gap: 10px;">
-            <label class="field" style="flex: 1; margin-bottom: 0;">
-              <span class="field-label">Enter Your Team Name</span>
-              <input id="quickResumeTeamInput" type="text" maxlength="48" placeholder="Type your Team Name to load your squad &amp; progress..." spellcheck="false" autocomplete="off">
-            </label>
-            <button type="button" class="btn btn-blood" id="quickResumeBtn" style="padding: 12px 20px; white-space: nowrap;">
-              <span id="quickResumeLabel">Resume Team →</span>
-            </button>
-          </div>
-          <p class="field-note" id="quickResumeNote" style="margin-top: 8px;">Completed Round 1 or switched from phone to laptop? Enter your Team Name above to continue where you left off.</p>
         </div>
 
-        <form id="ledgerForm" autocomplete="off" novalidate>
-          <label class="field">
-            <span class="field-label">Team Name</span>
-            <input id="teamInput" name="team" type="text" maxlength="40" required placeholder="e.g. The Midnight Coders" spellcheck="false" autocapitalize="words">
-          </label>
+        <!-- 2. STREAMLINED TEAM ENTRANCE (No redundant questions about phone/branch/year/member2) -->
+        <div class="r2-enter-wrap" id="r2EnterWrap">
+          <p class="panel-lede" style="margin-bottom: 24px;">
+            Enter your official <b>Team Name</b> from Round 1 to enter the Altar. Your verified squad roster will be linked automatically.
+          </p>
 
-          <!-- Team Leader Section -->
-          <div class="ledger-section">
-            <div class="ledger-section-head">
-              <span class="ledger-section-title"><span class="badge-icon">👑</span> Team Leader</span>
-              <span class="ledger-section-sub">Student 1</span>
-            </div>
-            <label class="field">
-              <span class="field-label">Leader Name</span>
-              <input id="leaderNameInput" name="leaderName" type="text" maxlength="50" required placeholder="Full name" spellcheck="false" autocapitalize="words">
+          <form id="r2QuickEntryForm" autocomplete="off" novalidate style="display: flex; flex-direction: column; gap: 14px; max-width: 460px; margin: 0 auto;">
+            <label class="field" style="margin-bottom: 0; text-align: left;">
+              <span class="field-label">Official Team Name *</span>
+              <input id="quickResumeTeamInput" type="text" maxlength="48" required placeholder="Type your registered Team Name..." spellcheck="false" autocomplete="off" style="font-size: 16px; padding: 14px;">
             </label>
-            <div class="field-row">
-              <label class="field">
-                <span class="field-label">Year of College</span>
-                <input id="leaderYearInput" name="leaderYear" type="text" maxlength="20" required placeholder="e.g. 1st, 2nd, 3rd, 4th" spellcheck="false">
-              </label>
-              <label class="field">
-                <span class="field-label">Branch</span>
-                <input id="leaderBranchInput" name="leaderBranch" type="text" maxlength="40" required placeholder="e.g. CSE, IT, ECE" spellcheck="false" autocapitalize="characters">
-              </label>
-            </div>
-            <div class="field-row">
-              <label class="field">
-                <span class="field-label">Phone Number</span>
-                <input id="leaderPhoneInput" name="leaderPhone" type="tel" inputmode="tel" maxlength="16" required placeholder="10-digit mobile number" autocomplete="tel">
-              </label>
-              <label class="field">
-                <span class="field-label">Email</span>
-                <input id="leaderEmailInput" name="leaderEmail" type="email" inputmode="email" maxlength="80" required placeholder="name@example.com" spellcheck="false" autocapitalize="off" autocomplete="email">
-              </label>
-            </div>
-            <p class="field-note">Phone and email are needed for everyone in the team. We use them to send your certificates.</p>
-          </div>
+            <p class="field-error" id="teamError" role="alert" style="margin: 0; text-align: left;"></p>
+            <button type="submit" class="btn btn-blood" id="quickResumeBtn" style="padding: 14px; font-size: 15px; justify-content: center; width: 100%;">
+              <span id="quickResumeLabel">Enter the Wheel of Curses →</span>
+            </button>
+          </form>
+        </div>
 
-          <!-- Team Members Section -->
-          <div class="ledger-section">
-            <div class="ledger-section-head">
-              <span class="ledger-section-title"><span class="badge-icon">👥</span> Team Member</span>
-              <span class="ledger-section-sub">Max 2 in team (Leader + 1 Member)</span>
-            </div>
-            <div id="membersContainer" class="members-container"></div>
-            <div class="add-member-wrap">
-              <button type="button" class="btn btn-add-member" id="addMemberBtn">
-                <span>+ Add Team Member (Optional)</span>
-              </button>
-              <p class="members-limit-note" id="membersLimitNote" hidden>Maximum team size reached (Leader + 1 Member).</p>
-            </div>
-          </div>
-
-          <p class="field-error" id="teamError" role="alert"></p>
-          <button class="btn btn-blood btn-submit-ledger" type="submit">
-            <span>Begin the Ritual</span>
-          </button>
-        </form>
-        <ul class="rules">
+        <ul class="rules" style="margin-top: 32px; text-align: left;">
           <li><b>I.</b><span>The Wheel of Evil binds your team to a monster — and that entity commands the wheel thereafter.</span></li>
           <li><b>II.</b><span>Choose one of your monster's dilemmas: the web experience you must craft to exploit its weakness.</span></li>
-          <li><b>III.</b><span>A hex on how you're allowed to build your UI.</span></li>
-          <li><b>IV.</b><span><span id="rulesDelay">15</span> minutes later, the twist awakens.</span></li>
+          <li><b>III.</b><span>A randomized UI Hex will corrupt your project with a mandatory design constraint.</span></li>
+          <li><b>IV.</b><span>A game-changing Twist awakens <span id="rulesDelay">15</span> minutes later, revealed mid-build by the event host.</span></li>
         </ul>
       </div>
     </section>

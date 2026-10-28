@@ -392,10 +392,12 @@ export default async function handler(req, res) {
       };
 
       let r2DelayMinutes = 15;
+      let round2Unlocked = false;
       try {
-        const { data: cfgData } = await supabase.from('r2_config').select('delay_minutes').eq('id', 'event').maybeSingle();
-        if (cfgData && typeof cfgData.delay_minutes === 'number') {
-          r2DelayMinutes = cfgData.delay_minutes;
+        const { data: cfgData } = await supabase.from('r2_config').select('*').eq('id', 'event').maybeSingle();
+        if (cfgData) {
+          if (typeof cfgData.delay_minutes === 'number') r2DelayMinutes = cfgData.delay_minutes;
+          if (typeof cfgData.round2_unlocked === 'boolean') round2Unlocked = cfgData.round2_unlocked;
         }
       } catch {
         // ignore if r2_config not present
@@ -405,6 +407,7 @@ export default async function handler(req, res) {
         authenticated: true,
         admin: adminSession.admin,
         r2DelayMinutes,
+        round2Unlocked,
         summary,
         teams: unifiedTeams,
         dbWarning: dbWarning || null,
@@ -440,6 +443,18 @@ export default async function handler(req, res) {
       const registrationId = body?.registrationId;
       const teamKey = normalizeTeamKey(body?.teamKey || body?.teamName || '');
       const nowIso = new Date().toISOString();
+
+      if (action === 'set_r2_access') {
+        const unlocked = Boolean(body?.unlocked);
+        try {
+          await supabase
+            .from('r2_config')
+            .upsert({ id: 'event', round2_unlocked: unlocked, updated_at: nowIso }, { onConflict: 'id' });
+        } catch {
+          // ignore if column not present yet
+        }
+        return res.status(200).json({ ok: true, round2Unlocked: unlocked });
+      }
 
       if (action === 'set_r2_delay') {
         const mins = Math.max(0, Math.min(600, Number(body?.delayMinutes) || 0));

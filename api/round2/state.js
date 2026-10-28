@@ -1,5 +1,6 @@
 import {
   getSessionFromRequest,
+  getAdminSessionFromRequest,
   createSessionToken,
   serializeSessionCookie,
   getRuntimeSessionSecret
@@ -40,6 +41,11 @@ let cachedAllR2Snapshot = null;
 let cachedAllR2At = 0;
 const ALL_R2_CACHE_TTL_MS = 2500;
 
+let cachedR2Unlocked = false;
+let cachedR2DelayMinutes = 15;
+let cachedConfigAt = 0;
+const CONFIG_CACHE_TTL_MS = 2000;
+
 function sanitizeR2Patch(rawPatch) {
   if (!rawPatch || typeof rawPatch !== 'object' || Array.isArray(rawPatch)) return {};
   const clean = {};
@@ -63,6 +69,20 @@ export default async function handler(req, res) {
       const urlObj = new URL(req.url, 'http://localhost');
       const wantAll = urlObj.searchParams.get('all') === '1';
 
+      // Refresh config cache periodically (2s TTL to protect Supabase under 200+ concurrent requests)
+      if (Date.now() - cachedConfigAt > CONFIG_CACHE_TTL_MS) {
+        try {
+          const { data: cfg } = await supabase.from('r2_config').select('*').eq('id', 'event').maybeSingle();
+          if (cfg) {
+            if (typeof cfg.delay_minutes === 'number') cachedR2DelayMinutes = cfg.delay_minutes;
+            if (typeof cfg.round2_unlocked === 'boolean') cachedR2Unlocked = cfg.round2_unlocked;
+            cachedConfigAt = Date.now();
+          }
+        } catch {
+          // keep in-memory cache
+        }
+      }
+
       if (wantAll) {
         const now = Date.now();
         if (cachedAllR2Snapshot && now - cachedAllR2At < ALL_R2_CACHE_TTL_MS) {
@@ -76,16 +96,9 @@ export default async function handler(req, res) {
         ]);
 
         let r2Rows = [];
-        let delayMinutes = null;
         try {
-          const [r2TeamsRes, r2CfgRes] = await Promise.all([
-            supabase.from('r2_teams').select('key, name, owner, data, created_at, updated_at'),
-            supabase.from('r2_config').select('delay_minutes').eq('id', 'event').maybeSingle()
-          ]);
-          r2Rows = r2TeamsRes.data || [];
-          if (r2CfgRes.data?.delay_minutes != null) {
-            delayMinutes = Number(r2CfgRes.data.delay_minutes);
-          }
+          const { data } = await supabase.from('r2_teams').select('key, name, owner, data, created_at, updated_at');
+          r2Rows = data || [];
         } catch {
           // ignore if r2_teams not created
         }
@@ -128,7 +141,11 @@ export default async function handler(req, res) {
 
         const snapshot = {
           teams: teamsByKey,
-          config: delayMinutes != null ? { delayMinutes } : {}
+          config: {
+            delayMinutes: cachedR2DelayMinutes,
+            round2Unlocked: cachedR2Unlocked
+          },
+          round2Unlocked: cachedR2Unlocked
         };
         cachedAllR2Snapshot = snapshot;
         cachedAllR2At = Date.now();
@@ -140,7 +157,11 @@ export default async function handler(req, res) {
       const queryTeam = urlObj.searchParams.get('team');
 
       if ((!session || !session.registrationId) && !queryTeam) {
-        return res.status(200).json({ authenticated: false });
+        return res.status(200).json({
+          authenticated: false,
+          round2Unlocked: cachedR2Unlocked,
+          delayMinutes: cachedR2DelayMinutes
+        });
       }
 
       let matchedReg = null;
@@ -189,6 +210,8 @@ export default async function handler(req, res) {
         registrationId: matchedReg?.id || session?.registrationId || null,
         teamName: finalTeamName,
         teamKey: finalTeamKey,
+        round2Unlocked: cachedR2Unlocked,
+        delayMinutes: cachedR2DelayMinutes,
         hasCustomTeamName: Boolean(meta.teamName || matchedReg?.team_name || r2Record?.name),
         leader: mergedR2.leader || leader,
         members: mergedR2.members?.length ? mergedR2.members : members,
@@ -223,9 +246,36 @@ export default async function handler(req, res) {
       const nowMs = Date.now();
 
       // -----------------------------------------------------------------------
+      // ACTION: set_r2_access (Admin allows or locks Round 2 globally)
+      // -----------------------------------------------------------------------
+      if (action === 'set_r2_access') {
+        const unlocked = Boolean(body?.unlocked);
+        cachedR2Unlocked = unlocked;
+        cachedConfigAt = Date.now();
+        cachedAllR2Snapshot = null;
+        try {
+          await supabase
+            .from('r2_config')
+            .upsert({ id: 'event', round2_unlocked: unlocked, updated_at: nowIso }, { onConflict: 'id' });
+        } catch {
+          // ignore
+        }
+        return res.status(200).json({ ok: true, round2Unlocked: unlocked });
+      }
+
+      // -----------------------------------------------------------------------
       // ACTION: register_or_resume (Sign the Ledger OR Resume by Team Name)
       // -----------------------------------------------------------------------
       if (action === 'register_or_resume') {
+        const isAdmin = Boolean(getAdminSessionFromRequest(req, secret));
+        if (!cachedR2Unlocked && !isAdmin) {
+          return res.status(403).json({
+            ok: false,
+            round2Unlocked: false,
+            error: 'Round 2 has not been opened yet by the event host. Please wait for the host to continue.'
+          });
+        }
+
         const inputTeamName = normalizeTeamName(body?.teamName || session?.teamName || '');
         const targetKey = normalizeTeamKey(inputTeamName);
 
