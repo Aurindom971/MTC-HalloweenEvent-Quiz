@@ -6,8 +6,16 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Enable local preview fallback DB if SUPABASE_SECRET_KEY is not set yet
-if (!process.env.SUPABASE_SECRET_KEY && !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+// Enable local preview fallback DB only if a service role / secret key is not set
+const hasServiceKey = Boolean(
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.SERVICE_ROLE_KEY ||
+  process.env.SUPABASE_SERVICE_ROLE ||
+  process.env.SERVICE_ROLE ||
+  process.env.SUPABASE_SERVICE_KEY ||
+  process.env.SUPABASE_SECRET_KEY
+);
+if (!hasServiceKey) {
   process.env.LOCAL_PREVIEW = '1';
 }
 if (!process.env.SESSION_SECRET) {
