@@ -382,14 +382,31 @@
         <h2 class="entity-escaped" id="entity-escaped" hidden>ENTITY ESCAPED</h2>
         <p class="ending-sealed" id="ending-sealed" hidden>YOUR ANSWERS HAVE BEEN SEALED.</p>
 
-        <!-- Round 2 Automatic Portal Handoff -->
+        <!-- Round 2 Host Gate & Handoff -->
         <div class="round2-handoff" id="round2-handoff" hidden>
-          <p class="round2-handoff-badge">ROUND 2 UNLOCKED · THE WHEEL OF CURSES</p>
-          <p class="round2-handoff-copy" id="round2-handoff-copy">Your Round 1 record is locked in the Crypt Ledger. Step through the portal to spin the Wheel of Curses and receive your dark fate.</p>
-          <div class="round2-handoff-actions">
-            <a class="primary round2-enter-btn" id="enter-round2-btn" href="/round2/">Enter Round 2 · Wheel of Curses <span>→</span></a>
+          <!-- 1. LOCKED BY EVENT HOST -->
+          <div class="r2-gate-locked-card" id="r1R2LockedCard" hidden style="background: rgba(255, 75, 54, 0.08); border: 1px solid rgba(255, 75, 54, 0.45); border-radius: 12px; padding: 22px 18px; margin: 18px 0; text-align: center;">
+            <div style="font-size: 34px; margin-bottom: 8px;">🔒</div>
+            <h3 style="font-size: 19px; color: #ff5252; letter-spacing: 1.5px; text-transform: uppercase; margin: 0 0 8px;">
+              Wait for the Event Host to Continue
+            </h3>
+            <p style="font-size: 14.5px; color: #f4e3d7; line-height: 1.6; margin: 0 0 12px; max-width: 480px; margin-inline: auto;">
+              Your Round 1 answers are sealed in the Crypt Ledger. Round 2 has not been opened yet. Please stand by — as soon as the event host allows access, Round 2 will open automatically for all devices!
+            </p>
+            <div style="display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: #ffb347; font-family: monospace; background: rgba(0,0,0,0.35); padding: 6px 14px; border-radius: 20px;">
+              <span class="status-pulse-dot" style="background:#ffb347; width: 8px; height: 8px; border-radius: 50%; display: inline-block;"></span> Checking clearance with event server…
+            </div>
           </div>
-          <p class="round2-countdown" id="round2-countdown">Opening the Altar of Curses...</p>
+
+          <!-- 2. UNLOCKED BY EVENT HOST -->
+          <div class="r2-gate-unlocked-card" id="r1R2UnlockedCard" hidden>
+            <p class="round2-handoff-badge" style="background: rgba(56, 224, 112, 0.15); color: #72f79c; border: 1px solid rgba(56, 224, 112, 0.4);">🔓 ROUND 2 UNLOCKED · ACCESS GRANTED</p>
+            <p class="round2-handoff-copy" id="round2-handoff-copy">Your Round 1 record is locked in the Crypt Ledger. Step through the portal to spin the Wheel of Curses and receive your dark fate.</p>
+            <div class="round2-handoff-actions">
+              <a class="primary round2-enter-btn" id="enter-round2-btn" href="/round2/">Enter Round 2 · Wheel of Curses <span>→</span></a>
+            </div>
+            <p class="round2-countdown" id="round2-countdown">Opening Round 2 in 3s...</p>
+          </div>
         </div>
       </div>
       <button class="secondary skip-story" id="skip-ending" type="button">Skip sequence</button>

@@ -888,6 +888,8 @@ function sealAndConfirm() {
 
 function activateRound2Portal(submissionPromise) {
   const handoff = $('round2-handoff');
+  const lockedCard = $('r1R2LockedCard');
+  const unlockedCard = $('r1R2UnlockedCard');
   const countdownEl = $('round2-countdown');
   const copyEl = $('round2-handoff-copy');
   if (handoff) handoff.hidden = false;
@@ -903,28 +905,63 @@ function activateRound2Portal(submissionPromise) {
 
   if (!isBrowser) return;
 
-  if (round2RedirectTimer) clearInterval(round2RedirectTimer);
-  let secondsLeft = 4;
-  if (countdownEl) {
-    countdownEl.textContent = `Opening Round 2 (The Wheel of Curses) in ${secondsLeft}s...`;
+  async function checkServerR2Gate() {
+    try {
+      const res = await fetch('/api/round2/state');
+      if (res.ok) {
+        const data = await res.json();
+        return Boolean(data.round2Unlocked);
+      }
+    } catch {}
+    return false;
   }
 
-  Promise.resolve(submissionPromise).finally(() => {
-    round2RedirectTimer = setInterval(() => {
-      secondsLeft -= 1;
-      if (secondsLeft > 0) {
-        if (countdownEl) {
-          countdownEl.textContent = `Opening Round 2 (The Wheel of Curses) in ${secondsLeft}s...`;
+  function triggerRound2Transition() {
+    if (lockedCard) lockedCard.hidden = true;
+    if (unlockedCard) unlockedCard.hidden = false;
+
+    if (round2RedirectTimer) clearInterval(round2RedirectTimer);
+    let secondsLeft = 3;
+    if (countdownEl) {
+      countdownEl.textContent = `Host clearance granted! Opening Round 2 in ${secondsLeft}s...`;
+    }
+
+    Promise.resolve(submissionPromise).finally(() => {
+      round2RedirectTimer = setInterval(() => {
+        secondsLeft -= 1;
+        if (secondsLeft > 0) {
+          if (countdownEl) {
+            countdownEl.textContent = `Opening Round 2 in ${secondsLeft}s...`;
+          }
+        } else {
+          clearInterval(round2RedirectTimer);
+          round2RedirectTimer = null;
+          if (countdownEl) {
+            countdownEl.textContent = 'Entering Round 2...';
+          }
+          window.location.href = '/round2/';
         }
-      } else {
-        clearInterval(round2RedirectTimer);
-        round2RedirectTimer = null;
-        if (countdownEl) {
-          countdownEl.textContent = 'Entering the Altar of Curses...';
+      }, 1000);
+    });
+  }
+
+  checkServerR2Gate().then(isUnlocked => {
+    if (!isUnlocked) {
+      if (lockedCard) lockedCard.hidden = false;
+      if (unlockedCard) unlockedCard.hidden = true;
+
+      // Poll every 2.5s until host allows access
+      const poller = setInterval(async () => {
+        if (document.hidden) return;
+        const opened = await checkServerR2Gate();
+        if (opened) {
+          clearInterval(poller);
+          triggerRound2Transition();
         }
-        window.location.href = '/round2/';
-      }
-    }, 1000);
+      }, 2500);
+    } else {
+      triggerRound2Transition();
+    }
   });
 }
 
@@ -1803,17 +1840,57 @@ if (isBrowser) {
     const teamPanelSub = $('team-display-sub');
 
     if (team.isSubmitted) {
-      if (teamProgressBadge) {
-        teamProgressBadge.hidden = false;
-        teamProgressBadge.textContent = 'ROUND 1 SEALED · ROUND 2 UNLOCKED';
-      }
-      if (teamPanelSub) {
-        teamPanelSub.textContent = 'Round 1 answers are sealed in the Crypt Ledger. Proceed to Round 2 (The Wheel of Curses)!';
-      }
-      if (proceedQuizBtn) {
-        proceedQuizBtn.disabled = false;
-        proceedQuizBtn.innerHTML = 'Proceed to Round 2 · Wheel of Curses <span>→</span>';
-      }
+      fetch('/api/round2/state').then(r => r.json()).then(data => {
+        const isUnlocked = Boolean(data && data.round2Unlocked);
+        if (!isUnlocked) {
+          if (teamProgressBadge) {
+            teamProgressBadge.hidden = false;
+            teamProgressBadge.textContent = 'ROUND 1 SEALED · WAIT FOR HOST TO CONTINUE';
+          }
+          if (teamPanelSub) {
+            teamPanelSub.textContent = 'Your Round 1 responses are sealed. Round 2 is currently locked by the event host. Please wait!';
+          }
+          if (proceedQuizBtn) {
+            proceedQuizBtn.disabled = true;
+            proceedQuizBtn.innerHTML = '🔒 Round 2 Locked by Host';
+          }
+          const p = setInterval(async () => {
+            if (document.hidden) return;
+            try {
+              const r2 = await fetch('/api/round2/state');
+              if (r2.ok) {
+                const d = await r2.json();
+                if (d && d.round2Unlocked) {
+                  clearInterval(p);
+                  if (teamProgressBadge) teamProgressBadge.textContent = 'ROUND 1 SEALED · ROUND 2 UNLOCKED';
+                  if (teamPanelSub) teamPanelSub.textContent = 'Access granted! Proceed to Round 2 (The Wheel of Curses).';
+                  if (proceedQuizBtn) {
+                    proceedQuizBtn.disabled = false;
+                    proceedQuizBtn.innerHTML = 'Proceed to Round 2 · Wheel of Curses <span>→</span>';
+                  }
+                }
+              }
+            } catch {}
+          }, 2500);
+        } else {
+          if (teamProgressBadge) {
+            teamProgressBadge.hidden = false;
+            teamProgressBadge.textContent = 'ROUND 1 SEALED · ROUND 2 UNLOCKED';
+          }
+          if (teamPanelSub) {
+            teamPanelSub.textContent = 'Round 1 answers are sealed in the Crypt Ledger. Proceed to Round 2 (The Wheel of Curses)!';
+          }
+          if (proceedQuizBtn) {
+            proceedQuizBtn.disabled = false;
+            proceedQuizBtn.innerHTML = 'Proceed to Round 2 · Wheel of Curses <span>→</span>';
+          }
+        }
+      }).catch(() => {
+        if (proceedQuizBtn) {
+          proceedQuizBtn.disabled = false;
+          proceedQuizBtn.innerHTML = 'Proceed to Round 2 · Wheel of Curses <span>→</span>';
+        }
+      });
     } else if (answeredSoFar > 0) {
       const sealNum = Math.min(4, Math.max(1, currentLevel + 1));
       if (teamProgressBadge) {

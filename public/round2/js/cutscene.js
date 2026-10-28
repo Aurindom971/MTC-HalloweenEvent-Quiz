@@ -1180,6 +1180,12 @@
       if (this.layer) {
         this.layer.classList.remove("is-active");
       }
+      var gateEl = document.getElementById("gate");
+      if (gateEl) {
+        gateEl.classList.add("gone");
+        document.documentElement.classList.remove("behind-gate");
+        document.documentElement.classList.add("gate-closed");
+      }
 
       var completedType = this.cutsceneType;
 

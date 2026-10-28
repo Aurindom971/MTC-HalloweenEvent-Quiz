@@ -54,20 +54,27 @@ html.gate-closed .gate.gone { display: none; }
 /* Whatever sits behind a full-screen cover (the gate, or the cutscene once it has
    faded in) can't be seen, so it isn't painted or animated until the cover lifts.
    Phones need that time for what IS on screen. The classes come from js/fx.js. */
-html.behind-gate :is(.atmo, .creatures, .topbar, .altar, .site-foot),
+html.behind-gate:not(.gate-closed) :is(.atmo, .creatures, .topbar, .altar, .site-foot),
 html.behind-cutscene :is(.atmo, .creatures, .topbar, .altar, .site-foot, .gate) { visibility: hidden; }
-html.behind-gate :is(.atmo, .creatures, .topbar, .altar, .site-foot),
-html.behind-gate :is(.atmo, .creatures, .topbar, .altar, .site-foot) *,
-html.behind-gate :is(.atmo, .creatures, .topbar, .altar, .site-foot) *::before,
-html.behind-gate :is(.atmo, .creatures, .topbar, .altar, .site-foot) *::after,
-html.behind-gate :is(.atmo, .creatures, .topbar, .altar, .site-foot)::before,
-html.behind-gate :is(.atmo, .creatures, .topbar, .altar, .site-foot)::after,
+html.behind-gate:not(.gate-closed) :is(.atmo, .creatures, .topbar, .altar, .site-foot),
+html.behind-gate:not(.gate-closed) :is(.atmo, .creatures, .topbar, .altar, .site-foot) *,
+html.behind-gate:not(.gate-closed) :is(.atmo, .creatures, .topbar, .altar, .site-foot) *::before,
+html.behind-gate:not(.gate-closed) :is(.atmo, .creatures, .topbar, .altar, .site-foot) *::after,
+html.behind-gate:not(.gate-closed) :is(.atmo, .creatures, .topbar, .altar, .site-foot)::before,
+html.behind-gate:not(.gate-closed) :is(.atmo, .creatures, .topbar, .altar, .site-foot)::after,
 html.behind-cutscene :is(.atmo, .creatures, .topbar, .altar, .site-foot, .gate),
 html.behind-cutscene :is(.atmo, .creatures, .topbar, .altar, .site-foot, .gate) *,
 html.behind-cutscene :is(.atmo, .creatures, .topbar, .altar, .site-foot, .gate) *::before,
 html.behind-cutscene :is(.atmo, .creatures, .topbar, .altar, .site-foot, .gate) *::after,
 html.behind-cutscene :is(.atmo, .creatures, .topbar, .altar, .site-foot, .gate)::before,
 html.behind-cutscene :is(.atmo, .creatures, .topbar, .altar, .site-foot, .gate)::after { animation-play-state: paused !important; }
+
+/* Guaranteed visibility: once gate is gone or closed, the Altar and Topbar MUST always render */
+html.gate-closed :is(.topbar, .altar, .site-foot),
+.gate.gone ~ :is(.topbar, .altar, .site-foot),
+html:not(.behind-gate):not(.behind-cutscene) :is(.topbar, .altar, .site-foot) {
+  visibility: visible !important;
+}
 /* the gate covers the whole page, so nothing behind it scrolls and no scrollbar shows */
 html:has(.gate:not(.gone)) { overflow: hidden; }
 .gate { scrollbar-width: none; }

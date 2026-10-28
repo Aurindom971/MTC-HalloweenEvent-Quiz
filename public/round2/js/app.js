@@ -1231,6 +1231,11 @@
     save();
     saveProgress();
     resetIdle();
+    if (el.gate) {
+      el.gate.classList.add("gone");
+      document.documentElement.classList.remove("behind-gate");
+      document.documentElement.classList.add("gate-closed");
+    }
     render(true);
     resumePending();
     if (showPrologue && restored.stage === "soul" && !restored.charId && el.prologueModal) {
@@ -1918,24 +1923,15 @@
     entered = true;
     setSound(withSound);
     resetIdle();
-    if (welcome === "none" && window.Creatures.scaresOn && withSound) {
-      welcome = "playing";
-      window.Creatures.welcome(function () {
-        welcome = "done";
-        if (window.OtherSideCutscene && typeof window.OtherSideCutscene.play === "function") {
-          window.OtherSideCutscene.play();
-        } else {
-          el.gate.classList.add("gone");
-          if (window.Creatures.opening) window.Creatures.opening();
-        }
-      });
-      return;
+    if (el.gate) {
+      el.gate.classList.add("gone");
+      document.documentElement.classList.remove("behind-gate");
+      document.documentElement.classList.add("gate-closed");
     }
     if (window.OtherSideCutscene && typeof window.OtherSideCutscene.play === "function") {
       window.OtherSideCutscene.play();
     } else {
-      el.gate.classList.add("gone");
-      if (welcome !== "playing" && window.Creatures.opening) setTimeout(function () { window.Creatures.opening(); }, 250);
+      if (window.Creatures && window.Creatures.opening) setTimeout(function () { window.Creatures.opening(); }, 250);
     }
   }
   $("gateEnter").addEventListener("click", function () { enter(true); });
@@ -2263,7 +2259,7 @@
       $("rulesDelay").textContent = delayMinutes();
       if (typeof window.Ledger.isUnlocked === "function") {
         var unlocked = window.Ledger.isUnlocked();
-        if (unlocked !== isRound2Unlocked) {
+        if (typeof unlocked === "boolean" && unlocked !== isRound2Unlocked) {
           isRound2Unlocked = unlocked;
           updateGateUI();
           if (session) render(false);
