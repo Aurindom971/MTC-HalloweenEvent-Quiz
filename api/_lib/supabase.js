@@ -4,21 +4,40 @@ import { createLocalPreviewSupabaseClient } from './local-preview-db.js';
 let cachedClient = null;
 
 /**
- * Returns a trusted Supabase client using Service-Role key from server environment.
+ * Returns a trusted Supabase client using Service-Role or Secret key from server environment.
  * The client bypasses public RLS to read registration data and update team answers.
+ * Auto-detects URL and keys from any standard environment variable naming convention.
  */
 export function getSupabaseAdmin() {
   if (cachedClient) return cachedClient;
 
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl = (
+    process.env.SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.VITE_SUPABASE_URL ||
+    ''
+  ).trim();
+
+  const supabaseKey = (
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_SECRET_KEY ||
+    process.env.SUPABASE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    ''
+  ).trim();
 
   if (!supabaseUrl || !supabaseKey) {
     if (process.env.LOCAL_PREVIEW === '1') {
       cachedClient = createLocalPreviewSupabaseClient();
       return cachedClient;
     }
-    throw new Error('Supabase server credentials missing in process.env (SUPABASE_URL and SUPABASE_SECRET_KEY required).');
+    throw new Error(
+      'Supabase server credentials missing in process.env. Please configure SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL) and ' +
+      'SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SECRET_KEY / SUPABASE_KEY) in your environment variables.'
+    );
   }
 
   cachedClient = createClient(supabaseUrl, supabaseKey, {

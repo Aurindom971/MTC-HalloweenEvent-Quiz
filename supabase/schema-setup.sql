@@ -58,6 +58,18 @@ alter table public.questions enable row level security;
 alter table public.team_answers enable row level security;
 
 grant all on table public.registrations, public.questions, public.team_answers to service_role;
+grant select on table public.registrations to anon, authenticated;
+grant select on table public.questions to anon, authenticated;
+grant all on table public.team_answers to anon, authenticated;
+
+drop policy if exists "Allow public select registrations" on public.registrations;
+create policy "Allow public select registrations" on public.registrations for select to anon, authenticated using (true);
+
+drop policy if exists "Allow public select questions" on public.questions;
+create policy "Allow public select questions" on public.questions for select to anon, authenticated using (true);
+
+drop policy if exists "Allow public all team_answers" on public.team_answers;
+create policy "Allow public all team_answers" on public.team_answers for all to anon, authenticated using (true) with check (true);
 
 -- ----------------------------------------------------------------------------
 -- 2. Round 2 Tables: r2_teams, r2_config, r2_hosts, r2_host_sessions

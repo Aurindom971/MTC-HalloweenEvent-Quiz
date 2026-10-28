@@ -713,6 +713,53 @@
       }
     }
 
+    .db-warning-banner {
+      background: rgba(255, 179, 71, 0.12);
+      border: 1px solid rgba(255, 179, 71, 0.45);
+      border-left: 5px solid var(--gold);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      color: var(--bone);
+      font: 14px/1.55 var(--f-serif);
+      animation: fadeIn 0.3s ease;
+    }
+    .db-warning-banner strong {
+      color: var(--gold);
+      font-family: var(--f-sans);
+      letter-spacing: 0.5px;
+    }
+
+    .db-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font: 600 11px/1 var(--f-sans);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border-dim);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--bone-muted);
+      white-space: nowrap;
+    }
+    .db-status-badge.live {
+      border-color: rgba(56, 224, 112, 0.5);
+      color: #72f79c;
+      background: rgba(56, 224, 112, 0.08);
+    }
+    .db-status-badge.warning {
+      border-color: rgba(255, 179, 71, 0.5);
+      color: var(--gold);
+      background: rgba(255, 179, 71, 0.08);
+    }
+    .db-status-badge.local {
+      border-color: rgba(86, 200, 255, 0.5);
+      color: var(--cyan);
+      background: rgba(86, 200, 255, 0.08);
+    }
+
     @media print {
       body { background: #fff !important; color: #111 !important; }
       .admin-header, .judge-strip, .controls-bar, .quick-score-chips, .save-judge-btn, .unlock-r1-btn { display: none !important; }
@@ -726,6 +773,7 @@
       <img src="assets/mtc-logo.png" alt="MTC">
       <span class="brand-title">MTC · Spook-A-Thon 2026<small>Unified Master Admin &amp; Judges' Board</small></span>
     </a>
+    <span class="db-status-badge" id="dbStatusBadge" title="Supabase Database Connection Status" hidden>🟢 Database Ready</span>
     <nav class="header-nav">
       <a class="btn" href="./">Round 1 Quiz ↗</a>
       <a class="btn" href="/round2/">Round 2 Wheel ↗</a>
@@ -746,7 +794,7 @@
       <form id="loginForm" autocomplete="off" novalidate>
         <div class="field">
           <label for="loginPassword">Admin / Judges Passphrase *</label>
-          <input type="password" id="loginPassword" required placeholder="Enter passphrase (e.g. MEOW or judges)..." autocomplete="current-password">
+          <input type="password" id="loginPassword" required placeholder="Enter admin passphrase..." autocomplete="current-password">
         </div>
         <button class="btn btn-primary" id="loginSubmitBtn" type="submit" style="width: 100%; justify-content: center; padding: 13px;">
           Unlock Admin &amp; Judges' Board →
@@ -757,6 +805,8 @@
 
   <!-- ============ DASHBOARD VIEW ============ -->
   <main class="dashboard-wrap" id="dashboardView" hidden>
+    <!-- Database Notice Banner -->
+    <div class="db-warning-banner" id="dbWarningBanner" hidden></div>
     <!-- KPIs -->
     <section class="kpi-grid" aria-label="Event summary metrics">
       <div class="kpi-card">
@@ -940,6 +990,36 @@
           if (r2DelayStatus && data.r2DelayMinutes != null) {
             r2DelayStatus.textContent = data.r2DelayMinutes === 0 ? "⚡ Unlocked (0m)" : ("⏱ " + data.r2DelayMinutes + "m delay");
           }
+
+          var dbStatusBadge = $("dbStatusBadge");
+          var dbWarningBanner = $("dbWarningBanner");
+          if (data.dbWarning) {
+            if (dbWarningBanner) {
+              dbWarningBanner.innerHTML = "⚠️ <strong>Database Alert:</strong> " + esc(data.dbWarning);
+              dbWarningBanner.hidden = false;
+            }
+            if (dbStatusBadge) {
+              dbStatusBadge.hidden = false;
+              dbStatusBadge.className = "db-status-badge warning";
+              dbStatusBadge.textContent = "⚠️ DB Permission Alert";
+              dbStatusBadge.title = data.dbWarning;
+            }
+          } else {
+            if (dbWarningBanner) dbWarningBanner.hidden = true;
+            if (dbStatusBadge) {
+              dbStatusBadge.hidden = false;
+              if (data.dbSource === "local_preview") {
+                dbStatusBadge.className = "db-status-badge local";
+                dbStatusBadge.textContent = "🟡 Local Preview Mode";
+                dbStatusBadge.title = "Running on local dev database. When deployed on Vercel with SUPABASE_SERVICE_ROLE_KEY, live Supabase data is loaded.";
+              } else {
+                dbStatusBadge.className = "db-status-badge live";
+                dbStatusBadge.textContent = "🟢 Live Supabase (" + allTeams.length + " teams)";
+                dbStatusBadge.title = "Connected to live Supabase database.";
+              }
+            }
+          }
+
           showDashboard();
           renderTeams();
           if (lastUpdatedLabel) {
@@ -959,6 +1039,8 @@
         if (printBoardBtn) printBoardBtn.hidden = true;
         refreshBtn.hidden = true;
         logoutBtn.hidden = true;
+        var dbStatusBadge = $("dbStatusBadge");
+        if (dbStatusBadge) dbStatusBadge.hidden = true;
         if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
       }
 

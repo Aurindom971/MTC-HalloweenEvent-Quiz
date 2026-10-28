@@ -28,25 +28,28 @@ async function verifyAdminCredentials(supabase, email, password) {
   const cleanEmail = String(email || '').trim().toLowerCase();
   if (!cleanPass) return null;
 
-  // 1. Check configured environment admin passwords + judges secret word
-  const allowedPasswords = [
+  // 1. Check configured environment admin passwords (strictly from env variables, zero hardcoded passwords in source)
+  const envPasswordsRaw = [
     process.env.ADMIN_PASSWORD,
     process.env.ADMIN_SECRET,
     process.env.ADMIN_API_KEY,
-    'MEOW',
-    'mtc-admin-2026',
-    'halloween2026',
-    'judges'
-  ]
-    .filter(Boolean)
-    .map(p => String(p).trim().toLowerCase());
+    process.env.ADMIN_PASSWORDS
+  ].filter(Boolean);
 
-  if (allowedPasswords.includes(cleanPass.toLowerCase())) {
+  const allowedPasswords = [];
+  for (const raw of envPasswordsRaw) {
+    for (const item of String(raw).split(',')) {
+      const trimmed = item.trim().toLowerCase();
+      if (trimmed) allowedPasswords.push(trimmed);
+    }
+  }
+
+  if (allowedPasswords.length > 0 && allowedPasswords.includes(cleanPass.toLowerCase())) {
     return { email: cleanEmail.includes('@') ? cleanEmail : 'admin@mtc.amity.edu', method: 'env' };
   }
 
   // 2. Check Round 2 host login RPC in Supabase if email + password provided
-  if (cleanEmail && cleanEmail.includes('@')) {
+  if (cleanEmail && cleanEmail.includes('@') && supabase?.rpc) {
     try {
       const { data: hostToken, error } = await supabase.rpc('r2_host_login', {
         p_email: cleanEmail,
@@ -86,8 +89,20 @@ export default async function handler(req, res) {
         return res.status(200).json({ authenticated: false });
       }
 
+      const envPasswordsRaw = [
+        process.env.ADMIN_PASSWORD,
+        process.env.ADMIN_SECRET,
+        process.env.ADMIN_API_KEY,
+        process.env.ADMIN_PASSWORDS
+      ].filter(Boolean);
+
       const verified = await verifyAdminCredentials(supabase, body?.email, body?.password);
       if (!verified) {
+        if (envPasswordsRaw.length === 0) {
+          return res.status(500).json({
+            error: 'Server configuration error: ADMIN_PASSWORD environment variable is not configured. Please set ADMIN_PASSWORD in your Vercel Project Settings.'
+          });
+        }
         return res.status(401).json({ error: 'Invalid admin credentials. Please check your admin password.' });
       }
 
@@ -136,6 +151,15 @@ export default async function handler(req, res) {
         r2Rows = data || [];
       } catch {
         // ignore if r2_teams not present
+      }
+
+      let dbWarning = null;
+      if (regRes.error) {
+        console.warn('Supabase registrations query warning:', regRes.error.message);
+        dbWarning = `Database Notice: ${regRes.error.message} on "registrations". If you provided the publishable/anon key, add SUPABASE_SERVICE_ROLE_KEY to your Vercel Project Settings (Supabase Dashboard -> Settings -> API -> service_role secret) to bypass Row Level Security.`;
+      } else if (ansRes.error) {
+        console.warn('Supabase team_answers query warning:', ansRes.error.message);
+        dbWarning = `Database Notice: ${ansRes.error.message} on "team_answers". Please configure SUPABASE_SERVICE_ROLE_KEY in your Vercel Project Settings.`;
       }
 
       const gradingQuestions = (!qRes.error && Array.isArray(qRes.data) && qRes.data.length > 0)
@@ -382,7 +406,15 @@ export default async function handler(req, res) {
         admin: adminSession.admin,
         r2DelayMinutes,
         summary,
-        teams: unifiedTeams
+        teams: unifiedTeams,
+        dbWarning: dbWarning || null,
+        dbStatus: {
+          connected: !regRes.error && !ansRes.error,
+          source: process.env.LOCAL_PREVIEW === '1' ? 'local_preview' : 'supabase',
+          registrationsCount: registrations.length,
+          answersCount: answersList.length,
+          r2TeamsCount: r2Rows.length
+        }
       });
     } catch (err) {
       console.error('Admin GET error:', err.message);

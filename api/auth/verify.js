@@ -298,6 +298,11 @@ export default async function handler(req, res) {
 
       if (ansErr) {
         console.error('Supabase team_answers lookup error:', ansErr.message);
+        if (ansErr.message && ansErr.message.includes('permission denied')) {
+          return res.status(500).json({
+            error: 'Database permission denied: Please configure SUPABASE_SERVICE_ROLE_KEY in your Vercel Project Settings.'
+          });
+        }
         return res.status(500).json({ error: 'Unable to look up team progress right now.' });
       }
 
@@ -415,6 +420,11 @@ export default async function handler(req, res) {
 
     if (regError) {
       console.error('Supabase registration lookup error:', regError.message);
+      if (regError.message && regError.message.includes('permission denied')) {
+        return res.status(500).json({
+          error: 'Database permission denied: Supabase Row Level Security is active. Please configure SUPABASE_SERVICE_ROLE_KEY in your Vercel Project Settings.'
+        });
+      }
       return res.status(500).json({ error: 'Authentication service temporarily unavailable.' });
     }
 
