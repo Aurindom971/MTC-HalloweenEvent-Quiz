@@ -322,12 +322,27 @@ export default async function handler(req, res) {
         matchedReg = regData;
       }
 
-      // 2. Fallback: Check registrations table if team_name column exists
+      // 2. Fallback: Check registrations table for any matching team name column
       if (!matchedReg) {
-        const { data: regRows } = await supabase.from('registrations').select('*');
+        const { data: regRows, error: regErr } = await supabase.from('registrations').select('*');
+        if (regErr) {
+          console.warn('Supabase registrations lookup warning:', regErr.message);
+        }
         matchedReg = (regRows || []).find(r => {
-          const rKey = normalizeTeamKey(r.team_name || '');
-          return rKey && rKey === targetKey;
+          const candidateNames = [
+            r.team_name,
+            r.team,
+            r.teamName,
+            r.team_title,
+            r.group_name,
+            r.registered_team_name
+          ].filter(Boolean);
+
+          for (const rawName of candidateNames) {
+            if (normalizeTeamKey(rawName) === targetKey) return true;
+            if (String(rawName).trim().toLowerCase() === inputTeamName.toLowerCase()) return true;
+          }
+          return false;
         }) || null;
 
         if (matchedReg && !matchedAnswer) {
@@ -350,13 +365,13 @@ export default async function handler(req, res) {
 
       if (!matchedAnswer && !matchedReg && !r2Record) {
         return res.status(404).json({
-          error: `Team "${inputTeamName}" was not found. If you haven't started yet, please verify with your Leader Email & Phone first.`
+          error: `Team "${inputTeamName}" was not found in the registration database. Please check your exact Team Name or verify using your Leader Email & Phone.`
         });
       }
 
       const meta = extractAnswerMeta(matchedAnswer?.answers);
       const { sealAnswers, answeredCount, hasDraft } = extractSealAnswers(matchedAnswer?.answers);
-      const resolvedTeamName = meta.teamName || matchedReg?.team_name || r2Record?.name || inputTeamName;
+      const resolvedTeamName = meta.teamName || matchedReg?.team_name || matchedReg?.team || matchedReg?.teamName || r2Record?.name || inputTeamName;
       const resolvedTeamKey = normalizeTeamKey(resolvedTeamName);
       const isSubmitted = matchedAnswer?.status === 'submitted';
       const members = matchedReg
@@ -364,6 +379,47 @@ export default async function handler(req, res) {
         : (Array.isArray(meta.members) ? meta.members : []);
       const leaderName = matchedReg?.full_name || meta.leaderName || r2Record?.data?.leader?.name || 'Team Leader';
       const leaderEmail = matchedReg?.email || meta.leaderEmail || r2Record?.data?.leader?.email || '';
+
+      // If matched from registrations but has no answers row yet, initialize one
+      if (matchedReg && !matchedAnswer) {
+        const nowIso = new Date().toISOString();
+        const initialMeta = {
+          registrationId: matchedReg.id,
+          teamName: resolvedTeamName,
+          teamKey: resolvedTeamKey,
+          leaderName,
+          leaderEmail,
+          leaderPhone: normalizeIndianMobile(matchedReg.phone) || matchedReg.phone,
+          studentId: matchedReg.student_id || null,
+          course: matchedReg.course || null,
+          academicYear: matchedReg.academic_year || null,
+          teamSize: matchedReg.team_size || members.length,
+          members,
+          startedAt: nowIso,
+          lastActiveAt: nowIso,
+          currentSeal: 1
+        };
+
+        try {
+          const { data: insertedAns } = await supabase
+            .from('team_answers')
+            .insert({
+              registration_id: matchedReg.id,
+              status: 'draft',
+              answers: { _meta: initialMeta },
+              created_at: nowIso,
+              updated_at: nowIso
+            })
+            .select()
+            .maybeSingle();
+
+          if (insertedAns) matchedAnswer = insertedAns;
+        } catch (e) {
+          console.warn('Initial team_answers creation warning:', e.message);
+        }
+
+        await syncTeamEverywhere(supabase, matchedReg, resolvedTeamName, resolvedTeamKey, initialMeta);
+      }
 
       const token = createSessionToken({
         registrationId: matchedReg?.id || matchedAnswer?.registration_id || r2Record?.data?.registrationId || `r2-${resolvedTeamKey}`,
