@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { createLocalPreviewSupabaseClient } from './local-preview-db.js';
 
 let cachedClient = null;
 
@@ -13,6 +14,10 @@ export function getSupabaseAdmin() {
   const supabaseKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
+    if (process.env.LOCAL_PREVIEW === '1') {
+      cachedClient = createLocalPreviewSupabaseClient();
+      return cachedClient;
+    }
     throw new Error('Supabase server credentials missing in process.env (SUPABASE_URL and SUPABASE_SECRET_KEY required).');
   }
 
@@ -93,4 +98,142 @@ export function normalizePhone(phone) {
   if (normalized) return normalized;
   if (typeof phone !== 'string' && typeof phone !== 'number') return '';
   return String(phone).replace(/\D/g, '');
+}
+
+/**
+ * Normalizes a human-readable team name (collapses extra spaces, trims).
+ */
+export function normalizeTeamName(name) {
+  if (typeof name !== 'string') return '';
+  return name.replace(/\s+/g, ' ').trim().slice(0, 40);
+}
+
+/**
+ * Converts a team name into a URL/DB-safe canonical key (matching Round 2 Ledger.teamKey).
+ */
+export function normalizeTeamKey(name) {
+  const clean = normalizeTeamName(name).toLowerCase();
+  if (!clean) return '';
+  let base = clean;
+  try {
+    base = base.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+  } catch {
+    // ignore normalize errors
+  }
+  let key = base.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  if (!key) {
+    key = 't-' + Array.from(clean).map(c => c.codePointAt(0).toString(36)).join('-');
+  }
+  return key.slice(0, 120);
+}
+
+/**
+ * Extracts only the seal_1..seal_4 answers from team_answers.answers JSONB,
+ * stripping out internal _meta fields so quiz hydration stays clean.
+ */
+export function extractSealAnswers(answersObj) {
+  if (!answersObj || typeof answersObj !== 'object' || Array.isArray(answersObj)) {
+    return { sealAnswers: {}, answeredCount: 0, hasDraft: false };
+  }
+  const sealAnswers = {};
+  let answeredCount = 0;
+  for (const key of ['seal_1', 'seal_2', 'seal_3', 'seal_4']) {
+    if (answersObj[key] && typeof answersObj[key] === 'object' && !Array.isArray(answersObj[key])) {
+      sealAnswers[key] = answersObj[key];
+      for (const val of Object.values(answersObj[key])) {
+        if (typeof val === 'number' || (typeof val === 'string' && val.trim().length > 0)) {
+          answeredCount += 1;
+        }
+      }
+    }
+  }
+  return {
+    sealAnswers,
+    answeredCount,
+    hasDraft: answeredCount > 0
+  };
+}
+
+/**
+ * Extracts _meta object from team_answers.answers JSONB.
+ */
+export function extractAnswerMeta(answersObj) {
+  if (!answersObj || typeof answersObj !== 'object' || Array.isArray(answersObj)) {
+    return {};
+  }
+  const meta = answersObj._meta;
+  return meta && typeof meta === 'object' && !Array.isArray(meta) ? meta : {};
+}
+
+/**
+ * Builds structured squad roster from a registration record.
+ */
+export function buildMembersList(reg) {
+  if (!reg) return [];
+  const members = [
+    {
+      role: 'Team Leader',
+      name: reg.full_name || 'Team Leader',
+      email: reg.email || null,
+      phone: normalizeIndianMobile(reg.phone) || reg.phone || null,
+      studentId: reg.student_id || null,
+      course: reg.course || null,
+      academicYear: reg.academic_year || null
+    }
+  ];
+  if (reg.member2_name) {
+    members.push({
+      role: 'Member 2',
+      name: reg.member2_name,
+      email: reg.member2_email || null,
+      phone: normalizeIndianMobile(reg.member2_phone) || reg.member2_phone || null
+    });
+  }
+  return members;
+}
+
+/**
+ * Builds Round 2 leader & members structure from a registration record or metadata.
+ */
+export function buildRound2Roster(reg, meta = {}) {
+  const yearSuffix = y => {
+    const n = Number(y);
+    if (n === 1) return '1st Year';
+    if (n === 2) return '2nd Year';
+    if (n === 3) return '3rd Year';
+    if (n === 4) return '4th Year';
+    return y ? String(y) : '';
+  };
+
+  if (reg) {
+    const leader = {
+      name: reg.full_name || meta.leaderName || 'Team Leader',
+      year: yearSuffix(reg.academic_year) || meta.academicYear || '1st Year',
+      branch: reg.course || meta.course || 'CSE',
+      phone: normalizeIndianMobile(reg.phone) || reg.phone || '',
+      email: reg.email || meta.leaderEmail || ''
+    };
+    const members = [];
+    if (reg.member2_name) {
+      members.push({
+        name: reg.member2_name,
+        year: yearSuffix(reg.academic_year) || '1st Year',
+        branch: reg.course || 'CSE',
+        phone: normalizeIndianMobile(reg.member2_phone) || reg.member2_phone || '',
+        email: reg.member2_email || ''
+      });
+    }
+    return { leader, members };
+  }
+
+  return {
+    leader: meta.leader || {
+      name: meta.leaderName || 'Team Leader',
+      year: meta.academicYear ? yearSuffix(meta.academicYear) : '1st Year',
+      branch: meta.course || 'CSE',
+      phone: meta.leaderPhone || '',
+      email: meta.leaderEmail || ''
+    },
+    members: Array.isArray(meta.r2Members) ? meta.r2Members : []
+  };
 }

@@ -148,6 +148,10 @@
       <span class="brand-text">Microsoft Tech Community<small>Amity Noida</small></span>
     </a>
     <div class="header-tools">
+      <div class="header-team-badge" id="header-team-badge" hidden aria-live="polite">
+        <span class="header-team-dot" id="header-sync-dot"></span>
+        <span class="header-team-label" id="header-team-label">TEAM</span>
+      </div>
       <span class="edition">HALLOWEEN EDITION / 2026</span>
       <button id="sound" class="sound" aria-pressed="true" aria-label="Turn sound off" title="Sound starts on your first interaction" type="button">Sound on ♫</button>
     </div>
@@ -157,17 +161,38 @@
   <main class="quiz-main">
     <section class="opening auth-gate" id="auth-gate" aria-labelledby="auth-title">
       <p class="boot-label">IDENTITY VERIFICATION PROTOCOL <span>·</span> SECURITY CLEARANCE REQUIRED</p>
-      <h1 id="auth-title">TEAM<br><em>VERIFICATION</em></h1>
-      <p class="story-line" id="auth-message">Enter the team leader's registered credentials to unlock the Crypt Trials.</p>
-      <form class="auth-form" id="auth-form" autocomplete="on">
-        <div class="auth-field">
-          <label for="auth-email">LEADER REGISTERED EMAIL</label>
-          <input type="email" id="auth-email" required placeholder="leader@domain.com" autocomplete="email">
+      <h1 id="auth-title">TEAM <em>VERIFICATION</em></h1>
+      <p class="story-line" id="auth-message">Verify your registered credentials or enter your Team Name to resume where you left off.</p>
+
+      <div class="auth-mode-tabs" id="auth-mode-tabs" role="tablist" aria-label="Sign-in mode">
+        <button class="auth-mode-tab is-active" id="tab-verify-creds" type="button" role="tab" aria-selected="true">Verify Credentials</button>
+        <button class="auth-mode-tab" id="tab-resume-team" type="button" role="tab" aria-selected="false">Resume by Team Name</button>
+      </div>
+
+      <form class="auth-form" id="auth-form" autocomplete="on" novalidate>
+        <div class="auth-credentials-group" id="auth-credentials-group">
+          <div class="auth-field">
+            <label for="auth-email">REGISTERED EMAIL (LEADER OR MEMBER)</label>
+            <input type="text" inputmode="email" id="auth-email" placeholder="leader@domain.com" autocomplete="email">
+          </div>
+          <div class="auth-field">
+            <label for="auth-phone">REGISTERED PHONE NUMBER</label>
+            <input type="tel" id="auth-phone" placeholder="10-digit mobile number" autocomplete="tel">
+          </div>
+          <div class="auth-field">
+            <label for="auth-team-name">OFFICIAL TEAM NAME <span class="field-optional">(SET NOW OR NEXT STEP)</span></label>
+            <input type="text" id="auth-team-name" maxlength="48" placeholder="e.g. Hexblade Coven (2–48 chars)" autocomplete="off">
+          </div>
         </div>
-        <div class="auth-field">
-          <label for="auth-phone">LEADER REGISTERED PHONE</label>
-          <input type="tel" id="auth-phone" required placeholder="10-digit mobile number" autocomplete="tel">
+
+        <div class="auth-resume-group" id="auth-resume-group" hidden>
+          <div class="auth-field">
+            <label for="resume-team-input">ENTER YOUR REGISTERED TEAM NAME</label>
+            <input type="text" id="resume-team-input" maxlength="48" placeholder="Type your exact Team Name to resume..." autocomplete="off">
+            <small class="auth-field-hint">Disconnected or switched devices? Enter your Team Name to restore your exact seal &amp; question.</small>
+          </div>
         </div>
+
         <div class="auth-actions">
           <button class="primary" id="auth-submit-btn" type="submit">Verify clearance <span>→</span></button>
         </div>
@@ -177,9 +202,24 @@
       <!-- Verified Team Details Card (Revealed after successful credential check) -->
       <div class="team-details-panel" id="team-details-panel" hidden aria-live="polite">
         <div class="team-panel-header">
-          <span class="team-panel-badge">CLEARANCE VERIFIED</span>
+          <div class="team-panel-badges">
+            <span class="team-panel-badge" id="team-clearance-badge">CLEARANCE VERIFIED</span>
+            <span class="team-panel-badge progress-badge" id="team-progress-badge" hidden>SEAL 01 READY</span>
+          </div>
           <h2 class="team-panel-name" id="team-display-name">Team Name</h2>
           <p class="team-panel-sub" id="team-display-sub">Roster verified in crypt registry</p>
+        </div>
+
+        <!-- Official Team Name Setup / Lock Box -->
+        <div class="team-name-setup-box" id="team-name-setup-box">
+          <label class="team-name-setup-label" for="team-custom-name-input" id="team-name-setup-label">
+            OFFICIAL TEAM NAME · REQUIRED FOR LEADERBOARD &amp; ROUND 2
+          </label>
+          <div class="team-name-setup-row">
+            <input type="text" id="team-custom-name-input" maxlength="48" placeholder="Enter your official Team Name (e.g. Phantom Core)..." autocomplete="off">
+            <button class="secondary team-name-save-btn" id="save-team-name-btn" type="button">Lock Team Name</button>
+          </div>
+          <p class="team-name-setup-note" id="team-name-setup-note">Your Team Name links your Round 1 marks with Round 2 (The Wheel of Curses) and allows instant resume if you disconnect.</p>
         </div>
 
         <div class="team-info-grid">
@@ -314,7 +354,7 @@
         <span id="selection-status" aria-live="polite">Select an answer</span>
         <button class="primary" id="next" disabled type="button">Continue →</button>
       </div>
-      <p class="demo-note">Preview edition · Sample questions only</p>
+      <p class="demo-note" id="autosave-indicator">✦ Progress auto-saved to Crypt Ledger · Resume anytime with your Team Name</p>
     </section>
 
     <section class="seal-result" id="seal-result" hidden aria-labelledby="seal-result-title">
@@ -341,6 +381,16 @@
         <p class="voiceover-caption" id="voiceover-caption" aria-live="assertive"></p>
         <h2 class="entity-escaped" id="entity-escaped" hidden>ENTITY ESCAPED</h2>
         <p class="ending-sealed" id="ending-sealed" hidden>YOUR ANSWERS HAVE BEEN SEALED.</p>
+
+        <!-- Round 2 Automatic Portal Handoff -->
+        <div class="round2-handoff" id="round2-handoff" hidden>
+          <p class="round2-handoff-badge">ROUND 2 UNLOCKED · THE WHEEL OF CURSES</p>
+          <p class="round2-handoff-copy" id="round2-handoff-copy">Your Round 1 record is locked in the Crypt Ledger. Step through the portal to spin the Wheel of Curses and receive your dark fate.</p>
+          <div class="round2-handoff-actions">
+            <a class="primary round2-enter-btn" id="enter-round2-btn" href="/round2/">Enter Round 2 · Wheel of Curses <span>→</span></a>
+          </div>
+          <p class="round2-countdown" id="round2-countdown">Opening the Altar of Curses...</p>
+        </div>
       </div>
       <button class="secondary skip-story" id="skip-ending" type="button">Skip sequence</button>
     </section>
@@ -370,7 +420,7 @@
   <footer class="quiz-footer">
     <span>MTC / AMITY NOIDA</span>
     <span>The spirits are watching. Make every answer count.</span>
-    <span>CREEP. CODE. CREATE.</span>
+    <span><a class="footer-admin-link" href="/admin.html">HOST &amp; JUDGING PORTAL</a> · CREEP. CODE. CREATE.</span>
   </footer>
 
   <audio id="audio" src="assets/creepy-laugh.mp3" preload="none" loop></audio>

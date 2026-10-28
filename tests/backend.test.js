@@ -462,3 +462,90 @@ describe('Phase 3 Tests: Team & Member Details Structure and Security', () => {
   });
 });
 
+describe('Phase 4 Tests: Unified Round 1 + Round 2 + Admin Judging Helpers', () => {
+  it('normalizes team names and builds deterministic URL-safe team keys', async () => {
+    const { normalizeTeamName, normalizeTeamKey } = await import('../api/_lib/supabase.js');
+    assert.equal(normalizeTeamName('  The   Night   Stalkers  '), 'The Night Stalkers');
+    assert.equal(normalizeTeamKey('  The   Night   Stalkers! '), 'the-night-stalkers');
+    assert.equal(normalizeTeamName(null), '');
+  });
+
+  it('cleanly separates seal answers from _meta tracking metadata', async () => {
+    const { extractSealAnswers, extractAnswerMeta } = await import('../api/_lib/supabase.js');
+    const rawAnswers = {
+      seal_1: { s1_q1_http_403: 1 },
+      seal_2: { s2_q2_bhoothnath_jalebis: 'Jalebis' },
+      _meta: {
+        teamName: 'Crimson Coven',
+        teamKey: 'crimson-coven',
+        r1Score: 16,
+        judging: { score: 9.5, description: 'Great design and twist execution' }
+      }
+    };
+
+    const extracted = extractSealAnswers(rawAnswers);
+    assert.deepEqual(Object.keys(extracted.sealAnswers), ['seal_1', 'seal_2']);
+    assert.equal(extracted.sealAnswers._meta, undefined);
+    assert.equal(extracted.answeredCount, 2);
+    assert.equal(extracted.hasDraft, true);
+
+    const meta = extractAnswerMeta(rawAnswers);
+    assert.equal(meta.teamName, 'Crimson Coven');
+    assert.equal(meta.r1Score, 16);
+    assert.equal(meta.judging.score, 9.5);
+  });
+
+  it('builds Round 1 and Round 2 rosters from registration records', async () => {
+    const { buildMembersList, buildRound2Roster } = await import('../api/_lib/supabase.js');
+    const reg = {
+      full_name: 'Ishit',
+      email: 'ishit@example.com',
+      phone: '+919876543210',
+      student_id: 'A12345',
+      course: 'CSE',
+      academic_year: 2,
+      member2_name: 'Aarav',
+      member2_email: 'aarav@example.com',
+      member2_phone: '+919876543211'
+    };
+
+    const r1Members = buildMembersList(reg);
+    assert.equal(r1Members.length, 2);
+    assert.equal(r1Members[0].role, 'Team Leader');
+    assert.equal(r1Members[0].studentId, 'A12345');
+    assert.equal(r1Members[1].role, 'Member 2');
+
+    const r2Roster = buildRound2Roster(reg);
+    assert.equal(r2Roster.leader.name, 'Ishit');
+    assert.equal(r2Roster.leader.year, '2nd Year');
+    assert.equal(r2Roster.leader.branch, 'CSE');
+    assert.equal(r2Roster.members.length, 1);
+    assert.equal(r2Roster.members[0].name, 'Aarav');
+  });
+
+  it('creates and verifies admin session cookies via getAdminSessionFromRequest', async () => {
+    const { createSessionToken, serializeAdminCookie, getAdminSessionFromRequest } = await import('../api/_lib/session.js');
+    const originalSecret = process.env.SESSION_SECRET;
+    try {
+      process.env.SESSION_SECRET = 'admin-unit-test-secret-key-at-least-32-bytes!';
+      const token = createSessionToken({ role: 'admin', email: 'ishit2807@gmail.com' }, process.env.SESSION_SECRET);
+      const cookieHeader = serializeAdminCookie(token, 3600);
+      assert.ok(cookieHeader.includes('mtc_admin_session='));
+
+      const fakeReq = {
+        headers: {
+          cookie: `mtc_admin_session=${encodeURIComponent(token)}`
+        }
+      };
+      const session = getAdminSessionFromRequest(fakeReq);
+      assert.ok(session);
+      assert.equal(session.role, 'admin');
+      assert.equal(session.email, 'ishit2807@gmail.com');
+    } finally {
+      if (originalSecret) process.env.SESSION_SECRET = originalSecret;
+      else delete process.env.SESSION_SECRET;
+    }
+  });
+});
+
+

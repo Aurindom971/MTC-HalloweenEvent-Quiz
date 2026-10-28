@@ -5,16 +5,57 @@ let levels = (typeof window !== 'undefined' && window.QUIZ_LEVELS) || [];
 let questions = levels.flatMap(level => level.questions);
 let current = 0;
 let currentLevel = 0;
+let resumeQuestionIndex = 0;
 let answers = [];
 let allAnswers = [];
 let sequenceTimer = null;
-let currentTeam = null; // { teamName, leaderName, isSubmitted }
+let round2RedirectTimer = null;
+let currentTeam = null; // { teamName, customTeamName, teamKey, leaderName, isSubmitted, needsTeamName }
 let draftSaveQueue = Promise.resolve();
 let draftSaveTimer = null;
 let isFinishingLevel = false;
 
 // Determine if running in a real browser (check.cjs mock does not have document.addEventListener)
 const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined' && typeof document.addEventListener === 'function';
+
+function updateHeaderTeamBadge(team = currentTeam, isSaving = false) {
+  const badge = $('header-team-badge');
+  const label = $('header-team-label');
+  const dot = $('header-sync-dot');
+  const autosaveEl = $('autosave-indicator');
+
+  if (!team || !team.authenticated) {
+    if (badge) badge.hidden = true;
+    return;
+  }
+
+  const displayName = team.customTeamName || team.teamName || `${team.leaderName || 'Squad'}'s Team`;
+  if (badge) badge.hidden = false;
+  if (label) label.textContent = displayName;
+  if (dot) dot.classList.toggle('is-saving', Boolean(isSaving));
+
+  if (autosaveEl) {
+    autosaveEl.textContent = isSaving
+      ? `⟳ Syncing answer for ${displayName} to Crypt Ledger...`
+      : `✦ Auto-saved for ${displayName} · Resume anytime with your Team Name`;
+  }
+}
+
+function syncRound2LocalStorage(team = currentTeam) {
+  if (!isBrowser || !team) return;
+  try {
+    const teamTitle = team.customTeamName || team.teamName;
+    if (teamTitle) {
+      window.localStorage.setItem('r2.team', teamTitle);
+      window.localStorage.setItem(
+        'r2.teamKey',
+        team.teamKey || String(teamTitle).trim().toLowerCase().replace(/\s+/g, ' ')
+      );
+    }
+  } catch {
+    // Ignore storage quota errors
+  }
+}
 
 async function checkSession() {
   try {
@@ -23,6 +64,8 @@ async function checkSession() {
     const data = await res.json();
     if (data.authenticated) {
       currentTeam = data;
+      updateHeaderTeamBadge(data, false);
+      syncRound2LocalStorage(data);
       return data;
     }
     return null;
@@ -52,6 +95,7 @@ async function loadDynamicQuestions() {
 
 async function saveSealDraft(sealNumber, answersMap) {
   const save = async () => {
+    updateHeaderTeamBadge(currentTeam, true);
     try {
       const res = await fetch('/api/quiz/save-draft', {
         method: 'POST',
@@ -64,9 +108,11 @@ async function saveSealDraft(sealNumber, answersMap) {
       });
       if (res.ok) clearSyncedLocalDraft(sealNumber, answersMap);
       else console.warn('Draft save notice:', (await res.json().catch(() => ({}))).error || res.statusText);
+      updateHeaderTeamBadge(currentTeam, false);
       return res.ok;
     } catch (err) {
       console.warn('Draft save notice:', err.message);
+      updateHeaderTeamBadge(currentTeam, false);
       return false;
     }
   };
@@ -76,7 +122,7 @@ async function saveSealDraft(sealNumber, answersMap) {
 }
 
 function localDraftStorageKey(team = currentTeam) {
-  const identity = team && (team.email || team.teamName || team.leaderName);
+  const identity = team && (team.email || team.teamKey || team.teamName || team.leaderName);
   return identity ? `mtc-quiz-draft:${String(identity).trim().toLowerCase()}` : null;
 }
 
@@ -132,6 +178,7 @@ function syncLocalDraft() {
 }
 
 function hydrateDraftProgress(team = currentTeam) {
+  allAnswers = [];
   const merged = {};
   const serverAnswers = team?.answers || {};
   const localAnswers = readLocalDraft(team);
@@ -147,13 +194,22 @@ function hydrateDraftProgress(team = currentTeam) {
       }
     });
   }
-  // Resume at the first unfinished seal; begin at its first question, retaining
-  // any saved answers in that seal so the team can review them.
+  // Resume at the first unfinished seal and remember the first unanswered question inside it.
   currentLevel = levels.findIndex((level, index) => level.questions.some((question, qIndex) => {
     const value = merged[`seal_${index + 1}`]?.[questionKey(question, index + 1, qIndex)];
     return !hasUsableAnswer(value);
   }));
-  if (currentLevel < 0) currentLevel = levels.length;
+  if (currentLevel < 0) {
+    currentLevel = levels.length;
+    resumeQuestionIndex = 0;
+  } else {
+    const activeLevel = levels[currentLevel];
+    const sealMap = merged[`seal_${currentLevel + 1}`] || {};
+    const firstUnanswered = activeLevel.questions.findIndex((question, qIndex) => {
+      return !hasUsableAnswer(sealMap[questionKey(question, currentLevel + 1, qIndex)]);
+    });
+    resumeQuestionIndex = firstUnanswered >= 0 ? firstUnanswered : 0;
+  }
 
   // Push any offline-only answers back to the database as soon as possible.
   syncLocalDraft();
@@ -182,7 +238,7 @@ function persistCurrentAnswer(immediate = false) {
   if (draftSaveTimer) clearTimeout(draftSaveTimer);
   const save = () => saveSealDraft(sealNumber, collectCurrentSealAnswers());
   if (immediate) save();
-  else draftSaveTimer = setTimeout(save, 350);
+  else draftSaveTimer = setTimeout(save, 900);
 }
 
 async function submitFinalQuiz(allAnswersBySeal) {
@@ -205,8 +261,8 @@ async function submitFinalQuiz(allAnswersBySeal) {
 }
 
 
-// Reveal narrative copy without delaying controls or changing quiz state.
-function revealText(element, text = element?.querySelector?.('.reveal-accessible')?.textContent || element?.textContent, duration = 2400) {
+// Reveal narrative copy smoothly by word without heavy per-character blur layers.
+function revealText(element, text = element?.querySelector?.('.reveal-accessible')?.textContent || element?.textContent, duration = 1600) {
   if (!element || !text) return;
   element.textContent = text;
   if (!isBrowser || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -215,23 +271,20 @@ function revealText(element, text = element?.querySelector?.('.reveal-accessible
   accessible.textContent = text;
   const visual = document.createElement('span');
   visual.setAttribute('aria-hidden', 'true');
-  let index = 0;
-  const pace = Math.min(38, duration / Math.max(1, Array.from(text).length));
-  text.split(/(\s+)/).forEach(word => {
+  const tokens = text.split(/(\s+)/);
+  const wordCount = Math.max(1, tokens.filter(t => !/^\s+$/.test(t)).length);
+  const pace = Math.min(42, duration / wordCount);
+  let wordIndex = 0;
+  tokens.forEach(word => {
+    if (!word) return;
     if (/^\s+$/.test(word)) {
       visual.appendChild(document.createTextNode(word));
-      index += word.length;
       return;
     }
     const group = document.createElement('span');
     group.className = 'reveal-word';
-    Array.from(word).forEach(letter => {
-      const character = document.createElement('span');
-      character.className = 'reveal-letter';
-      character.textContent = letter;
-      character.style.animationDelay = `${index++ * pace}ms`;
-      group.appendChild(character);
-    });
+    group.textContent = word;
+    group.style.animationDelay = `${wordIndex++ * pace}ms`;
     visual.appendChild(group);
   });
   element.replaceChildren(accessible, visual);
@@ -251,20 +304,19 @@ function show(id) {
   }
   if (isBrowser && entering && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const view = $(id);
-    // Animate presentation only: state changes and controls remain immediate.
+    // Animate opacity & transform only (no filter:blur) for 60fps transitions.
     view.getAnimations().forEach(animation => animation.cancel());
     view.animate([
-      { opacity: 0, transform: 'translateY(18px) scale(.97)', filter: 'blur(6px)' },
-      { opacity: 1, transform: 'translateY(0) scale(1)', filter: 'blur(0)' }
-    ], { duration: 800, easing: 'cubic-bezier(.2,.8,.2,1)' });
+      { opacity: 0, transform: 'translateY(12px) scale(.985)' },
+      { opacity: 1, transform: 'translateY(0) scale(1)' }
+    ], { duration: 420, easing: 'cubic-bezier(.2,.8,.2,1)' });
     const veil = $('scene-transition');
     if (veil) {
       veil.getAnimations().forEach(animation => animation.cancel());
       veil.animate([
-        { opacity: .8, transform: 'scale(.8)' },
-        { opacity: .35, offset: .4, transform: 'scale(1.05)' },
-        { opacity: 0, transform: 'scale(1.5)' }
-      ], { duration: 850, easing: 'ease-out' });
+        { opacity: .65, transform: 'scale(.92)' },
+        { opacity: 0, transform: 'scale(1.18)' }
+      ], { duration: 480, easing: 'ease-out' });
     }
   }
   const narrative = {
@@ -799,7 +851,7 @@ function sealAndConfirm() {
     answersBySeal[`seal_${sealNum}`] = sMap;
   });
 
-  submitFinalQuiz(answersBySeal);
+  const submissionPromise = submitFinalQuiz(answersBySeal);
 
   // Keep ending view with ENTITY ESCAPED visible, show sealed message below it
   show('ending');
@@ -830,6 +882,50 @@ function sealAndConfirm() {
   if (ending) {
     ending.classList.remove('is-glitching', 'is-static', 'is-blackout');
   }
+
+  activateRound2Portal(submissionPromise);
+}
+
+function activateRound2Portal(submissionPromise) {
+  const handoff = $('round2-handoff');
+  const countdownEl = $('round2-countdown');
+  const copyEl = $('round2-handoff-copy');
+  if (handoff) handoff.hidden = false;
+
+  if (currentTeam) {
+    currentTeam.isSubmitted = true;
+    syncRound2LocalStorage(currentTeam);
+    const teamLabel = currentTeam.customTeamName || currentTeam.teamName;
+    if (copyEl && teamLabel) {
+      copyEl.textContent = `Team "${teamLabel}" — your Round 1 record is sealed in the Crypt Ledger. Step through the portal to spin the Wheel of Curses in Round 2.`;
+    }
+  }
+
+  if (!isBrowser) return;
+
+  if (round2RedirectTimer) clearInterval(round2RedirectTimer);
+  let secondsLeft = 4;
+  if (countdownEl) {
+    countdownEl.textContent = `Opening Round 2 (The Wheel of Curses) in ${secondsLeft}s...`;
+  }
+
+  Promise.resolve(submissionPromise).finally(() => {
+    round2RedirectTimer = setInterval(() => {
+      secondsLeft -= 1;
+      if (secondsLeft > 0) {
+        if (countdownEl) {
+          countdownEl.textContent = `Opening Round 2 (The Wheel of Curses) in ${secondsLeft}s...`;
+        }
+      } else {
+        clearInterval(round2RedirectTimer);
+        round2RedirectTimer = null;
+        if (countdownEl) {
+          countdownEl.textContent = 'Entering the Altar of Curses...';
+        }
+        window.location.href = '/round2/';
+      }
+    }, 1000);
+  });
 }
 
 function beginEnding() {
@@ -925,12 +1021,14 @@ if (skipOpeningBtn) {
 const beginLevelBtn = $('begin-level');
 if (beginLevelBtn) {
   beginLevelBtn.addEventListener('click', () => {
-    current = 0;
     const level = levels[currentLevel];
     answers = level ? level.questions.map((question, index) => {
       const allIndex = levels.slice(0, currentLevel).reduce((sum, item) => sum + item.questions.length, index);
       return allAnswers[allIndex];
     }) : [];
+    const maxIndex = level && level.questions ? Math.max(0, level.questions.length - 1) : 0;
+    current = Math.min(Math.max(0, resumeQuestionIndex), maxIndex);
+    resumeQuestionIndex = 0;
     show('trial');
     render();
     if (isBrowser && window.AudioEngine) window.AudioEngine.playAdvance();
@@ -1035,6 +1133,13 @@ if (codeEditorInput) {
     persistCurrentAnswer();
     updateEditorLineNumbers();
     update();
+  });
+
+  codeEditorInput.addEventListener('scroll', () => {
+    const lineNumbersEl = $('editor-line-numbers');
+    if (lineNumbersEl) {
+      lineNumbersEl.scrollTop = codeEditorInput.scrollTop;
+    }
   });
 }
 
@@ -1378,7 +1483,7 @@ if (isBrowser) {
     }
   });
 
-  // 3. Floating Motes Canvas
+  // 3. Floating Motes Canvas (Offscreen stamp + 30fps cap for low CPU usage)
   const motesCanvas = $('motes');
   if (motesCanvas && motesCanvas.getContext) {
     const ctx = motesCanvas.getContext('2d');
@@ -1386,21 +1491,35 @@ if (isBrowser) {
     let w = (motesCanvas.width = window.innerWidth);
     let h = (motesCanvas.height = window.innerHeight);
 
+    // Pre-render glowing ember sprite once to avoid per-frame arc/fill overhead
+    const sprite = document.createElement('canvas');
+    sprite.width = 16;
+    sprite.height = 16;
+    const sCtx = sprite.getContext('2d');
+    if (sCtx) {
+      const grad = sCtx.createRadialGradient(8, 8, 0.5, 8, 8, 7.5);
+      grad.addColorStop(0, 'rgba(255, 165, 80, 1)');
+      grad.addColorStop(0.45, 'rgba(255, 105, 40, 0.65)');
+      grad.addColorStop(1, 'rgba(255, 70, 20, 0)');
+      sCtx.fillStyle = grad;
+      sCtx.fillRect(0, 0, 16, 16);
+    }
+
     const resizeCanvas = () => {
       w = motesCanvas.width = window.innerWidth;
       h = motesCanvas.height = window.innerHeight;
     };
     window.addEventListener('resize', resizeCanvas, { passive: true });
 
-    const moteCount = Math.min(50, Math.floor(window.innerWidth / 24));
+    const moteCount = Math.min(36, Math.floor(window.innerWidth / 32));
     for (let i = 0; i < moteCount; i++) {
       motes.push({
         x: Math.random() * w,
         y: Math.random() * h,
-        r: Math.random() * 1.8 + 0.6,
-        alpha: Math.random() * 0.6 + 0.2,
-        speedY: -(Math.random() * 0.45 + 0.2),
-        speedX: (Math.random() - 0.5) * 0.3,
+        r: Math.random() * 1.8 + 0.7,
+        alpha: Math.random() * 0.55 + 0.2,
+        speedY: -(Math.random() * 0.7 + 0.35),
+        speedX: (Math.random() - 0.5) * 0.45,
         seed: Math.random() * 100
       });
     }
@@ -1409,33 +1528,36 @@ if (isBrowser) {
     let lastTime = 0;
 
     const renderMotes = time => {
-      ctx.clearRect(0, 0, w, h);
-      motes.forEach(m => {
-        m.y += m.speedY;
-        m.x += m.speedX + Math.sin(time * 0.0015 + m.seed) * 0.25;
+      if (document.visibilityState === 'hidden') return;
+      if (time - lastTime >= 32) {
+        lastTime = time;
+        ctx.clearRect(0, 0, w, h);
+        for (let i = 0; i < motes.length; i++) {
+          const m = motes[i];
+          m.y += m.speedY;
+          m.x += m.speedX + Math.sin(time * 0.0014 + m.seed) * 0.3;
 
-        if (m.y < -10) {
-          m.y = h + 10;
-          m.x = Math.random() * w;
+          if (m.y < -12) {
+            m.y = h + 12;
+            m.x = Math.random() * w;
+          }
+
+          const size = m.r * 5;
+          ctx.globalAlpha = m.alpha;
+          ctx.drawImage(sprite, m.x - size * 0.5, m.y - size * 0.5, size, size);
         }
-
-        ctx.beginPath();
-        ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, ${Math.floor(90 + m.r * 30)}, 40, ${m.alpha})`;
-        ctx.fill();
-      });
-
-      if (document.visibilityState !== 'hidden') {
-        animFrame = requestAnimationFrame(renderMotes);
+        ctx.globalAlpha = 1;
       }
+      animFrame = requestAnimationFrame(renderMotes);
     };
 
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
         lastTime = performance.now();
         animFrame = requestAnimationFrame(renderMotes);
-      } else {
+      } else if (animFrame) {
         cancelAnimationFrame(animFrame);
+        animFrame = null;
       }
     });
 
@@ -1526,27 +1648,113 @@ if (isBrowser) {
     setTimeout(spawnBat, 8000);
   }
 
-  // 9. Team Authentication & Team Details Handling
+  // 9. Team Authentication, Team Name Setup & Resume Handling
   const authForm = $('auth-form');
   const authStatus = $('auth-status');
   const authEmail = $('auth-email');
   const authPhone = $('auth-phone');
+  const authTeamName = $('auth-team-name');
+  const resumeTeamInput = $('resume-team-input');
   const authSubmitBtn = $('auth-submit-btn');
+
+  const authModeTabs = $('auth-mode-tabs');
+  const tabVerifyCreds = $('tab-verify-creds');
+  const tabResumeTeam = $('tab-resume-team');
+  const authCredentialsGroup = $('auth-credentials-group');
+  const authResumeGroup = $('auth-resume-group');
 
   const teamDetailsPanel = $('team-details-panel');
   const teamDisplayName = $('team-display-name');
   const teamDisplayLeader = $('team-display-leader');
   const teamDisplaySize = $('team-display-size');
   const teamMembersList = $('team-members-list');
+  const teamProgressBadge = $('team-progress-badge');
+  const teamNameSetupBox = $('team-name-setup-box');
+  const teamNameSetupLabel = $('team-name-setup-label');
+  const teamNameSetupNote = $('team-name-setup-note');
+  const teamCustomNameInput = $('team-custom-name-input');
+  const saveTeamNameBtn = $('save-team-name-btn');
   const authSwitchBtn = $('auth-switch-btn');
   const proceedQuizBtn = $('proceed-quiz-btn');
+
+  let authMode = 'verify'; // 'verify' | 'resume'
+
+  function setAuthMode(mode) {
+    authMode = mode === 'resume' ? 'resume' : 'verify';
+    if (tabVerifyCreds) {
+      tabVerifyCreds.classList.toggle('is-active', authMode === 'verify');
+      tabVerifyCreds.setAttribute('aria-selected', String(authMode === 'verify'));
+    }
+    if (tabResumeTeam) {
+      tabResumeTeam.classList.toggle('is-active', authMode === 'resume');
+      tabResumeTeam.setAttribute('aria-selected', String(authMode === 'resume'));
+    }
+    if (authCredentialsGroup) authCredentialsGroup.hidden = authMode !== 'verify';
+    if (authResumeGroup) authResumeGroup.hidden = authMode !== 'resume';
+    if (authEmail) authEmail.required = authMode === 'verify';
+    if (authPhone) authPhone.required = authMode === 'verify';
+    if (resumeTeamInput) resumeTeamInput.required = authMode === 'resume';
+    if (authSubmitBtn) {
+      authSubmitBtn.innerHTML = authMode === 'resume'
+        ? 'Resume Team Session <span>→</span>'
+        : 'Verify clearance <span>→</span>';
+    }
+    if (authStatus) {
+      authStatus.hidden = true;
+      authStatus.className = 'auth-status';
+      authStatus.textContent = '';
+    }
+  }
+
+  if (tabVerifyCreds) {
+    tabVerifyCreds.addEventListener('click', () => setAuthMode('verify'));
+  }
+  if (tabResumeTeam) {
+    tabResumeTeam.addEventListener('click', () => setAuthMode('resume'));
+  }
+
+  function countHydratedAnswers() {
+    let count = 0;
+    for (let i = 0; i < allAnswers.length; i++) {
+      if (hasUsableAnswer(allAnswers[i])) count++;
+    }
+    return count;
+  }
 
   function renderTeamDetails(team) {
     if (!teamDetailsPanel) return;
 
-    if (teamDisplayName) teamDisplayName.textContent = team.teamName || `${team.leaderName}'s Team`;
+    const effectiveName = team.customTeamName || team.teamName || `${team.leaderName}'s Team`;
+    if (teamDisplayName) teamDisplayName.textContent = effectiveName;
     if (teamDisplayLeader) teamDisplayLeader.textContent = team.leaderName || '—';
     if (teamDisplaySize) teamDisplaySize.textContent = String(team.teamSize || (team.members ? team.members.length : 1));
+
+    updateHeaderTeamBadge(team, false);
+    syncRound2LocalStorage(team);
+
+    if (teamCustomNameInput) {
+      teamCustomNameInput.value = team.customTeamName || '';
+    }
+    if (teamNameSetupBox) {
+      teamNameSetupBox.classList.toggle('is-locked', Boolean(team.customTeamName));
+    }
+    if (teamNameSetupLabel) {
+      teamNameSetupLabel.textContent = team.customTeamName
+        ? 'OFFICIAL TEAM NAME LOCKED FOR ROUND 1 & ROUND 2'
+        : 'SET YOUR OFFICIAL TEAM NAME · REQUIRED BEFORE STARTING';
+    }
+    if (saveTeamNameBtn) {
+      saveTeamNameBtn.textContent = team.customTeamName ? 'Update Name' : 'Lock Team Name';
+      saveTeamNameBtn.disabled = Boolean(team.isSubmitted);
+    }
+    if (teamCustomNameInput) {
+      teamCustomNameInput.disabled = Boolean(team.isSubmitted);
+    }
+    if (teamNameSetupNote) {
+      teamNameSetupNote.textContent = team.customTeamName
+        ? `Team "${team.customTeamName}" is bound in the Crypt Ledger. You can resume anytime on any device using this name.`
+        : 'Choose a unique Team Name (2–48 chars). It will track your marks in Admin and carry directly into Round 2.';
+    }
 
     if (teamMembersList) {
       teamMembersList.innerHTML = '';
@@ -1588,17 +1796,42 @@ if (isBrowser) {
     }
 
     if (authForm) authForm.hidden = true;
+    if (authModeTabs) authModeTabs.hidden = true;
     teamDetailsPanel.hidden = false;
 
-    // Reset button and subtitle to default/ready state if not submitted
+    const answeredSoFar = Math.max(Number(team.answeredCount) || 0, countHydratedAnswers());
     const teamPanelSub = $('team-display-sub');
+
     if (team.isSubmitted) {
-      if (teamPanelSub) teamPanelSub.textContent = 'Final answers have been sealed and submitted. No further attempts allowed.';
+      if (teamProgressBadge) {
+        teamProgressBadge.hidden = false;
+        teamProgressBadge.textContent = 'ROUND 1 SEALED · ROUND 2 UNLOCKED';
+      }
+      if (teamPanelSub) {
+        teamPanelSub.textContent = 'Round 1 answers are sealed in the Crypt Ledger. Proceed to Round 2 (The Wheel of Curses)!';
+      }
       if (proceedQuizBtn) {
-        proceedQuizBtn.disabled = true;
-        proceedQuizBtn.textContent = 'Quiz Already Sealed';
+        proceedQuizBtn.disabled = false;
+        proceedQuizBtn.innerHTML = 'Proceed to Round 2 · Wheel of Curses <span>→</span>';
+      }
+    } else if (answeredSoFar > 0) {
+      const sealNum = Math.min(4, Math.max(1, currentLevel + 1));
+      if (teamProgressBadge) {
+        teamProgressBadge.hidden = false;
+        teamProgressBadge.textContent = `SAVED PROGRESS · SEAL 0${sealNum} (${answeredSoFar}/20)`;
+      }
+      if (teamPanelSub) {
+        teamPanelSub.textContent = `Welcome back! ${answeredSoFar} of 20 responses restored from the Crypt Ledger.`;
+      }
+      if (proceedQuizBtn) {
+        proceedQuizBtn.disabled = false;
+        proceedQuizBtn.innerHTML = `Resume at Seal 0${sealNum} <span>→</span>`;
       }
     } else {
+      if (teamProgressBadge) {
+        teamProgressBadge.hidden = false;
+        teamProgressBadge.textContent = 'SEAL 01 READY';
+      }
       if (teamPanelSub) teamPanelSub.textContent = 'Roster verified in crypt registry';
       if (proceedQuizBtn) {
         proceedQuizBtn.disabled = false;
@@ -1607,24 +1840,79 @@ if (isBrowser) {
     }
   }
 
+  async function saveCustomTeamName(rawName) {
+    const cleaned = String(rawName || '').trim();
+    if (!cleaned || cleaned.length < 2) {
+      if (teamNameSetupNote) {
+        teamNameSetupNote.textContent = '⚠ Please enter a valid Team Name (at least 2 characters).';
+      }
+      if (teamCustomNameInput) teamCustomNameInput.focus();
+      return false;
+    }
+
+    if (saveTeamNameBtn) {
+      saveTeamNameBtn.disabled = true;
+      saveTeamNameBtn.textContent = 'Locking...';
+    }
+
+    try {
+      const res = await fetch('/api/auth/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'set_team_name',
+          teamName: cleaned
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (teamNameSetupNote) {
+          teamNameSetupNote.textContent = `⚠ ${data.error || 'Could not save Team Name.'}`;
+        }
+        return false;
+      }
+
+      currentTeam = {
+        ...(currentTeam || {}),
+        ...data,
+        teamName: data.teamName || cleaned,
+        customTeamName: data.customTeamName || cleaned,
+        needsTeamName: false
+      };
+      renderTeamDetails(currentTeam);
+      return true;
+    } catch {
+      if (teamNameSetupNote) {
+        teamNameSetupNote.textContent = '⚠ Network error while saving Team Name. Please retry.';
+      }
+      return false;
+    } finally {
+      if (saveTeamNameBtn && currentTeam && !currentTeam.isSubmitted) {
+        saveTeamNameBtn.disabled = false;
+        saveTeamNameBtn.textContent = currentTeam.customTeamName ? 'Update Name' : 'Lock Team Name';
+      }
+    }
+  }
+
+  if (saveTeamNameBtn) {
+    saveTeamNameBtn.addEventListener('click', () => {
+      if (!teamCustomNameInput) return;
+      saveCustomTeamName(teamCustomNameInput.value);
+    });
+  }
+
   function resetAuthView() {
     if (teamDetailsPanel) teamDetailsPanel.hidden = true;
     if (authForm) authForm.hidden = false;
+    if (authModeTabs) authModeTabs.hidden = false;
     const teamPanelSub = $('team-display-sub');
     if (teamPanelSub) teamPanelSub.textContent = 'Roster verified in crypt registry';
     if (proceedQuizBtn) {
       proceedQuizBtn.disabled = false;
       proceedQuizBtn.innerHTML = 'Enter Crypt Trials <span>→</span>';
     }
-    if (authStatus) {
-      authStatus.hidden = true;
-      authStatus.className = 'auth-status';
-      authStatus.textContent = '';
-    }
-    if (authSubmitBtn) {
-      authSubmitBtn.disabled = false;
-      authSubmitBtn.innerHTML = 'Verify clearance <span>→</span>';
-    }
+    updateHeaderTeamBadge(null, false);
+    setAuthMode(authMode);
   }
 
   if (authSwitchBtn) {
@@ -1638,7 +1926,10 @@ if (isBrowser) {
       resetAuthView();
       if (authEmail) authEmail.value = '';
       if (authPhone) authPhone.value = '';
-      if (authEmail) authEmail.focus();
+      if (authTeamName) authTeamName.value = '';
+      if (resumeTeamInput) resumeTeamInput.value = '';
+      if (authMode === 'resume' && resumeTeamInput) resumeTeamInput.focus();
+      else if (authEmail) authEmail.focus();
     });
   }
 
@@ -1646,13 +1937,21 @@ if (isBrowser) {
     proceedQuizBtn.addEventListener('click', async () => {
       if (!currentTeam) return;
 
-      // Check if already finalized
+      // If Round 1 is already submitted, transition immediately to Round 2
       if (currentTeam.isSubmitted) {
-        const teamPanelSub = $('team-display-sub');
-        if (teamPanelSub) teamPanelSub.textContent = 'Final answers have been sealed and submitted. No further attempts allowed.';
-        const btn = $('proceed-quiz-btn');
-        if (btn) { btn.disabled = true; btn.textContent = 'Quiz Already Sealed'; }
+        syncRound2LocalStorage(currentTeam);
+        window.location.href = '/round2/';
         return;
+      }
+
+      // Ensure Official Team Name is set and saved before entering
+      const typedName = teamCustomNameInput ? teamCustomNameInput.value.trim() : '';
+      if (typedName && typedName !== (currentTeam.customTeamName || '')) {
+        const ok = await saveCustomTeamName(typedName);
+        if (!ok) return;
+      } else if (!currentTeam.customTeamName) {
+        const ok = await saveCustomTeamName(typedName);
+        if (!ok) return;
       }
 
       proceedQuizBtn.disabled = true;
@@ -1660,9 +1959,18 @@ if (isBrowser) {
 
       await loadDynamicQuestions();
       hydrateDraftProgress(currentTeam);
-      show('opening');
-      const startBtn = $('start');
-      if (startBtn) startBtn.hidden = false;
+
+      const answeredSoFar = countHydratedAnswers();
+      if (answeredSoFar > 0) {
+        // Returning team mid-quiz: jump straight to the Mission Dashboard so they can resume immediately
+        show('intro');
+        updateDashboard();
+      } else {
+        show('opening');
+        const startEl = $('start');
+        if (startEl) startEl.hidden = false;
+      }
+
       proceedQuizBtn.disabled = false;
       proceedQuizBtn.innerHTML = 'Enter Crypt Trials <span>→</span>';
     });
@@ -1671,16 +1979,10 @@ if (isBrowser) {
   if (authForm) {
     authForm.addEventListener('submit', async e => {
       e.preventDefault();
-      if (!authEmail || !authPhone) return;
-
-      const email = authEmail.value.trim();
-      const phone = authPhone.value.trim();
-
-      if (!email || !phone) return;
 
       if (authSubmitBtn) {
         authSubmitBtn.disabled = true;
-        authSubmitBtn.innerHTML = 'Verifying...';
+        authSubmitBtn.innerHTML = authMode === 'resume' ? 'Locating Team...' : 'Verifying...';
       }
       if (authStatus) {
         authStatus.hidden = true;
@@ -1688,10 +1990,35 @@ if (isBrowser) {
       }
 
       try {
+        let payload;
+        if (authMode === 'resume') {
+          const teamName = resumeTeamInput ? resumeTeamInput.value.trim() : '';
+          if (!teamName) {
+            if (authSubmitBtn) {
+              authSubmitBtn.disabled = false;
+              authSubmitBtn.innerHTML = 'Resume Team Session <span>→</span>';
+            }
+            return;
+          }
+          payload = { action: 'resume_team', teamName };
+        } else {
+          const email = authEmail ? authEmail.value.trim() : '';
+          const phone = authPhone ? authPhone.value.trim() : '';
+          const teamName = authTeamName ? authTeamName.value.trim() : '';
+          if (!email || !phone) {
+            if (authSubmitBtn) {
+              authSubmitBtn.disabled = false;
+              authSubmitBtn.innerHTML = 'Verify clearance <span>→</span>';
+            }
+            return;
+          }
+          payload = { action: 'verify', email, phone, teamName };
+        }
+
         const res = await fetch('/api/auth/verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, phone })
+          body: JSON.stringify(payload)
         });
 
         const data = await res.json();
@@ -1704,13 +2031,10 @@ if (isBrowser) {
             authStatus.textContent = `Clearance granted. Welcome, Team ${data.teamName}!`;
           }
 
-          // Preload questions in background
           await loadDynamicQuestions();
-
-          // Display team and member details directly on login page
+          hydrateDraftProgress(data);
           renderTeamDetails(data);
         } else {
-          // Failure: Ensure team details panel is never displayed
           if (teamDetailsPanel) teamDetailsPanel.hidden = true;
           if (authStatus) {
             authStatus.hidden = false;
@@ -1718,7 +2042,7 @@ if (isBrowser) {
             authStatus.textContent = data.error || 'Verification failed. Credentials do not match.';
           }
         }
-      } catch (err) {
+      } catch {
         if (teamDetailsPanel) teamDetailsPanel.hidden = true;
         if (authStatus) {
           authStatus.hidden = false;
@@ -1728,7 +2052,9 @@ if (isBrowser) {
       } finally {
         if (authSubmitBtn) {
           authSubmitBtn.disabled = false;
-          authSubmitBtn.innerHTML = 'Verify clearance <span>→</span>';
+          authSubmitBtn.innerHTML = authMode === 'resume'
+            ? 'Resume Team Session <span>→</span>'
+            : 'Verify clearance <span>→</span>';
         }
       }
     });
@@ -1739,21 +2065,9 @@ if (isBrowser) {
     if (session && session.authenticated) {
       await loadDynamicQuestions();
       hydrateDraftProgress(session);
-      // If team already finalized, show final status
-      if (session.isSubmitted) {
-        show('auth-gate');
-        renderTeamDetails(session);
-        const teamPanelSub = $('team-display-sub');
-        if (teamPanelSub) teamPanelSub.textContent = 'Final answers have been sealed and submitted. No further attempts allowed.';
-        const proceedBtn = $('proceed-quiz-btn');
-        if (proceedBtn) { proceedBtn.disabled = true; proceedBtn.textContent = 'Quiz Already Sealed'; }
-      } else {
-        // Authenticated session present: display team details on auth-gate
-        show('auth-gate');
-        renderTeamDetails(session);
-      }
+      show('auth-gate');
+      renderTeamDetails(session);
     } else {
-      // Require verification gate
       show('auth-gate');
       resetAuthView();
     }

@@ -1,0 +1,188 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <defs>
+    <!-- Glowing trace filters -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <filter id="hotGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3.5" result="blur1"/>
+      <feGaussianBlur stdDeviation="1.5" result="blur2"/>
+      <feMerge>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <linearGradient id="traceGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4d0a10"/>
+      <stop offset="50%" stop-color="#731018"/>
+      <stop offset="100%" stop-color="#3d070c"/>
+    </linearGradient>
+
+    <linearGradient id="hotTrace" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff3326"/>
+      <stop offset="50%" stop-color="#ff6a2a"/>
+      <stop offset="100%" stop-color="#ff2215"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Base substrate plate -->
+  <rect width="400" height="400" fill="#080203"/>
+
+  <!-- Subtle PCB grid texture dots -->
+  <g fill="#1a0406" opacity="0.4">
+    <circle cx="20" cy="20" r="1"/><circle cx="60" cy="20" r="1"/><circle cx="100" cy="20" r="1"/><circle cx="140" cy="20" r="1"/><circle cx="180" cy="20" r="1"/><circle cx="220" cy="20" r="1"/><circle cx="260" cy="20" r="1"/><circle cx="300" cy="20" r="1"/><circle cx="340" cy="20" r="1"/><circle cx="380" cy="20" r="1"/>
+    <circle cx="20" cy="60" r="1"/><circle cx="60" cy="60" r="1"/><circle cx="100" cy="60" r="1"/><circle cx="140" cy="60" r="1"/><circle cx="180" cy="60" r="1"/><circle cx="220" cy="60" r="1"/><circle cx="260" cy="60" r="1"/><circle cx="300" cy="60" r="1"/><circle cx="340" cy="60" r="1"/><circle cx="380" cy="60" r="1"/>
+    <circle cx="20" cy="100" r="1"/><circle cx="60" cy="100" r="1"/><circle cx="100" cy="100" r="1"/><circle cx="140" cy="100" r="1"/><circle cx="180" cy="100" r="1"/><circle cx="220" cy="100" r="1"/><circle cx="260" cy="100" r="1"/><circle cx="300" cy="100" r="1"/><circle cx="340" cy="100" r="1"/><circle cx="380" cy="100" r="1"/>
+    <circle cx="20" cy="140" r="1"/><circle cx="60" cy="140" r="1"/><circle cx="100" cy="140" r="1"/><circle cx="140" cy="140" r="1"/><circle cx="180" cy="140" r="1"/><circle cx="220" cy="140" r="1"/><circle cx="260" cy="140" r="1"/><circle cx="300" cy="140" r="1"/><circle cx="340" cy="140" r="1"/><circle cx="380" cy="140" r="1"/>
+    <circle cx="20" cy="180" r="1"/><circle cx="60" cy="180" r="1"/><circle cx="100" cy="180" r="1"/><circle cx="140" cy="180" r="1"/><circle cx="180" cy="180" r="1"/><circle cx="220" cy="180" r="1"/><circle cx="260" cy="180" r="1"/><circle cx="300" cy="180" r="1"/><circle cx="340" cy="180" r="1"/><circle cx="380" cy="180" r="1"/>
+    <circle cx="20" cy="220" r="1"/><circle cx="60" cy="220" r="1"/><circle cx="100" cy="220" r="1"/><circle cx="140" cy="220" r="1"/><circle cx="180" cy="220" r="1"/><circle cx="220" cy="220" r="1"/><circle cx="260" cy="220" r="1"/><circle cx="300" cy="220" r="1"/><circle cx="340" cy="220" r="1"/><circle cx="380" cy="220" r="1"/>
+    <circle cx="20" cy="260" r="1"/><circle cx="60" cy="260" r="1"/><circle cx="100" cy="260" r="1"/><circle cx="140" cy="260" r="1"/><circle cx="180" cy="260" r="1"/><circle cx="220" cy="260" r="1"/><circle cx="260" cy="260" r="1"/><circle cx="300" cy="260" r="1"/><circle cx="340" cy="260" r="1"/><circle cx="380" cy="260" r="1"/>
+    <circle cx="20" cy="300" r="1"/><circle cx="60" cy="300" r="1"/><circle cx="100" cy="300" r="1"/><circle cx="140" cy="300" r="1"/><circle cx="180" cy="300" r="1"/><circle cx="220" cy="300" r="1"/><circle cx="260" cy="300" r="1"/><circle cx="300" cy="300" r="1"/><circle cx="340" cy="300" r="1"/><circle cx="380" cy="300" r="1"/>
+    <circle cx="20" cy="340" r="1"/><circle cx="60" cy="340" r="1"/><circle cx="100" cy="340" r="1"/><circle cx="140" cy="340" r="1"/><circle cx="180" cy="340" r="1"/><circle cx="220" cy="340" r="1"/><circle cx="260" cy="340" r="1"/><circle cx="300" cy="340" r="1"/><circle cx="340" cy="340" r="1"/><circle cx="380" cy="340" r="1"/>
+    <circle cx="20" cy="380" r="1"/><circle cx="60" cy="380" r="1"/><circle cx="100" cy="380" r="1"/><circle cx="140" cy="380" r="1"/><circle cx="180" cy="380" r="1"/><circle cx="220" cy="380" r="1"/><circle cx="260" cy="380" r="1"/><circle cx="300" cy="380" r="1"/><circle cx="340" cy="380" r="1"/><circle cx="380" cy="380" r="1"/>
+  </g>
+
+  <!-- ==================== BACKGROUND TRACES (Dark Red) ==================== -->
+  <g stroke="url(#traceGrad)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Edge seamless connections (X wrap: 0 to 400, Y wrap: 0 to 400) -->
+    <!-- Top-to-bottom buses -->
+    <path d="M40 0 L40 50 L70 80 L70 170 L90 190 L90 280 L60 310 L60 400" stroke-width="2"/>
+    <path d="M48 0 L48 46 L78 76 L78 166 L98 186 L98 284 L68 314 L68 400" stroke-width="1.2"/>
+    <path d="M160 0 L160 70 L130 100 L130 180 L170 220 L170 330 L190 350 L190 400" stroke-width="2"/>
+    <path d="M320 0 L320 60 L360 100 L360 210 L330 240 L330 320 L350 340 L350 400" stroke-width="2"/>
+    <path d="M328 0 L328 56 L368 96 L368 206 L338 236 L338 324 L358 344 L358 400" stroke-width="1.2"/>
+
+    <!-- Left-to-right buses -->
+    <path d="M0 60 L60 60 L90 90 L180 90 L210 60 L310 60 L330 40 L400 40" stroke-width="1.8"/>
+    <path d="M0 150 L50 150 L80 120 L200 120 L230 150 L340 150 L370 120 L400 120" stroke-width="2"/>
+    <path d="M0 240 L70 240 L100 270 L180 270 L210 240 L280 240 L300 260 L400 260" stroke-width="1.8"/>
+    <path d="M0 340 L90 340 L120 310 L230 310 L250 330 L350 330 L370 350 L400 350" stroke-width="2"/>
+    <path d="M0 348 L86 348 L116 318 L226 318 L246 338 L346 338 L366 358 L400 358" stroke-width="1.2"/>
+
+    <!-- Diagonal branches & circuit clusters -->
+    <path d="M120 20 L150 50 L200 50 L220 30" stroke-width="1.5"/>
+    <path d="M250 100 L280 130 L320 130" stroke-width="1.5"/>
+    <path d="M110 370 L140 340 L170 340" stroke-width="1.5"/>
+    <path d="M220 370 L250 400" stroke-width="1.5"/>
+    <path d="M20 200 L50 200 L70 220 L70 250" stroke-width="1.5"/>
+    <path d="M270 180 L290 200 L320 200" stroke-width="1.5"/>
+  </g>
+
+  <!-- ==================== GLOWING HOT CIRCUIT TRACES ==================== -->
+  <g stroke="url(#hotTrace)" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.45" filter="url(#glow)">
+    <!-- Ambient glowing traces routed off-center -->
+    <path d="M0 120 L80 120 L120 80 L160 80" stroke-width="1.8"/>
+    <path d="M240 80 L280 80 L320 120 L400 120" stroke-width="1.8"/>
+    <path d="M80 320 L120 320 L160 360 L240 360 L280 320 L320 320" stroke-width="1.8"/>
+
+    <!-- Glowing witch hat trace motif (inspired by the poster!) -->
+    <path d="M190 140 Q215 115 200 95 Q185 80 205 70" stroke-width="2.2" filter="url(#hotGlow)" opacity="0.8"/>
+    <!-- Hat body cone -->
+    <path d="M190 140 L175 165 L225 165 L210 140 Z" stroke-width="1.8"/>
+    <!-- Brim curves branching into circuits -->
+    <path d="M150 170 C165 165 235 165 250 170" stroke-width="2.2"/>
+    <path d="M150 170 L130 185 L130 210" stroke-width="1.4"/>
+    <path d="M250 170 L270 185 L270 210" stroke-width="1.4"/>
+
+    <!-- Corner energy feeders -->
+    <path d="M40 50 L70 80 L70 110" stroke-width="1.6"/>
+    <path d="M330 320 L350 340 L350 370" stroke-width="1.6"/>
+    <path d="M40 350 L70 320 L110 320" stroke-width="1.6"/>
+  </g>
+
+  <!-- ==================== MICROCHIPS / IC PACKAGES ==================== -->
+  <!-- Chip 1: Center microprocessor (200, 200) -->
+  <g transform="translate(182, 182)">
+    <!-- SMD pins (top & bottom) -->
+    <g stroke="#9a95a2" stroke-width="1.5">
+      <line x1="5" y1="-5" x2="5" y2="0"/><line x1="12" y1="-5" x2="12" y2="0"/><line x1="19" y1="-5" x2="19" y2="0"/><line x1="26" y1="-5" x2="26" y2="0"/><line x1="31" y1="-5" x2="31" y2="0"/>
+      <line x1="5" y1="36" x2="5" y2="41"/><line x1="12" y1="36" x2="12" y2="41"/><line x1="19" y1="36" x2="19" y2="41"/><line x1="26" y1="36" x2="26" y2="41"/><line x1="31" y1="36" x2="31" y2="41"/>
+      <line x1="-5" y1="5" x2="0" y2="5"/><line x1="-5" y1="12" x2="0" y2="12"/><line x1="-5" y1="19" x2="0" y2="19"/><line x1="-5" y1="26" x2="0" y2="26"/><line x1="-5" y1="31" x2="0" y2="31"/>
+      <line x1="36" y1="5" x2="41" y2="5"/><line x1="36" y1="12" x2="41" y2="12"/><line x1="36" y1="19" x2="41" y2="19"/><line x1="36" y1="26" x2="41" y2="26"/><line x1="36" y1="31" x2="41" y2="31"/>
+    </g>
+    <!-- IC Body -->
+    <rect x="0" y="0" width="36" height="36" rx="3" fill="#130406" stroke="#c4161c" stroke-width="1.5"/>
+    <circle cx="6" cy="6" r="2" fill="#5c0508"/>
+    <!-- Glowing core emblem -->
+    <rect x="10" y="10" width="16" height="16" fill="#300508" stroke="#ff3b20" stroke-width="1" filter="url(#glow)"/>
+    <circle cx="18" cy="18" r="3" fill="#ff7a1a"/>
+  </g>
+
+  <!-- Chip 2: Upper Left SMD chip -->
+  <g transform="translate(64, 60)">
+    <g stroke="#7d7885" stroke-width="1.2">
+      <line x1="-3" y1="4" x2="0" y2="4"/><line x1="-3" y1="10" x2="0" y2="10"/><line x1="-3" y1="16" x2="0" y2="16"/><line x1="-3" y1="22" x2="0" y2="22"/>
+      <line x1="20" y1="4" x2="23" y2="4"/><line x1="20" y1="10" x2="23" y2="10"/><line x1="20" y1="16" x2="23" y2="16"/><line x1="20" y1="22" x2="23" y2="22"/>
+    </g>
+    <rect x="0" y="0" width="20" height="26" rx="2" fill="#150507" stroke="#661017" stroke-width="1.2"/>
+    <circle cx="4" cy="4" r="1.2" fill="#88151c"/>
+  </g>
+
+  <!-- Chip 3: Upper Right SMD chip -->
+  <g transform="translate(310, 80)">
+    <g stroke="#7d7885" stroke-width="1.2">
+      <line x1="4" y1="-3" x2="4" y2="0"/><line x1="10" y1="-3" x2="10" y2="0"/><line x1="16" y1="-3" x2="16" y2="0"/><line x1="22" y1="-3" x2="22" y2="0"/>
+      <line x1="4" y1="20" x2="4" y2="23"/><line x1="10" y1="20" x2="10" y2="23"/><line x1="16" y1="20" x2="16" y2="23"/><line x1="22" y1="20" x2="22" y2="23"/>
+    </g>
+    <rect x="0" y="0" width="26" height="20" rx="2" fill="#150507" stroke="#661017" stroke-width="1.2"/>
+    <circle cx="4" cy="4" r="1.2" fill="#88151c"/>
+  </g>
+
+  <!-- Chip 4: Lower Left SMD chip -->
+  <g transform="translate(110, 290)">
+    <g stroke="#7d7885" stroke-width="1.2">
+      <line x1="-3" y1="4" x2="0" y2="4"/><line x1="-3" y1="10" x2="0" y2="10"/><line x1="-3" y1="16" x2="0" y2="16"/>
+      <line x1="16" y1="4" x2="19" y2="4"/><line x1="16" y1="10" x2="19" y2="10"/><line x1="16" y1="16" x2="19" y2="16"/>
+    </g>
+    <rect x="0" y="0" width="16" height="20" rx="2" fill="#150507" stroke="#661017" stroke-width="1.2"/>
+    <circle cx="3" cy="3" r="1" fill="#88151c"/>
+  </g>
+
+  <!-- Chip 5: Lower Right SMD chip -->
+  <g transform="translate(320, 290)">
+    <g stroke="#7d7885" stroke-width="1.2">
+      <line x1="-3" y1="4" x2="0" y2="4"/><line x1="-3" y1="10" x2="0" y2="10"/><line x1="-3" y1="16" x2="0" y2="16"/><line x1="-3" y1="22" x2="0" y2="22"/>
+      <line x1="22" y1="4" x2="25" y2="4"/><line x1="22" y1="10" x2="25" y2="10"/><line x1="22" y1="16" x2="25" y2="16"/><line x1="22" y1="22" x2="25" y2="22"/>
+    </g>
+    <rect x="0" y="0" width="22" height="26" rx="2" fill="#150507" stroke="#661017" stroke-width="1.2"/>
+    <circle cx="4" cy="4" r="1.2" fill="#88151c"/>
+  </g>
+
+  <!-- ==================== VIAS & SOLDER PADS ==================== -->
+  <!-- Standard dark solder vias -->
+  <g fill="#45080c" stroke="#1f0305" stroke-width="1">
+    <circle cx="60" cy="60" r="3.2"/><circle cx="90" cy="90" r="3.2"/><circle cx="180" cy="90" r="3.2"/><circle cx="210" cy="60" r="3.2"/>
+    <circle cx="50" cy="150" r="3.2"/><circle cx="80" cy="120" r="3.2"/><circle cx="230" cy="150" r="3.2"/><circle cx="340" cy="150" r="3.2"/>
+    <circle cx="70" cy="240" r="3.2"/><circle cx="100" cy="270" r="3.2"/><circle cx="180" cy="270" r="3.2"/><circle cx="280" cy="240" r="3.2"/>
+    <circle cx="90" cy="340" r="3.2"/><circle cx="120" cy="310" r="3.2"/><circle cx="230" cy="310" r="3.2"/><circle cx="350" cy="330" r="3.2"/>
+  </g>
+
+  <!-- Inner via holes -->
+  <g fill="#080203">
+    <circle cx="60" cy="60" r="1.3"/><circle cx="90" cy="90" r="1.3"/><circle cx="180" cy="90" r="1.3"/><circle cx="210" cy="60" r="1.3"/>
+    <circle cx="50" cy="150" r="1.3"/><circle cx="80" cy="120" r="1.3"/><circle cx="230" cy="150" r="1.3"/><circle cx="340" cy="150" r="1.3"/>
+    <circle cx="70" cy="240" r="1.3"/><circle cx="100" cy="270" r="1.3"/><circle cx="180" cy="270" r="1.3"/><circle cx="280" cy="240" r="1.3"/>
+    <circle cx="90" cy="340" r="1.3"/><circle cx="120" cy="310" r="1.3"/><circle cx="230" cy="310" r="1.3"/><circle cx="350" cy="330" r="1.3"/>
+  </g>
+
+  <!-- Hot Glowing Vias -->
+  <g fill="#ff7a1a" stroke="#ff2a1a" stroke-width="1.2" filter="url(#glow)">
+    <circle cx="110" cy="200" r="3.5"/><circle cx="280" cy="200" r="3.5"/>
+    <circle cx="160" cy="150" r="3.5"/><circle cx="160" cy="240" r="3.5"/>
+    <circle cx="240" cy="160" r="3.5"/><circle cx="200" cy="280" r="3.5"/>
+    <circle cx="200" cy="110" r="3.5"/>
+  </g>
+  <g fill="#ffffff">
+    <circle cx="110" cy="200" r="1.2"/><circle cx="280" cy="200" r="1.2"/>
+    <circle cx="160" cy="150" r="1.2"/><circle cx="160" cy="240" r="1.2"/>
+    <circle cx="240" cy="160" r="1.2"/><circle cx="200" cy="280" r="1.2"/>
+    <circle cx="200" cy="110" r="1.2"/>
+  </g>
+</svg>

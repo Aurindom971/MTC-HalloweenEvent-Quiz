@@ -1,6 +1,33 @@
-import { getSessionFromRequest } from '../_lib/session.js';
-import { getSupabaseAdmin } from '../_lib/supabase.js';
+import { getSessionFromRequest, getRuntimeSessionSecret } from '../_lib/session.js';
+import { getSupabaseAdmin, normalizeTeamKey, extractSealAnswers, extractAnswerMeta } from '../_lib/supabase.js';
 import { gradeSubmission } from '../_lib/evaluator.js';
+import { QUESTION_DEFINITIONS } from '../../server/questions.master.js';
+
+let cachedGradingQuestions = null;
+let cachedGradingAt = 0;
+const GRADING_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+async function getGradingQuestions(supabase) {
+  const now = Date.now();
+  if (cachedGradingQuestions && now - cachedGradingAt < GRADING_CACHE_TTL_MS) {
+    return cachedGradingQuestions;
+  }
+  try {
+    const { data: dbQuestions, error: qError } = await supabase
+      .from('questions')
+      .select('question_key, seal_number, question_type, answer_key, points')
+      .eq('is_active', true);
+
+    const resolved = (!qError && Array.isArray(dbQuestions) && dbQuestions.length > 0)
+      ? dbQuestions
+      : QUESTION_DEFINITIONS;
+    cachedGradingQuestions = resolved;
+    cachedGradingAt = now;
+    return resolved;
+  } catch {
+    return QUESTION_DEFINITIONS;
+  }
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -8,7 +35,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const session = getSessionFromRequest(req);
+  const secret = getRuntimeSessionSecret();
+  const session = getSessionFromRequest(req, secret);
   if (!session || !session.registrationId) {
     return res.status(401).json({ error: 'Authentication required' });
   }
@@ -24,7 +52,7 @@ export default async function handler(req, res) {
     }
 
     const finalAnswers = body?.answers;
-    if (!finalAnswers || typeof finalAnswers !== 'object') {
+    if (!finalAnswers || typeof finalAnswers !== 'object' || Array.isArray(finalAnswers)) {
       return res.status(400).json({ error: 'Final answers object is required.' });
     }
 
@@ -44,33 +72,63 @@ export default async function handler(req, res) {
 
     // Reject repeat submissions (Enforcing one final submission per team)
     if (existing?.status === 'submitted') {
-      return res.status(409).json({ error: 'Final quiz answers have already been submitted. Further modifications are prohibited.' });
+      const existingMeta = extractAnswerMeta(existing.answers);
+      return res.status(200).json({
+        submitted: true,
+        alreadySubmitted: true,
+        score: existingMeta.r1Score ?? 0,
+        totalQuestions: existingMeta.r1Total ?? 20,
+        submittedAt: existingMeta.r1SubmittedAt || null
+      });
     }
 
-    // 2. Fetch master questions including private answer_key for server evaluation
-    const { data: dbQuestions, error: qError } = await supabase
-      .from('questions')
-      .select('question_key, seal_number, question_type, answer_key, points')
-      .eq('is_active', true);
+    // 2. Fetch master questions (cached in memory for 100+ simultaneous submissions)
+    const gradingQuestions = await getGradingQuestions(supabase);
 
-    if (qError || !dbQuestions) {
-      console.error('Error fetching questions for grading');
-      return res.status(500).json({ error: 'Evaluation service temporarily unavailable.' });
-    }
+    // Merge existing saved seal answers with finalAnswers so no previously saved draft answer is lost
+    const existingSeals = extractSealAnswers(existing?.answers).sealAnswers;
+    const submittedSeals = extractSealAnswers(finalAnswers).sealAnswers;
+    const mergedSeals = {
+      seal_1: { ...(existingSeals.seal_1 || {}), ...(submittedSeals.seal_1 || {}) },
+      seal_2: { ...(existingSeals.seal_2 || {}), ...(submittedSeals.seal_2 || {}) },
+      seal_3: { ...(existingSeals.seal_3 || {}), ...(submittedSeals.seal_3 || {}) },
+      seal_4: { ...(existingSeals.seal_4 || {}), ...(submittedSeals.seal_4 || {}) }
+    };
 
     // 3. Score submission on server
-    const evaluation = gradeSubmission(dbQuestions, finalAnswers);
-
+    const evaluation = gradeSubmission(gradingQuestions, mergedSeals);
     const now = new Date().toISOString();
+    const existingMeta = extractAnswerMeta(existing?.answers);
+    const { answeredCount } = extractSealAnswers(mergedSeals);
+
+    const payloadToStore = {
+      ...mergedSeals,
+      _meta: {
+        ...existingMeta,
+        registrationId: session.registrationId,
+        teamName: existingMeta.teamName || session.teamName || null,
+        teamKey: existingMeta.teamKey || session.teamKey || normalizeTeamKey(session.teamName || ''),
+        leaderName: existingMeta.leaderName || session.leaderName || null,
+        leaderEmail: existingMeta.leaderEmail || session.email || null,
+        startedAt: existingMeta.startedAt || now,
+        lastActiveAt: now,
+        currentSeal: 4,
+        answeredCount,
+        liveScore: evaluation.score,
+        r1Score: evaluation.score,
+        r1Total: evaluation.totalQuestions,
+        r1Results: evaluation.results,
+        r1SubmittedAt: now
+      }
+    };
 
     // 4. Update or insert submission record with status: 'submitted'
     if (existing) {
-      // Atomic conditional update: only update if current status in database is still 'draft'
       const { data: updatedRows, error: updateError } = await supabase
         .from('team_answers')
         .update({
           status: 'submitted',
-          answers: finalAnswers,
+          answers: payloadToStore,
           submitted_at: now,
           updated_at: now
         })
@@ -83,7 +141,6 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'Failed to record final submission' });
       }
 
-      // If zero rows updated, another concurrent request already updated the status to 'submitted'
       if (!updatedRows || updatedRows.length === 0) {
         return res.status(409).json({ error: 'Final quiz answers have already been submitted by another concurrent request.' });
       }
@@ -93,7 +150,7 @@ export default async function handler(req, res) {
         .insert({
           registration_id: session.registrationId,
           status: 'submitted',
-          answers: finalAnswers,
+          answers: payloadToStore,
           submitted_at: now,
           created_at: now,
           updated_at: now
@@ -101,7 +158,6 @@ export default async function handler(req, res) {
         .select('id, status');
 
       if (insertError) {
-        // Unique constraint violation on registration_id indicates race condition on insert
         if (insertError.code === '23505') {
           return res.status(409).json({ error: 'Final quiz answers have already been submitted.' });
         }
@@ -114,7 +170,6 @@ export default async function handler(req, res) {
       }
     }
 
-    // Return score summary to client without leaking private answer keys
     return res.status(200).json({
       submitted: true,
       score: evaluation.score,

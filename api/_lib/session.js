@@ -1,7 +1,8 @@
 import crypto from 'node:crypto';
 
 const COOKIE_NAME = 'mtc_quiz_session';
-const DEFAULT_MAX_AGE_SECONDS = 60 * 60 * 8; // 8 hours
+const ADMIN_COOKIE_NAME = 'mtc_admin_session';
+const DEFAULT_MAX_AGE_SECONDS = 60 * 60 * 12; // 12 hours
 
 /**
  * Derives a consistent 32-byte key from the secret string.
@@ -12,7 +13,6 @@ function getDerivedKey(secret) {
 
 /**
  * Gets the session secret from environment variables.
- * Falls back to SUPABASE_SECRET_KEY or a local dev fallback if not set.
  */
 export function getSessionSecret() {
   const secret = process.env.SESSION_SECRET;
@@ -20,6 +20,13 @@ export function getSessionSecret() {
     throw new Error('SESSION_SECRET environment variable is required.');
   }
   return secret;
+}
+
+/**
+ * Safe session secret getter for runtime handlers that falls back to SUPABASE_SECRET_KEY if SESSION_SECRET is unset.
+ */
+export function getRuntimeSessionSecret() {
+  return process.env.SESSION_SECRET || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY ;
 }
 
 /**
@@ -92,7 +99,11 @@ export function parseCookies(cookieHeader) {
     if (idx < 0) continue;
     const key = pair.substring(0, idx).trim();
     const val = pair.substring(idx + 1).trim();
-    cookies[key] = decodeURIComponent(val);
+    try {
+      cookies[key] = decodeURIComponent(val);
+    } catch {
+      cookies[key] = val;
+    }
   }
   return cookies;
 }
@@ -136,10 +147,59 @@ export function clearSessionCookie() {
 /**
  * Extracts and verifies the session from an incoming HTTP request.
  */
-export function getSessionFromRequest(req, secret = getSessionSecret()) {
+export function getSessionFromRequest(req, secret = getRuntimeSessionSecret()) {
   const cookieHeader = req.headers.cookie || req.headers.Cookie;
   const cookies = parseCookies(cookieHeader);
   const token = cookies[COOKIE_NAME];
   if (!token) return null;
   return verifySessionToken(token, secret);
+}
+
+/**
+ * Builds a Set-Cookie header string for the admin session cookie.
+ */
+export function serializeAdminCookie(token, maxAgeSeconds = DEFAULT_MAX_AGE_SECONDS) {
+  const isProd = process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
+  const parts = [
+    `${ADMIN_COOKIE_NAME}=${encodeURIComponent(token)}`,
+    `Max-Age=${maxAgeSeconds}`,
+    'Path=/',
+    'HttpOnly',
+    'SameSite=Strict'
+  ];
+  if (isProd) {
+    parts.push('Secure');
+  }
+  return parts.join('; ');
+}
+
+/**
+ * Clears the admin session cookie.
+ */
+export function clearAdminCookie() {
+  const isProd = process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
+  const parts = [
+    `${ADMIN_COOKIE_NAME}=`,
+    'Max-Age=0',
+    'Path=/',
+    'HttpOnly',
+    'SameSite=Strict'
+  ];
+  if (isProd) {
+    parts.push('Secure');
+  }
+  return parts.join('; ');
+}
+
+/**
+ * Extracts and verifies the admin session from an incoming HTTP request.
+ */
+export function getAdminSessionFromRequest(req, secret = getRuntimeSessionSecret()) {
+  const cookieHeader = req.headers.cookie || req.headers.Cookie;
+  const cookies = parseCookies(cookieHeader);
+  const token = cookies[ADMIN_COOKIE_NAME];
+  if (!token) return null;
+  const payload = verifySessionToken(token, secret);
+  if (!payload || payload.role !== 'admin') return null;
+  return payload;
 }

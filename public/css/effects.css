@@ -80,11 +80,11 @@ body[data-scene="briefing"] .circuit-grid { filter: drop-shadow(0 0 8px #a31a26)
   clip-path: inset(50%);
   white-space: nowrap;
 }
-.reveal-word { display: inline-block; }
-.reveal-letter { animation: cryptLetter .42s ease-out both; }
+.reveal-word { display: inline-block; animation: cryptLetter .36s ease-out both; }
+.reveal-letter { animation: cryptLetter .36s ease-out both; }
 @keyframes cryptLetter {
-  from { opacity: 0; filter: blur(3px); }
-  to { opacity: 1; filter: blur(0); }
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Keep the fixed stage attached to the viewport, including on mobile. */

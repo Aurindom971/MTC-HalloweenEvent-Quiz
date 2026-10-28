@@ -1,0 +1,1228 @@
+/* =========================================================
+   THE OTHER SIDE: HORROR CUTSCENE & WHEEL OF EVIL STYLES
+   MTC Halloween Build · Round 2
+   Hardware-accelerated 60fps animations, zero external assets
+   ========================================================= */
+
+/* ============ CUTSCENE FULLSCREEN LAYER ============ */
+.cutscene-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #030002;
+  color: #fff;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  font-family: var(--f-pixel), monospace;
+}
+
+.cutscene-layer.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ---------- Cutscene Modes ---------- */
+.cutscene-layer.corruption-mode {
+  background: #0d0103;
+}
+
+.cutscene-layer.corruption-mode .cutscene-vignette {
+  background: radial-gradient(ellipse at center, rgba(180, 0, 0, 0.3) 0%, rgba(90, 0, 0, 0.68) 55%, rgba(12, 0, 3, 0.96) 100%);
+  animation: corruptionRedStrobe 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes corruptionRedStrobe {
+  0% { opacity: 0.7; }
+  100% { opacity: 1; filter: brightness(1.2); }
+}
+
+.cutscene-layer.shutdown-mode {
+  background: #080102;
+}
+
+.cutscene-layer.shutdown-mode .cutscene-vignette {
+  background: radial-gradient(ellipse at center, rgba(140, 10, 0, 0.25) 0%, rgba(50, 2, 4, 0.75) 60%, rgba(5, 0, 1, 0.98) 100%);
+}
+
+.cutscene-layer.alliance-mode {
+  background: #090206;
+}
+
+.cutscene-layer.alliance-mode .cutscene-vignette {
+  background: radial-gradient(ellipse at center, rgba(255, 140, 0, 0.16) 0%, rgba(180, 25, 10, 0.42) 50%, rgba(8, 1, 4, 0.96) 100%);
+  animation: allianceSunStrobe 2.8s ease-in-out infinite alternate;
+}
+
+@keyframes allianceSunStrobe {
+  0% { opacity: 0.75; transform: scale(0.98); }
+  100% { opacity: 1; transform: scale(1.02); filter: brightness(1.2); }
+}
+
+/* ---------- 3D Camera Rig (Trauma Shakes & Dimensional Plunge) ---------- */
+.cutscene-rig {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform-origin: center center;
+  perspective: 1000px;
+  will-change: transform, filter;
+}
+
+.cutscene-rig.claw-slam-shake {
+  animation: clawSlamShake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes clawSlamShake {
+  0% { transform: scale(1) translate(0, 0); }
+  15% { transform: scale(1.025) translate(-18px, 12px) rotate(-1.4deg); }
+  35% { transform: scale(1.018) translate(16px, -15px) rotate(1.5deg); }
+  55% { transform: scale(1.008) translate(-10px, 8px) rotate(-0.7deg); }
+  75% { transform: scale(1.003) translate(6px, -4px) rotate(0.4deg); }
+  100% { transform: scale(1) translate(0, 0) rotate(0deg); }
+}
+
+.cutscene-rig.drag-plunge {
+  animation: abyssDragPlunge 1.5s cubic-bezier(0.7, 0, 0.2, 1) forwards;
+}
+
+@keyframes abyssDragPlunge {
+  0% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+    filter: brightness(1) contrast(1) blur(0px);
+  }
+  20% {
+    transform: translate(-22px, 16px) scale(1.18) rotate(-2deg);
+    filter: brightness(1.2) contrast(1.3) blur(1px);
+  }
+  45% {
+    transform: translate(25px, -20px) scale(1.65) rotate(2.5deg);
+    filter: brightness(1.5) contrast(1.6) blur(3px);
+  }
+  70% {
+    transform: translate(-14px, 10px) scale(2.8) rotate(-1.5deg);
+    filter: brightness(2) contrast(2) blur(6px);
+  }
+  100% {
+    transform: translate(0, 0) scale(5.2) rotate(0deg);
+    filter: brightness(3.5) contrast(2.5) blur(18px);
+    opacity: 0;
+  }
+}
+
+/* ---------- Canvas Background ---------- */
+.cutscene-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* ---------- Opening Portal Video (Replaces former procedural portal & hands) ---------- */
+.cutscene-portal-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 3;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  will-change: opacity, transform;
+}
+
+.cutscene-portal-video.is-playing {
+  opacity: 1;
+}
+
+.cutscene-portal-video.is-fading {
+  opacity: 0;
+  transform: scale(1.12);
+  transition: opacity 0.55s cubic-bezier(0.4, 0, 0.2, 1), transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------- Realistic Human Zombie Hands Layer ---------- */
+.cutscene-claws-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 15;
+  transform-style: preserve-3d;
+  overflow: hidden;
+}
+
+.claw-wrap {
+  position: absolute;
+  filter: drop-shadow(0 0 20px rgba(255, 30, 20, 0.9));
+  opacity: 0;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+.hand-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  mix-blend-mode: screen;
+  filter: contrast(1.22) brightness(1.12);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Specific Positions for Realistic Anatomical Zombie Hands (16:9 aspect) */
+.claw-left {
+  left: -80px;
+  top: 48%;
+  width: clamp(380px, 48vw, 760px);
+  aspect-ratio: 16 / 9;
+  height: auto;
+  transform-origin: 10% 50%;
+  transform: translate3d(-105%, -50%, -450px) rotate(16deg) scale(0.25);
+}
+
+.claw-left.emerge {
+  opacity: 1;
+  transform: translate3d(0%, -50%, 0) rotate(1deg) scale(1);
+  transition: transform 0.95s cubic-bezier(0.16, 0.84, 0.2, 1), opacity 0.4s ease;
+}
+
+.claw-right {
+  right: -80px;
+  top: 50%;
+  width: clamp(380px, 48vw, 760px);
+  aspect-ratio: 16 / 9;
+  height: auto;
+  transform-origin: 90% 50%;
+  transform: translate3d(105%, -50%, -450px) rotate(-16deg) scale(0.25);
+}
+
+.claw-right.emerge {
+  opacity: 1;
+  transform: translate3d(0%, -50%, 0) rotate(-1deg) scale(1);
+  transition: transform 0.95s cubic-bezier(0.16, 0.84, 0.2, 1), opacity 0.4s ease;
+}
+
+.claw-center {
+  top: 52%;
+  left: 50%;
+  width: clamp(420px, 58vw, 920px);
+  aspect-ratio: 16 / 9;
+  height: auto;
+  transform-origin: center center;
+  transform: translate(-50%, -50%) scale(0.04);
+}
+
+.claw-center.lunge {
+  opacity: 0.98;
+  transform: translate(-50%, -50%) scale(1.55);
+  transition: transform 1.25s cubic-bezier(0.1, 0.88, 0.2, 1), opacity 0.4s ease;
+}
+
+/* Zombie Hands Twitch and Squeeze during Grip */
+.claw-wrap.gripping {
+  animation: clawTwitch 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes clawTwitch {
+  0% { opacity: 0.92; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 0.94; transform: scale(0.99); }
+}
+
+/* ---------- Glass Impact Fractures Overlay ---------- */
+.cutscene-glass {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 18;
+}
+
+.glass-cracks-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.impact-fracture path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.95);
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 6px #ff3326) drop-shadow(0 0 15px rgba(255, 51, 38, 0.8));
+  stroke-dasharray: 600;
+  stroke-dashoffset: 600;
+  animation: glassCrackStrike 0.22s cubic-bezier(0, 0.9, 0.1, 1) forwards;
+}
+
+@keyframes glassCrackStrike {
+  to { stroke-dashoffset: 0; }
+}
+
+/* ---------- Supernova Flashbang ---------- */
+.cutscene-flash {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, #ffffff 0%, #ff3828 50%, #200204 100%);
+  pointer-events: none;
+  z-index: 99;
+  opacity: 0;
+}
+
+.cutscene-flash.bang {
+  opacity: 1;
+  transition: none;
+}
+
+.cutscene-flash.fade {
+  opacity: 0;
+  transition: opacity 0.75s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ---------- Portal Vortex (Phase 1) ---------- */
+.cutscene-vortex {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 250vmax; height: 250vmax;
+  transform: translate(-50%, -50%) scale(0.01);
+  background: radial-gradient(circle at center, 
+    rgba(255, 51, 38, 0.9) 0%, 
+    rgba(196, 22, 28, 0.6) 25%, 
+    rgba(34, 7, 8, 0.8) 50%, 
+    transparent 70%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  transition: transform 2.2s cubic-bezier(0.7, 0, 0.3, 1), opacity 0.8s ease;
+}
+
+.cutscene-vortex.pull {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1) rotate(540deg);
+}
+
+/* ---------- CRT Scanlines & Chromatic Aberration ---------- */
+.cutscene-scanlines {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.45) 0px,
+    rgba(0, 0, 0, 0.45) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  animation: scanlineJitter 0.2s steps(2) infinite;
+}
+
+@keyframes scanlineJitter {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(2px); }
+}
+
+.cutscene-chroma {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.cutscene-chroma.glitching {
+  opacity: 0.8;
+  animation: rgbSplit 0.18s infinite;
+}
+
+@keyframes rgbSplit {
+  0% {
+    box-shadow: inset -4px 0 0 rgba(255, 51, 38, 0.5), inset 4px 0 0 rgba(0, 255, 238, 0.5);
+  }
+  50% {
+    box-shadow: inset 3px 2px 0 rgba(255, 51, 38, 0.7), inset -3px -2px 0 rgba(0, 255, 238, 0.7);
+  }
+  100% {
+    box-shadow: inset -2px -1px 0 rgba(255, 51, 38, 0.5), inset 2px 1px 0 rgba(0, 255, 238, 0.5);
+  }
+}
+
+.cutscene-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(3, 1, 2, 0.92) 100%);
+}
+
+/* ---------- Top Controls (Skip) ---------- */
+.cutscene-controls {
+  position: absolute;
+  top: calc(16px + var(--safe-t, 0px));
+  right: var(--gutter, 20px);
+  z-index: 100;
+}
+
+.cutscene-skip-btn {
+  background: rgba(18, 4, 5, 0.88);
+  border: 1px solid rgba(255, 51, 38, 0.5);
+  color: var(--bone, #f4e3d7);
+  font-family: var(--f-pixel), monospace;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+}
+
+.cutscene-skip-btn kbd {
+  background: rgba(255, 51, 38, 0.25);
+  color: var(--blood-hot, #ff3326);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.cutscene-skip-btn:hover,
+.cutscene-skip-btn:focus-visible {
+  border-color: var(--blood-hot, #ff3326);
+  box-shadow: 0 0 15px rgba(255, 51, 38, 0.6);
+  transform: translateY(-1px);
+}
+
+/* ---------- Stage & Phase Layout ---------- */
+.cutscene-stage {
+  position: relative;
+  z-index: 20;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px var(--gutter, 20px);
+  box-sizing: border-box;
+}
+
+/* ---------- Phase 3 & 4: Dark Void with Spooky Figures & Glowing Eyes ---------- */
+.cutscene-void-figures {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 1.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.cutscene-void-figures.revealed {
+  opacity: 1;
+}
+
+.void-shadow-fig {
+  position: absolute;
+  filter: brightness(0) drop-shadow(0 0 25px rgba(0, 0, 0, 0.95));
+  opacity: 0.88;
+  will-change: transform;
+}
+
+.fig-reaper {
+  left: -2%;
+  bottom: 4%;
+  height: clamp(380px, 55vh, 700px);
+  animation: figureBreathe 5.2s ease-in-out infinite alternate;
+}
+.fig-reaper img { height: 100%; width: auto; display: block; }
+
+.fig-contorted {
+  right: 2%;
+  bottom: 5%;
+  height: clamp(320px, 46vh, 580px);
+  animation: figureBreathe 4.4s ease-in-out 1.2s infinite alternate;
+}
+.fig-contorted img { height: 100%; width: auto; display: block; }
+
+.fig-horde {
+  left: 50%;
+  bottom: 0%;
+  transform: translateX(-50%) scale(1.15);
+  height: clamp(260px, 38vh, 480px);
+  opacity: 0.42;
+  filter: brightness(0) blur(2.5px);
+}
+.fig-horde img { height: 100%; width: auto; display: block; }
+
+.fig-nosferatu {
+  left: 16%;
+  bottom: 8%;
+  height: clamp(300px, 46vh, 580px);
+  animation: figureBreathe 4.8s ease-in-out 0.6s infinite alternate;
+}
+.fig-nosferatu img { height: 100%; width: auto; display: block; }
+
+@keyframes figureBreathe {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-10px); }
+}
+
+/* Eerie Glowing Eyes in the Shadows */
+.spooky-eyes-wrap {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.spooky-eye-pair {
+  position: absolute;
+  display: flex;
+  gap: 16px;
+}
+
+.spooky-eye-pair .eye {
+  width: 6px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ff3326;
+  box-shadow: 0 0 10px #ff3326, 0 0 22px rgba(255, 51, 38, 0.95);
+  animation: eyePulse 3.8s ease-in-out infinite alternate;
+}
+
+.eye-pair-1 { left: 9%; top: 48%; }
+.eye-pair-2 { right: 15%; top: 52%; }
+.eye-pair-2 .eye { background: #ff7a1a; box-shadow: 0 0 10px #ff7a1a, 0 0 22px rgba(255, 122, 26, 0.95); animation-delay: 1.2s; }
+.eye-pair-3 { left: 23%; top: 38%; }
+.eye-pair-3 .eye { animation-delay: 2.1s; }
+.eye-pair-4 { right: 28%; top: 62%; }
+.eye-pair-4 .eye { animation-delay: 0.7s; }
+
+@keyframes eyePulse {
+  0%, 100% { opacity: 0.95; transform: scaleY(1); }
+  47% { opacity: 0.9; transform: scaleY(1.1); }
+  50% { opacity: 0; transform: scaleY(0.08); } /* Blinking */
+  53% { opacity: 0.95; transform: scaleY(1.1); }
+}
+
+/* ---------- Big Animated Cinematic Typography with Subtle Red Glow ---------- */
+.cutscene-cinema-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 var(--gutter, 24px);
+  pointer-events: none;
+}
+
+.cinema-text-stage {
+  max-width: 1040px;
+  width: 100%;
+  text-align: center;
+  padding: 0 20px;
+  position: relative;
+}
+
+.cinema-text-stage::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  height: 240px;
+  background: radial-gradient(ellipse at center, rgba(200, 20, 15, 0.22) 0%, rgba(40, 4, 6, 0.1) 50%, transparent 75%);
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(28px);
+  animation: bloodAuraBreathe 6s ease-in-out infinite alternate;
+}
+
+@keyframes bloodAuraBreathe {
+  0% { opacity: 0.55; transform: translate(-50%, -50%) scale(0.95); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+}
+
+/* Cinematic Narrative Header / Emergency Kicker */
+.cinema-text-kicker {
+  margin: 0 0 16px;
+  font-family: var(--f-pixel), monospace;
+  font-size: clamp(12px, 1.8vw, 16px);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #ff3326;
+  text-shadow: 0 0 12px rgba(255, 51, 38, 0.9);
+  animation: kickerGlitchBlink 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes kickerGlitchBlink {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); text-shadow: 0 0 18px #ff2216; }
+}
+
+/* ---------- Cinematic Spooky Blood Inscription Typography ---------- */
+.cinema-text-line {
+  margin: 0;
+  font-family: var(--f-body, 'IM Fell English', Georgia, serif);
+  font-style: italic;
+  font-size: clamp(28px, 4.6vw, 54px);
+  line-height: 1.45;
+  letter-spacing: 0.035em;
+  color: #fae4e1;
+  text-align: center;
+  position: relative;
+  user-select: none;
+  transition: transform 0.3s ease, font-size 0.3s ease;
+}
+
+/* Big Countdown Numbers (Three..., Two..., One...) */
+.cinema-text-line.countdown-num {
+  font-family: var(--f-pixel), 'Rye', serif;
+  font-size: clamp(52px, 9vw, 98px);
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #ffffff;
+  text-shadow: 
+    0 0 20px #ff2216,
+    0 0 50px #cc0000,
+    0 4px 20px rgba(0, 0, 0, 0.98);
+  animation: countdownPop 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.25) both;
+}
+
+@keyframes countdownPop {
+  0% { transform: scale(0.65) translateY(-10px); opacity: 0; filter: blur(8px); }
+  60% { transform: scale(1.1) translateY(2px); opacity: 1; filter: blur(0px); }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* Climax Battle Cry: LET THE HAUNT BEGIN! */
+.cinema-text-line.haunt-climax {
+  font-family: var(--f-pixel), 'Rye', 'Oswald', sans-serif;
+  font-size: clamp(34px, 7vw, 76px);
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.22;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 
+    0 0 25px #ff1a10, 
+    0 0 60px #ff2216, 
+    0 0 110px #b30006, 
+    0 0 170px rgba(255, 30, 20, 0.95),
+    0 6px 28px rgba(0, 0, 0, 0.98);
+  animation: hauntClimaxTremor 0.28s ease-in-out infinite alternate;
+}
+
+@keyframes hauntClimaxTremor {
+  0% { transform: scale(1) translate(0, 0); }
+  50% { transform: scale(1.03) translate(-3px, 2px); }
+  100% { transform: scale(1.02) translate(3px, -2px); }
+}
+
+/* Word Container (Prevents mid-word line splitting) */
+.blood-word {
+  display: inline-block;
+  white-space: nowrap;
+  margin: 0 0.18em;
+  vertical-align: baseline;
+}
+
+/* Individual Inscribed Blood Character */
+.blood-char {
+  display: inline-block;
+  position: relative;
+  color: #fae4e1;
+  text-shadow: 
+    0 0 12px rgba(255, 34, 22, 0.95),
+    0 0 28px rgba(200, 15, 10, 0.75),
+    0 3px 14px rgba(0, 0, 0, 0.98);
+  will-change: transform, opacity, filter, color;
+}
+
+/* Pending: Invisible before bleeding in */
+.blood-char.pending {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-14px) scaleY(1.45) scaleX(0.78);
+  filter: blur(6px);
+}
+
+/* Bleeding In Animation (Wet arterial crimson streak -> coalesces into cursed bone-white) */
+.blood-char.bleeding {
+  visibility: visible;
+  animation: bloodBleedIn 0.52s cubic-bezier(0.18, 0.89, 0.32, 1.25) forwards;
+}
+
+@keyframes bloodBleedIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-16px) scaleY(1.55) scaleX(0.75);
+    color: #ff2216;
+    filter: blur(6px) brightness(2.4);
+    text-shadow: 
+      0 0 18px #ff1a10,
+      0 8px 24px #cc0000,
+      0 14px 32px rgba(255, 30, 20, 0.95);
+  }
+  38% {
+    opacity: 1;
+    transform: translateY(4px) scaleY(1.18) scaleX(0.92);
+    color: #e60000;
+    filter: blur(1.5px) brightness(1.6);
+    text-shadow: 
+      0 0 22px #ff2216,
+      0 4px 16px #aa0000,
+      0 10px 24px rgba(180, 0, 0, 0.9);
+  }
+  70% {
+    transform: translateY(-1px) scale(1.04);
+    filter: blur(0px) brightness(1.2);
+    color: #ff9990;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0px) brightness(1);
+    color: #fae4e1;
+    text-shadow: 
+      0 0 12px rgba(255, 34, 22, 0.95),
+      0 0 28px rgba(200, 15, 10, 0.75),
+      0 3px 14px rgba(0, 0, 0, 0.98);
+  }
+}
+
+/* Viscous Blood Drip Oozing Downward from Letters */
+.blood-char.has-drip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -2px;
+  width: 2.2px;
+  height: 0px;
+  background: linear-gradient(180deg, #ff2216 0%, #aa0000 65%, #440000 100%);
+  border-radius: 0 0 3px 3px;
+  box-shadow: 0 0 6px rgba(255, 34, 22, 0.85);
+  transform: translateX(-50%);
+  animation: bloodOozeDrip 2.0s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation-delay: 0.25s;
+  pointer-events: none;
+}
+
+@keyframes bloodOozeDrip {
+  0% { height: 0px; opacity: 0; }
+  25% { height: 5px; opacity: 1; }
+  65% { height: 13px; opacity: 0.95; }
+  100% { height: 17px; opacity: 0.8; }
+}
+
+.blood-char.has-drip::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -17px;
+  width: 4px;
+  height: 5px;
+  background: radial-gradient(circle at 35% 30%, #ff6655, #b30000 60%, #330000 100%);
+  border-radius: 50% 50% 60% 60%;
+  box-shadow: 0 0 6px #ff2216;
+  transform: translateX(-50%) scale(0);
+  animation: bloodTearDrop 2.0s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation-delay: 0.25s;
+  pointer-events: none;
+}
+
+@keyframes bloodTearDrop {
+  0%, 35% { transform: translateX(-50%) scale(0); opacity: 0; }
+  55% { transform: translateX(-50%) scale(1); opacity: 1; }
+  80% { transform: translateX(-50%) translateY(4px) scale(1.1); opacity: 1; }
+  100% { transform: translateX(-50%) translateY(14px) scale(0.6); opacity: 0; }
+}
+
+/* Sentence Exit: Letters liquefy into dripping blood mist */
+.cinema-text-line.exit .blood-char {
+  animation: bloodDissolveExit 0.62s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes bloodDissolveExit {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0px);
+  }
+  35% {
+    color: #ff2216;
+    filter: blur(2.5px) brightness(1.6);
+    transform: translateY(5px) scaleY(1.25);
+    text-shadow: 0 0 16px #ff2216, 0 8px 20px #990000;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(18px) scaleY(1.4) scaleX(0.85);
+    filter: blur(9px) brightness(0.3);
+  }
+}
+
+/* ---------- Phase 5: Climax End Card ---------- */
+.cutscene-endcard {
+  position: relative;
+  z-index: 50;
+  max-width: 740px;
+  width: 90vw;
+  text-align: center;
+  padding: 44px 32px;
+  background: radial-gradient(ellipse at 50% 50%, #1e0508 0%, #080102 95%);
+  border: 1px solid rgba(255, 51, 38, 0.5);
+  box-shadow: 0 0 65px rgba(196, 22, 28, 0.5);
+  clip-path: var(--chamfer, polygon(16px 0, calc(100% - 16px) 0, 100% 16px, 100% calc(100% - 16px), calc(100% - 16px) 100%, 16px 100%, 0 calc(100% - 16px), 0 16px));
+  animation: cardRise 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes cardRise {
+  from { opacity: 0; transform: translateY(30px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.endcard-kicker {
+  margin: 0 0 10px;
+  font-family: var(--f-sc, 'IM Fell English SC', serif);
+  font-size: 14px;
+  letter-spacing: 0.28em;
+  color: var(--ember, #ff7a1a);
+}
+
+.endcard-title {
+  margin: 0;
+  font-family: var(--f-type, 'Rye', serif);
+  font-size: clamp(30px, 6.5vw, 52px);
+  line-height: 1.1;
+  letter-spacing: 0.05em;
+  color: #fff;
+  text-shadow: 0 0 20px rgba(255, 51, 38, 0.8);
+}
+
+.highlight-glitch {
+  color: var(--blood-hot, #ff3326);
+  text-shadow: 0 0 25px rgba(255, 51, 38, 0.95);
+}
+
+.endcard-desc {
+  margin: 20px auto 30px;
+  font-family: var(--f-sans, system-ui, sans-serif);
+  font-size: clamp(16px, 2.2vw, 19px);
+  color: var(--bone-dim, #d0b8a8);
+  max-width: 540px;
+  line-height: 1.5;
+}
+
+.endcard-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.endcard-proceed-btn {
+  --h: 60px;
+  font-size: 20px;
+  min-width: 320px;
+  box-shadow: 0 0 30px rgba(255, 51, 38, 0.6);
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.08em;
+}
+
+.endcard-proceed-btn:hover {
+  box-shadow: 0 0 50px rgba(255, 51, 38, 0.95);
+  transform: translateY(-2px);
+}
+
+.endcard-replay-btn {
+  background: none;
+  border: none;
+  font-family: var(--f-pixel), monospace;
+  font-size: 13px;
+  color: rgba(244, 227, 215, 0.6);
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.endcard-replay-btn:hover { color: #fff; }
+
+/* ============ FATE CARD CHARACTER DOSSIER REVEAL ============ */
+.card-media-wrap {
+  position: relative;
+  margin: 12px auto 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.card-portrait-frame {
+  position: relative;
+  width: 160px;
+  height: 200px;
+  border-radius: 8px;
+  border: 2px solid var(--accent, #c4161c);
+  box-shadow: 
+    0 0 30px color-mix(in srgb, var(--accent, #c4161c) 50%, transparent),
+    inset 0 0 20px rgba(0, 0, 0, 0.9);
+  overflow: hidden;
+  background: #0d0204;
+}
+
+.card-portrait-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+
+.card-portrait-vignette {
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.85);
+  pointer-events: none;
+}
+
+/* the sponsor reveal shows the round Kapidhwaj badge as-is: no frame, no vignette, no corner glyph */
+.card-portrait-frame.is-logo {
+  width: 150px;
+  height: 150px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  overflow: visible;
+}
+.card-portrait-frame.is-logo .card-portrait-vignette,
+.card-portrait-frame.is-logo .card-portrait-badge { display: none; }
+
+.card-portrait-badge {
+  position: absolute;
+  bottom: 6px;
+  right: 8px;
+  font-size: 22px;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.9));
+}
+
+.card-archetype-wrap {
+  margin: 6px 0 4px;
+}
+
+.card-archetype-tag {
+  display: inline-block;
+  font-family: var(--f-pixel), monospace;
+  font-size: 11.5px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #ffb347;
+  background: rgba(255, 179, 71, 0.12);
+  border: 1px solid rgba(255, 179, 71, 0.4);
+  padding: 3px 14px;
+  border-radius: 12px;
+}
+
+.card-brief-box {
+  margin: 10px 0 6px;
+  padding: 10px 14px;
+  background: rgba(18, 4, 7, 0.9);
+  border: 1px solid rgba(240, 115, 90, 0.35);
+  border-radius: 6px;
+  text-align: left;
+}
+
+.card-brief-label {
+  display: block;
+  font-family: var(--f-pixel), monospace;
+  font-size: 10.5px;
+  letter-spacing: .12em;
+  color: #ff7a1a;
+  margin-bottom: 3px;
+}
+
+.card-brief-text {
+  margin: 0;
+  font-family: var(--f-sans), system-ui, sans-serif;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: #f7ebe1;
+}
+
+.card-quote {
+  margin: 8px 0 4px;
+  padding: 8px 14px;
+  border-left: 2px solid var(--accent, #c4161c);
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 0 6px 6px 0;
+  font-family: var(--f-serif, 'IM Fell English', serif);
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #ffd8cc;
+  text-align: left;
+}
+
+/* ============ PROLOGUE DECREE MODAL ============ */
+.prologue-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 950;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--gutter, 20px);
+}
+
+.prologue-box {
+  width: min(640px, 94vw);
+  max-height: 88vh;
+  overflow-y: auto;
+  background: radial-gradient(ellipse at 50% 20%, #1c0507 0%, #0a0102 90%);
+  border: 1px solid rgba(255, 51, 38, 0.4);
+  box-shadow: 0 0 60px rgba(196, 22, 28, 0.45);
+  padding: 36px 30px;
+  text-align: center;
+}
+
+.prologue-kicker {
+  display: block;
+  font-family: var(--f-pixel), monospace;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  color: var(--blood-hot, #ff3326);
+  margin-bottom: 6px;
+}
+
+.prologue-title {
+  margin: 0;
+  font-family: var(--f-type, 'Rye', serif);
+  font-size: clamp(28px, 5.5vw, 42px);
+  color: #fff;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 15px rgba(255, 51, 38, 0.7);
+}
+
+.prologue-sub {
+  margin: 6px 0 20px;
+  font-family: var(--f-sc, 'IM Fell English SC', serif);
+  font-size: 14px;
+  letter-spacing: 0.16em;
+  color: var(--ember, #ff7a1a);
+}
+
+.prologue-body {
+  font-family: var(--f-serif, 'IM Fell English', serif);
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--bone, #f4e3d7);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.prologue-stanza p {
+  margin: 4px 0;
+}
+
+.prologue-em {
+  color: #ff9e80;
+  font-style: italic;
+}
+
+.prologue-highlight {
+  padding: 12px 16px;
+  background: rgba(255, 51, 38, 0.08);
+  border-left: 3px solid var(--blood-hot, #ff3326);
+  border-right: 3px solid var(--blood-hot, #ff3326);
+  border-radius: 4px;
+}
+
+.prologue-destiny {
+  color: var(--blood-hot, #ff3326);
+  font-weight: bold;
+  font-family: var(--f-sans, system-ui, sans-serif);
+  letter-spacing: 0.04em;
+}
+
+.prologue-watching {
+  color: var(--ember, #ff7a1a);
+  font-style: italic;
+}
+
+.prologue-coda {
+  margin-top: 10px;
+  font-family: var(--f-sc, 'IM Fell English SC', serif);
+  font-size: 19px;
+  letter-spacing: 0.14em;
+  color: #fff;
+}
+
+.prologue-foot {
+  margin-top: 24px;
+}
+
+.wheel-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.prologue-pill {
+  font-family: var(--f-pixel), monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 4px 12px;
+  border-radius: 12px;
+  background: rgba(255, 51, 38, 0.15);
+  border: 1px solid rgba(255, 51, 38, 0.4);
+  color: var(--bone, #f4e3d7);
+  cursor: pointer;
+  vertical-align: middle;
+  transition: all 0.2s ease;
+}
+
+.prologue-pill:hover {
+  background: var(--blood-hot, #ff3326);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(255, 51, 38, 0.6);
+}
+
+/* ---------- Prominent System Shutdown Banner & Locked State ---------- */
+.system-shutdown-banner {
+  background: linear-gradient(90deg, rgba(150, 0, 0, 0.95), rgba(220, 20, 20, 0.98), rgba(150, 0, 0, 0.95));
+  border-bottom: 2px solid #ff3326;
+  box-shadow: 0 0 30px rgba(255, 34, 22, 0.75);
+  color: #fff;
+  font-family: var(--f-pixel), monospace;
+  font-size: clamp(12px, 2vw, 16px);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 10px 18px;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 95;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  animation: shutdownBannerPulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes shutdownBannerPulse {
+  0% { filter: brightness(0.95); }
+  100% { filter: brightness(1.25); box-shadow: 0 0 45px rgba(255, 34, 22, 0.9); }
+}
+
+.sub-locked-badge {
+  background: rgba(30, 2, 4, 0.9);
+  border: 1px solid #ff3326;
+  color: #ff3326;
+  font-family: var(--f-pixel), monospace;
+  font-size: 13px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 10px 16px;
+  border-radius: 4px;
+  text-align: center;
+  margin-top: 14px;
+  box-shadow: 0 0 18px rgba(255, 34, 22, 0.4);
+}
+
+.sub-locked-badge.bad {
+  border-color: #ff2216;
+  background: rgba(45, 2, 5, 0.95);
+  color: #ff6655;
+}
+
+/* ---------- Alliance Protocol Endcard Sponsor Badge ---------- */
+.endcard-sponsor-badge {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(25, 8, 4, 0.88);
+  border: 1px solid rgba(255, 140, 0, 0.45);
+  box-shadow: 0 0 24px rgba(255, 100, 0, 0.25), inset 0 0 14px rgba(0, 0, 0, 0.6);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 14px 0;
+  text-align: left;
+}
+
+.endcard-sponsor-logo {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+}
+
+.endcard-sponsor-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.endcard-sponsor-info strong {
+  color: #ffaa00;
+  font-family: var(--f-pixel, monospace);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+}
+
+.endcard-sponsor-info p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #fae4e1;
+}
+
+.endcard-ig-link {
+  display: inline-block;
+  color: #ffaa00;
+  font-weight: 600;
+  text-decoration: underline;
+  margin-top: 4px;
+  font-size: 12.5px;
+}
+
+.endcard-sponsor-rules {
+  background: rgba(14, 2, 4, 0.85);
+  border-left: 3px solid #ffaa00;
+  padding: 10px 14px;
+  border-radius: 0 6px 6px 0;
+  text-align: left;
+  margin-top: 10px;
+}
+
+.endcard-sponsor-rules strong {
+  display: block;
+  color: #ffbb33;
+  font-size: 12.5px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.endcard-sponsor-rules ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #f7deda;
+}

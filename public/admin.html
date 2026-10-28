@@ -1,0 +1,1471 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080203">
+  <meta name="color-scheme" content="dark">
+  <title>MTC · Master Admin &amp; Judging Portal</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%96%EF%B8%8F%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rye&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Oswald:wght@400;500;600;700&family=Special+Elite&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #070203;
+      --bg-card: #120407;
+      --bg-elevated: #1a060a;
+      --border-dim: rgba(175, 52, 44, 0.34);
+      --border-strong: rgba(255, 78, 56, 0.65);
+      --bone: #f4e3d7;
+      --bone-muted: #ba988e;
+      --crimson: #d32128;
+      --ember: #ff4b36;
+      --gold: #ffb347;
+      --emerald: #38e070;
+      --cyan: #56c8ff;
+      --f-title: "Rye", Georgia, serif;
+      --f-serif: "IM Fell English", Georgia, serif;
+      --f-sans: "Oswald", sans-serif;
+      --f-mono: "Special Elite", "Consolas", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      background:
+        radial-gradient(65vmax 45vmax at 85% 8%, rgba(190, 26, 26, 0.16), transparent 65%),
+        radial-gradient(60vmax 40vmax at 12% 0%, rgba(110, 14, 20, 0.2), transparent 60%),
+        var(--bg-deep);
+      color: var(--bone);
+      font-family: var(--f-serif);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ============ TOPBAR ============ */
+    .admin-header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 28px;
+      background: rgba(9, 2, 4, 0.92);
+      border-bottom: 1px solid var(--border-dim);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--bone);
+    }
+
+    .brand img {
+      width: 38px;
+      height: 38px;
+      object-fit: contain;
+    }
+
+    .brand-title {
+      font: 600 15px/1.15 var(--f-sans);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .brand-title small {
+      display: block;
+      font-size: 10px;
+      color: var(--ember);
+      letter-spacing: 2px;
+      margin-top: 2px;
+    }
+
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid var(--border-dim);
+      background: rgba(28, 7, 11, 0.85);
+      color: var(--bone);
+      font: 600 12px/1 var(--f-sans);
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      padding: 10px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+    }
+
+    .btn:hover:not(:disabled) {
+      border-color: var(--ember);
+      background: rgba(58, 12, 18, 0.95);
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #a8121a, #d9232a);
+      border-color: #ff5d47;
+      color: #fff;
+      box-shadow: 0 0 22px rgba(217, 35, 42, 0.3);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, #c4161c, #ff3326);
+    }
+
+    .btn-gold {
+      background: linear-gradient(135deg, rgba(145, 72, 10, 0.9), rgba(195, 102, 16, 0.92));
+      border-color: #ffbe5c;
+      color: #fff6e5;
+    }
+
+    /* ============ LOGIN VIEW ============ */
+    .login-wrap {
+      flex: 1;
+      display: grid;
+      place-items: center;
+      padding: 32px 16px;
+    }
+
+    .login-card {
+      width: min(460px, 100%);
+      background: var(--bg-card);
+      border: 1px solid var(--border-strong);
+      border-radius: 6px;
+      padding: 32px 28px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.85);
+    }
+
+    .login-kicker {
+      margin: 0 0 6px;
+      font: 600 11px/1.2 var(--f-sans);
+      letter-spacing: 2.2px;
+      color: var(--ember);
+      text-transform: uppercase;
+    }
+
+    .login-title {
+      margin: 0 0 10px;
+      font: 400 32px/1.15 var(--f-title);
+      color: var(--bone);
+    }
+
+    .login-sub {
+      margin: 0 0 22px;
+      font-size: 16px;
+      line-height: 1.5;
+      color: var(--bone-muted);
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .field label {
+      font: 600 11px/1.2 var(--f-sans);
+      letter-spacing: 1.5px;
+      color: #ff9d8a;
+      text-transform: uppercase;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      background: #070102;
+      border: 1px solid rgba(185, 58, 48, 0.5);
+      color: var(--bone);
+      padding: 11px 13px;
+      border-radius: 4px;
+      font: 14px/1.4 var(--f-mono);
+      outline: none;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: var(--ember);
+      box-shadow: 0 0 12px rgba(255, 75, 54, 0.3);
+    }
+
+    .login-error {
+      margin: 0 0 14px;
+      padding: 10px 12px;
+      background: rgba(110, 14, 18, 0.45);
+      border-left: 3px solid var(--ember);
+      color: #ff9e9e;
+      font: 12px/1.4 var(--f-mono);
+    }
+
+    /* ============ DASHBOARD VIEW ============ */
+    .dashboard-wrap {
+      width: min(1480px, 100%);
+      margin: 0 auto;
+      padding: 24px 24px 64px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    /* KPI Summary Bar */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dim);
+      border-top: 2px solid var(--ember);
+      border-radius: 5px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .kpi-card.gold { border-top-color: var(--gold); }
+    .kpi-card.emerald { border-top-color: var(--emerald); }
+    .kpi-card.cyan { border-top-color: var(--cyan); }
+
+    .kpi-label {
+      font: 600 10px/1.2 var(--f-sans);
+      letter-spacing: 1.8px;
+      color: var(--bone-muted);
+      text-transform: uppercase;
+    }
+
+    .kpi-val {
+      font: 700 28px/1.1 var(--f-sans);
+      font-variant-numeric: tabular-nums;
+      color: var(--bone);
+    }
+
+    .kpi-sub {
+      font: 11px/1.3 var(--f-mono);
+      color: #9e7d74;
+    }
+
+    /* Controls Bar */
+    .controls-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-dim);
+      border-radius: 6px;
+      padding: 14px 18px;
+    }
+
+    .filter-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .filter-tab {
+      appearance: none;
+      border: 1px solid rgba(150, 48, 42, 0.4);
+      background: rgba(15, 3, 5, 0.8);
+      color: var(--bone-muted);
+      font: 600 11px/1 var(--f-sans);
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      padding: 9px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    .filter-tab.is-active {
+      background: linear-gradient(135deg, #a8121a, #d9232a);
+      border-color: #ff624d;
+      color: #fff;
+    }
+
+    .search-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      justify-content: flex-end;
+    }
+
+    .search-input {
+      min-width: 250px;
+      background: #070102;
+      border: 1px solid rgba(175, 52, 44, 0.48);
+      color: var(--bone);
+      padding: 9px 13px;
+      border-radius: 4px;
+      font: 13px/1.2 var(--f-mono);
+    }
+
+    .sort-select {
+      background: #070102;
+      border: 1px solid rgba(175, 52, 44, 0.48);
+      color: var(--bone);
+      padding: 9px 12px;
+      border-radius: 4px;
+      font: 600 11px/1.2 var(--f-sans);
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+    }
+
+    /* Judge Identity Strip */
+    .judge-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 10px 16px;
+      background: rgba(25, 7, 10, 0.72);
+      border: 1px solid rgba(255, 179, 71, 0.35);
+      border-radius: 5px;
+      font: 12px/1.4 var(--f-mono);
+      color: #f3d2a2;
+    }
+
+    .judge-strip-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .judge-name-input {
+      background: #070102;
+      border: 1px solid rgba(255, 179, 71, 0.5);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 3px;
+      font: 12px/1.2 var(--f-mono);
+      width: 210px;
+    }
+
+    /* Team Cards / Rows List */
+    .teams-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .team-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dim);
+      border-radius: 6px;
+      overflow: hidden;
+      transition: border-color 0.2s ease;
+    }
+
+    .team-card:hover {
+      border-color: rgba(255, 92, 68, 0.55);
+    }
+
+    .team-card.has-website {
+      border-left: 4px solid var(--emerald);
+    }
+
+    .team-card.r1-active {
+      border-left: 4px solid var(--gold);
+    }
+
+    .team-card-main {
+      display: grid;
+      grid-template-columns: 1.35fr 0.9fr 1.2fr 1.15fr 1.4fr;
+      gap: 16px;
+      padding: 18px 20px;
+      align-items: start;
+    }
+
+    .col-heading {
+      display: block;
+      font: 600 10px/1.2 var(--f-sans);
+      letter-spacing: 1.6px;
+      color: #b5897f;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .team-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 4px;
+    }
+
+    .team-rank {
+      font: 700 12px/1 var(--f-sans);
+      color: var(--gold);
+      background: rgba(160, 82, 12, 0.3);
+      border: 1px solid rgba(255, 179, 71, 0.45);
+      padding: 3px 7px;
+      border-radius: 3px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .team-name {
+      margin: 0;
+      font: 600 19px/1.2 var(--f-sans);
+      letter-spacing: 0.6px;
+      color: #fff2ea;
+    }
+
+    .roster-meta {
+      font: 12px/1.5 var(--f-mono);
+      color: var(--bone-muted);
+      margin: 4px 0 0;
+    }
+
+    .roster-meta strong {
+      color: var(--bone);
+    }
+
+    /* Status Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 3px;
+      font: 600 10px/1.2 var(--f-sans);
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+    }
+
+    .badge-submitted {
+      background: rgba(20, 90, 42, 0.45);
+      border: 1px solid rgba(56, 224, 112, 0.55);
+      color: #98ffba;
+    }
+
+    .badge-progress {
+      background: rgba(120, 62, 10, 0.45);
+      border: 1px solid rgba(255, 179, 71, 0.55);
+      color: #ffd791;
+    }
+
+    .badge-idle {
+      background: rgba(45, 18, 22, 0.6);
+      border: 1px solid rgba(150, 75, 70, 0.4);
+      color: #b38f86;
+    }
+
+    /* Round 1 Score Box */
+    .score-pill {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 4px;
+      margin-top: 6px;
+      padding: 6px 11px;
+      background: rgba(8, 2, 4, 0.9);
+      border: 1px solid rgba(255, 92, 68, 0.4);
+      border-radius: 4px;
+      font: 700 20px/1 var(--f-sans);
+      font-variant-numeric: tabular-nums;
+      color: #fff;
+    }
+
+    .score-pill small {
+      font-size: 12px;
+      color: var(--bone-muted);
+      font-weight: 400;
+    }
+
+    .r1-sub-detail {
+      margin-top: 6px;
+      font: 11px/1.4 var(--f-mono);
+      color: var(--bone-muted);
+    }
+
+    /* Round 2 Fates */
+    .fates-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font: 12px/1.4 var(--f-mono);
+    }
+
+    .fate-item {
+      display: flex;
+      gap: 6px;
+      align-items: baseline;
+    }
+
+    .fate-tag {
+      font: 600 10px/1 var(--f-sans);
+      letter-spacing: 1px;
+      color: #ff9c87;
+      min-width: 44px;
+      text-transform: uppercase;
+    }
+
+    .fate-val {
+      color: var(--bone);
+      word-break: break-word;
+    }
+
+    /* Website Submission Links */
+    .links-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .sub-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 11px;
+      border-radius: 4px;
+      font: 600 11px/1.2 var(--f-sans);
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: 1px solid rgba(86, 200, 255, 0.45);
+      background: rgba(12, 38, 58, 0.5);
+      color: #a8e4ff;
+      transition: all 0.15s ease;
+    }
+
+    .sub-link:hover {
+      background: rgba(20, 62, 92, 0.8);
+      border-color: #7cd4ff;
+      color: #fff;
+    }
+
+    .sub-link.live-site {
+      background: rgba(16, 78, 38, 0.55);
+      border-color: rgba(56, 224, 112, 0.6);
+      color: #a6ffbe;
+    }
+
+    .sub-link.live-site:hover {
+      background: rgba(24, 108, 52, 0.85);
+      color: #fff;
+    }
+
+    /* Inline Judging Box */
+    .judge-box {
+      background: rgba(9, 2, 4, 0.86);
+      border: 1px solid rgba(255, 179, 71, 0.38);
+      border-radius: 5px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .judge-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .judge-score-input-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .judge-score-input {
+      width: 72px;
+      background: #040102;
+      border: 1px solid rgba(255, 179, 71, 0.65);
+      color: var(--gold);
+      padding: 6px 8px;
+      border-radius: 3px;
+      font: 700 16px/1 var(--f-sans);
+      font-variant-numeric: tabular-nums;
+      text-align: center;
+    }
+
+    .total-score-badge {
+      font: 700 13px/1 var(--f-sans);
+      font-variant-numeric: tabular-nums;
+      color: #fff3db;
+      background: rgba(165, 88, 14, 0.35);
+      border: 1px solid rgba(255, 179, 71, 0.5);
+      padding: 5px 9px;
+      border-radius: 3px;
+    }
+
+    .quick-score-chips {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .score-chip {
+      appearance: none;
+      border: 1px solid rgba(255, 179, 71, 0.35);
+      background: rgba(35, 14, 8, 0.7);
+      color: #e9c596;
+      font: 600 10px/1 var(--f-sans);
+      padding: 4px 7px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .score-chip:hover {
+      border-color: var(--gold);
+      color: #fff;
+    }
+
+    .judge-desc-input {
+      width: 100%;
+      min-height: 58px;
+      resize: vertical;
+      background: #040102;
+      border: 1px solid rgba(175, 52, 44, 0.45);
+      color: var(--bone);
+      padding: 7px 9px;
+      border-radius: 3px;
+      font: 12px/1.4 var(--f-mono);
+    }
+
+    .judge-actions-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .judge-save-status {
+      font: 11px/1.2 var(--f-mono);
+      color: var(--emerald);
+    }
+
+    .btn-sm {
+      padding: 7px 12px;
+      font-size: 11px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 56px 20px;
+      background: var(--bg-card);
+      border: 1px dashed var(--border-dim);
+      border-radius: 6px;
+      color: var(--bone-muted);
+      font: 16px/1.5 var(--f-mono);
+    }
+
+    @media (max-width: 1180px) {
+      .kpi-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .team-card-main {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .team-card-main {
+        grid-template-columns: 1fr;
+      }
+      .admin-header {
+        padding: 12px 16px;
+      }
+      .dashboard-wrap {
+        padding: 16px 12px 48px;
+      }
+    }
+
+    @media print {
+      body { background: #fff !important; color: #111 !important; }
+      .admin-header, .judge-strip, .controls-bar, .quick-score-chips, .save-judge-btn, .unlock-r1-btn { display: none !important; }
+      .team-card { break-inside: avoid; border: 1px solid #999 !important; background: #fff !important; color: #111 !important; margin-bottom: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="admin-header">
+    <a class="brand" href="./">
+      <img src="assets/mtc-logo.png" alt="MTC">
+      <span class="brand-title">MTC · Spook-A-Thon 2026<small>Unified Master Admin &amp; Judges' Board</small></span>
+    </a>
+    <nav class="header-nav">
+      <a class="btn" href="./">Round 1 Quiz ↗</a>
+      <a class="btn" href="/round2/">Round 2 Wheel ↗</a>
+      <button class="btn btn-gold" id="exportCsvBtn" type="button" hidden>📊 Export Spreadsheet (.CSV)</button>
+      <button class="btn" id="printBoardBtn" type="button" hidden>🖨️ Print Board</button>
+      <button class="btn" id="refreshBtn" type="button" hidden>↻ Refresh</button>
+      <button class="btn" id="logoutBtn" type="button" hidden>Sign Out</button>
+    </nav>
+  </header>
+
+  <!-- ============ LOGIN VIEW ============ -->
+  <main class="login-wrap" id="loginView">
+    <section class="login-card" aria-labelledby="loginTitle">
+      <p class="login-kicker">Restricted Clearance · Organizers &amp; Judges</p>
+      <h1 class="login-title" id="loginTitle">Admin &amp; Judges' Board</h1>
+      <p class="login-sub">Enter the Admin or Judges passphrase to view live Round 1 marks, Round 2 Grimoire fates, submitted websites, and score teams (0–10).</p>
+      <p class="login-error" id="loginError" role="alert" hidden></p>
+      <form id="loginForm" autocomplete="off" novalidate>
+        <div class="field">
+          <label for="loginPassword">Admin / Judges Passphrase *</label>
+          <input type="password" id="loginPassword" required placeholder="Enter passphrase (e.g. MEOW or judges)..." autocomplete="current-password">
+        </div>
+        <button class="btn btn-primary" id="loginSubmitBtn" type="submit" style="width: 100%; justify-content: center; padding: 13px;">
+          Unlock Admin &amp; Judges' Board →
+        </button>
+      </form>
+    </section>
+  </main>
+
+  <!-- ============ DASHBOARD VIEW ============ -->
+  <main class="dashboard-wrap" id="dashboardView" hidden>
+    <!-- KPIs -->
+    <section class="kpi-grid" aria-label="Event summary metrics">
+      <div class="kpi-card">
+        <span class="kpi-label">Total Teams</span>
+        <strong class="kpi-val" id="kpiTotal">0</strong>
+        <span class="kpi-sub">Registered in database</span>
+      </div>
+      <div class="kpi-card gold">
+        <span class="kpi-label">R1 Started</span>
+        <strong class="kpi-val" id="kpiR1Started">0</strong>
+        <span class="kpi-sub">Active in Crypt Trials</span>
+      </div>
+      <div class="kpi-card emerald">
+        <span class="kpi-label">R1 Completed</span>
+        <strong class="kpi-val" id="kpiR1Submitted">0</strong>
+        <span class="kpi-sub">Auto-graded (/20 marks)</span>
+      </div>
+      <div class="kpi-card cyan">
+        <span class="kpi-label">R2 Active</span>
+        <strong class="kpi-val" id="kpiR2Active">0</strong>
+        <span class="kpi-sub">Spinning / Building</span>
+      </div>
+      <div class="kpi-card emerald">
+        <span class="kpi-label">Websites Submitted</span>
+        <strong class="kpi-val" id="kpiWebsites">0</strong>
+        <span class="kpi-sub">Ready for judging</span>
+      </div>
+      <div class="kpi-card gold">
+        <span class="kpi-label">Teams Judged</span>
+        <strong class="kpi-val" id="kpiJudged">0</strong>
+        <span class="kpi-sub">Scored out of 10</span>
+      </div>
+    </section>
+
+    <!-- Judge Identity, Round 2 Twist Timer Control & Live Sync Strip -->
+    <section class="judge-strip">
+      <div class="judge-strip-left">
+        <span>⚖️ <strong>Active Judge / Organizer:</strong></span>
+        <input type="text" class="judge-name-input" id="judgeNameInput" placeholder="e.g. Judge Ananya / Panel 1" maxlength="60">
+        <span style="margin-left: 10px;">⏱️ <strong>R2 Twist Timer:</strong></span>
+        <button type="button" class="score-chip r2-delay-btn" data-delay="15">15m</button>
+        <button type="button" class="score-chip r2-delay-btn" data-delay="5">5m</button>
+        <button type="button" class="score-chip r2-delay-btn" data-delay="0">0m (Unlock Twists Now)</button>
+        <span id="r2DelayStatus" style="color: var(--gold);"></span>
+      </div>
+      <div id="lastUpdatedLabel">Synced just now</div>
+    </section>
+
+    <!-- Filter & Search Controls -->
+    <section class="controls-bar">
+      <div class="filter-tabs" id="filterTabs" role="tablist">
+        <button class="filter-tab is-active" type="button" data-filter="all">All Teams</button>
+        <button class="filter-tab" type="button" data-filter="websites">🚀 Submitted Websites</button>
+        <button class="filter-tab" type="button" data-filter="r1_active">⏳ R1 In Progress</button>
+        <button class="filter-tab" type="button" data-filter="r1_done">✓ R1 Completed</button>
+        <button class="filter-tab" type="button" data-filter="r2_spinning">🎡 R2 Still Spinning</button>
+        <button class="filter-tab" type="button" data-filter="r2_waiting">⛓️ Twist Chained</button>
+        <button class="filter-tab" type="button" data-filter="r2_done">⚡ Twist Revealed</button>
+        <button class="filter-tab" type="button" data-filter="judged">⚖️ Judged</button>
+      </div>
+
+      <div class="search-group">
+        <input type="search" class="search-input" id="searchInput" placeholder="Search team name, leader, email, phone, character...">
+        <select class="sort-select" id="sortSelect" aria-label="Sort teams">
+          <option value="total_desc">Sort: Combined Score (High → Low)</option>
+          <option value="website_first">Sort: Submitted Websites First</option>
+          <option value="r1_desc">Sort: Round 1 Marks (High → Low)</option>
+          <option value="r2_desc">Sort: Judge Score (High → Low)</option>
+          <option value="recent">Sort: Recently Active</option>
+          <option value="name_asc">Sort: Team Name (A → Z)</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- Teams List -->
+    <section class="teams-list" id="teamsList" aria-live="polite"></section>
+  </main>
+
+  <script src="/round2/js/data.js"></script>
+  <script>
+    (function () {
+      "use strict";
+
+      var $ = function (id) { return document.getElementById(id); };
+      var CURSE_DATA = window.CURSE_DATA || { characters: [], uiCurses: [], twists: [] };
+
+      var allTeams = [];
+      var currentFilter = "all";
+      var searchQuery = "";
+      var sortBy = "total_desc";
+      var pollTimer = null;
+
+      var loginView = $("loginView");
+      var dashboardView = $("dashboardView");
+      var loginForm = $("loginForm");
+      var loginPassword = $("loginPassword");
+      var loginError = $("loginError");
+      var loginSubmitBtn = $("loginSubmitBtn");
+
+      var exportCsvBtn = $("exportCsvBtn");
+      var printBoardBtn = $("printBoardBtn");
+      var refreshBtn = $("refreshBtn");
+      var logoutBtn = $("logoutBtn");
+      var judgeNameInput = $("judgeNameInput");
+      var r2DelayStatus = $("r2DelayStatus");
+      var filterTabs = $("filterTabs");
+      var searchInput = $("searchInput");
+      var sortSelect = $("sortSelect");
+      var teamsList = $("teamsList");
+      var lastUpdatedLabel = $("lastUpdatedLabel");
+
+      // Restore saved Judge Name
+      try {
+        var savedJudge = localStorage.getItem("mtc.admin.judgeName");
+        if (savedJudge && judgeNameInput) judgeNameInput.value = savedJudge;
+      } catch (e) {}
+
+      if (judgeNameInput) {
+        judgeNameInput.addEventListener("input", function () {
+          try { localStorage.setItem("mtc.admin.judgeName", judgeNameInput.value.trim()); } catch (e) {}
+        });
+      }
+
+      function esc(str) {
+        return String(str == null ? "" : str).replace(/[&<>"']/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+      }
+
+      function resolveFateDetails(r2) {
+        if (!r2 || typeof r2 !== "object") {
+          return { charName: "—", problemTitle: "—", hexTitle: "—", twistTitle: "—", stage: "—" };
+        }
+        var charObj = null;
+        if (r2.charId) {
+          var cid = r2.charId === "thanos" ? "valak" : r2.charId;
+          for (var i = 0; i < CURSE_DATA.characters.length; i++) {
+            if (CURSE_DATA.characters[i].id === cid) {
+              charObj = CURSE_DATA.characters[i];
+              break;
+            }
+          }
+        }
+        var charName = charObj ? (charObj.glyph + " " + charObj.short) : (r2.charId || "—");
+        var problemObj = (charObj && typeof r2.problem === "number" && charObj.problems) ? charObj.problems[r2.problem] : null;
+        var problemTitle = problemObj ? problemObj.t : (typeof r2.problem === "number" ? "Problem #" + (r2.problem + 1) : "—");
+        var problemDesc = problemObj ? problemObj.d : "";
+        var hexObj = (typeof r2.hex === "number" && CURSE_DATA.uiCurses) ? CURSE_DATA.uiCurses[r2.hex] : null;
+        var hexTitle = hexObj ? hexObj.t : (typeof r2.hex === "number" ? "Hex #" + (r2.hex + 1) : "—");
+        var hexDesc = hexObj ? hexObj.d : "";
+        var twistObj = (typeof r2.twist === "number" && CURSE_DATA.twists) ? CURSE_DATA.twists[r2.twist] : null;
+        var twistTitle = twistObj ? twistObj.t : (typeof r2.twist === "number" ? "Twist #" + (r2.twist + 1) : (r2.stage === "twist" ? "⛓️ Chained (Waiting)" : "—"));
+        var twistDesc = twistObj ? twistObj.d : "";
+        return {
+          charName: charName,
+          problemTitle: problemTitle,
+          problemDesc: problemDesc,
+          hexTitle: hexTitle,
+          hexDesc: hexDesc,
+          twistTitle: twistTitle,
+          twistDesc: twistDesc,
+          stage: r2.stage || "—"
+        };
+      }
+
+      async function fetchAdminData() {
+        try {
+          var res = await fetch("/api/admin");
+          if (res.status === 401) {
+            showLogin();
+            return false;
+          }
+          if (!res.ok) return false;
+          var data = await res.json();
+          if (!data || !data.authenticated) {
+            showLogin();
+            return false;
+          }
+          allTeams = Array.isArray(data.teams) ? data.teams : [];
+          updateKpis(data.summary || {});
+          if (r2DelayStatus && data.r2DelayMinutes != null) {
+            r2DelayStatus.textContent = data.r2DelayMinutes === 0 ? "⚡ Unlocked (0m)" : ("⏱ " + data.r2DelayMinutes + "m delay");
+          }
+          showDashboard();
+          renderTeams();
+          if (lastUpdatedLabel) {
+            lastUpdatedLabel.textContent = "Last synced: " + new Date().toLocaleTimeString();
+          }
+          return true;
+        } catch (err) {
+          console.warn("Admin fetch error:", err);
+          return false;
+        }
+      }
+
+      function showLogin() {
+        loginView.hidden = false;
+        dashboardView.hidden = true;
+        exportCsvBtn.hidden = true;
+        if (printBoardBtn) printBoardBtn.hidden = true;
+        refreshBtn.hidden = true;
+        logoutBtn.hidden = true;
+        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+      }
+
+      function showDashboard() {
+        loginView.hidden = true;
+        dashboardView.hidden = false;
+        exportCsvBtn.hidden = false;
+        if (printBoardBtn) printBoardBtn.hidden = false;
+        refreshBtn.hidden = false;
+        logoutBtn.hidden = false;
+        if (!pollTimer) {
+          pollTimer = setInterval(fetchAdminData, 10000);
+        }
+      }
+
+      function updateKpis(summary) {
+        $("kpiTotal").textContent = String(summary.totalRegistered || allTeams.length || 0);
+        $("kpiR1Started").textContent = String(summary.r1Started || 0);
+        $("kpiR1Submitted").textContent = String(summary.r1Submitted || 0);
+        $("kpiR2Active").textContent = String(summary.r2Active || 0);
+        $("kpiWebsites").textContent = String(summary.r2Submitted || 0);
+        $("kpiJudged").textContent = String(summary.judgedCount || 0);
+      }
+
+      function filterAndSortTeams() {
+        var list = allTeams.filter(function (t) {
+          if (currentFilter === "websites" && !(t.r2 && t.r2.submissionUrl)) return false;
+          if (currentFilter === "r1_active" && t.r1Status !== "in_progress") return false;
+          if (currentFilter === "r1_done" && t.r1Status !== "submitted") return false;
+          if (currentFilter === "r2_active" && !t.r2Started) return false;
+          if (currentFilter === "r2_spinning" && !(t.r2Started && t.r2 && t.r2.stage !== "twist" && t.r2.stage !== "done")) return false;
+          if (currentFilter === "r2_waiting" && !(t.r2 && t.r2.stage === "twist" && typeof t.r2.twist !== "number")) return false;
+          if (currentFilter === "r2_done" && !(t.r2 && (typeof t.r2.twist === "number" || t.r2.stage === "done"))) return false;
+          if (currentFilter === "judged" && !(t.judging && typeof t.judging.score === "number")) return false;
+
+          if (searchQuery) {
+            var fate = resolveFateDetails(t.r2);
+            var hay = [
+              t.teamName,
+              t.leaderName,
+              t.leaderEmail,
+              t.leaderPhone,
+              t.course,
+              t.member2Name,
+              t.member2Email,
+              t.registrationCode,
+              fate.charName,
+              fate.problemTitle,
+              fate.hexTitle,
+              fate.twistTitle,
+              t.r2 && t.r2.submissionUrl,
+              t.judging && t.judging.description
+            ].filter(Boolean).join(" ").toLowerCase();
+            if (hay.indexOf(searchQuery) === -1) return false;
+          }
+          return true;
+        });
+
+        list.sort(function (a, b) {
+          if (sortBy === "website_first") {
+            var aSub = (a.r2 && a.r2.submissionUrl) ? 1 : 0;
+            var bSub = (b.r2 && b.r2.submissionUrl) ? 1 : 0;
+            if (bSub !== aSub) return bSub - aSub;
+            return (b.totalCombinedScore || 0) - (a.totalCombinedScore || 0);
+          }
+          if (sortBy === "r1_desc") {
+            return (b.r1Score || 0) - (a.r1Score || 0);
+          }
+          if (sortBy === "r2_desc") {
+            var aJ = (a.judging && typeof a.judging.score === "number") ? a.judging.score : -1;
+            var bJ = (b.judging && typeof b.judging.score === "number") ? b.judging.score : -1;
+            return bJ - aJ;
+          }
+          if (sortBy === "recent") {
+            var aT = Date.parse(a.r1UpdatedAt || (a.r2 && a.r2.submittedAt) || 0) || 0;
+            var bT = Date.parse(b.r1UpdatedAt || (b.r2 && b.r2.submittedAt) || 0) || 0;
+            return bT - aT;
+          }
+          if (sortBy === "name_asc") {
+            return String(a.teamName || "").localeCompare(String(b.teamName || ""));
+          }
+          // Default: total_desc
+          if ((b.totalCombinedScore || 0) !== (a.totalCombinedScore || 0)) {
+            return (b.totalCombinedScore || 0) - (a.totalCombinedScore || 0);
+          }
+          var aHasWeb = (a.r2 && a.r2.submissionUrl) ? 1 : 0;
+          var bHasWeb = (b.r2 && b.r2.submissionUrl) ? 1 : 0;
+          return bHasWeb - aHasWeb;
+        });
+
+        return list;
+      }
+
+      function renderTeams() {
+        // Preserve any unsaved input focus if user is actively typing
+        var activeEl = document.activeElement;
+        if (activeEl && teamsList.contains(activeEl) && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA")) {
+          return;
+        }
+
+        var filtered = filterAndSortTeams();
+        if (!filtered.length) {
+          teamsList.innerHTML = '<div class="empty-state">No teams match the current filter or search query.</div>';
+          return;
+        }
+
+        teamsList.innerHTML = filtered.map(function (t, idx) {
+          var r1Badge = t.r1Status === "submitted"
+            ? '<span class="badge badge-submitted">✓ R1 Submitted</span>'
+            : t.r1Status === "in_progress"
+            ? '<span class="badge badge-progress">⏳ R1 In Progress (Seal 0' + (t.r1CurrentSeal || 1) + ')</span>'
+            : '<span class="badge badge-idle">Not Started</span>';
+
+          var fate = resolveFateDetails(t.r2);
+          var r2 = t.r2 || {};
+          var judging = t.judging || {};
+          var judgeScoreVal = typeof judging.score === "number" ? String(judging.score) : "";
+          var judgeDescVal = judging.description || "";
+          var cardClass = "team-card" + (r2.submissionUrl ? " has-website" : t.r1Status === "in_progress" ? " r1-active" : "");
+
+          var linksHtml = "";
+          if (r2.submissionUrl) {
+            linksHtml += '<a class="sub-link live-site" href="' + esc(r2.submissionUrl) + '" target="_blank" rel="noopener">🌐 Open Live Website ↗</a>';
+          }
+          if (r2.repoUrl) {
+            linksHtml += '<a class="sub-link" href="' + esc(r2.repoUrl) + '" target="_blank" rel="noopener">📁 GitHub Repo ↗</a>';
+          }
+          if (r2.zipUrl) {
+            linksHtml += '<a class="sub-link" href="' + esc(r2.zipUrl) + '" target="_blank" rel="noopener">📦 Download ZIP (' + esc(r2.zipName || "source.zip") + ') ⤓</a>';
+          }
+          if (r2.zipCloudUrl) {
+            linksHtml += '<a class="sub-link" href="' + esc(r2.zipCloudUrl) + '" target="_blank" rel="noopener">☁️ Cloud ZIP Link ↗</a>';
+          }
+          if (!linksHtml) {
+            linksHtml = '<span class="r1-sub-detail">No website submitted yet</span>';
+          }
+
+          var member2Line = t.member2Name
+            ? '<br>👥 <strong>' + esc(t.member2Name) + '</strong>' + (t.member2Phone ? ' · ' + esc(t.member2Phone) : '') + (t.member2Email ? ' · ' + esc(t.member2Email) : '')
+            : '';
+
+          var unlockBtnHtml = t.r1Status === "submitted" && t.registrationId
+            ? '<button type="button" class="btn btn-sm unlock-r1-btn" data-reg-id="' + esc(t.registrationId) + '" title="Re-open Round 1 if team submitted by mistake" style="margin-top:8px;">🔓 Re-open R1</button>'
+            : '';
+
+          return (
+            '<article class="' + cardClass + '" data-team-key="' + esc(t.teamKey) + '" data-reg-id="' + esc(t.registrationId || "") + '" data-team-name="' + esc(t.teamName) + '">' +
+              '<div class="team-card-main">' +
+                '<!-- Col 1: Team & Roster -->' +
+                '<div>' +
+                  '<span class="col-heading">Team &amp; Verified Roster</span>' +
+                  '<div class="team-title-row">' +
+                    '<span class="team-rank">#' + (idx + 1) + '</span>' +
+                    '<h3 class="team-name">' + esc(t.teamName) + '</h3>' +
+                  '</div>' +
+                  '<p class="roster-meta">' +
+                    '👑 <strong>' + esc(t.leaderName || "—") + '</strong>' +
+                    (t.academicYear || t.course ? ' (' + esc([t.academicYear, t.course].filter(Boolean).join(" · ")) + ')' : '') +
+                    (t.leaderPhone ? '<br>📞 ' + esc(t.leaderPhone) : '') +
+                    (t.leaderEmail ? ' · ✉️ ' + esc(t.leaderEmail) : '') +
+                    member2Line +
+                  '</p>' +
+                '</div>' +
+
+                '<!-- Col 2: Round 1 Quiz Status & Marks -->' +
+                '<div>' +
+                  '<span class="col-heading">Round 1 · Crypt Quiz</span>' +
+                  '<div>' + r1Badge + '</div>' +
+                  '<div class="score-pill">' + Number(t.r1Score || 0) + ' <small>/ ' + Number(t.r1Total || 20) + ' marks</small></div>' +
+                  '<div class="r1-sub-detail">Answered: ' + Number(t.r1AnsweredCount || 0) + ' / 20 questions</div>' +
+                  unlockBtnHtml +
+                '</div>' +
+
+                '<!-- Col 3: Round 2 Wheel of Curses Fates -->' +
+                '<div>' +
+                  '<span class="col-heading">Round 2 · Assigned Fates</span>' +
+                  '<div class="fates-list">' +
+                    '<div class="fate-item"><span class="fate-tag">Stage</span><span class="fate-val">' + esc(fate.stage.toUpperCase()) + '</span></div>' +
+                    '<div class="fate-item"><span class="fate-tag">Soul</span><span class="fate-val">' + esc(fate.charName) + '</span></div>' +
+                    '<div class="fate-item" title="' + esc(fate.problemDesc) + '"><span class="fate-tag">Curse</span><span class="fate-val">' + esc(fate.problemTitle) + '</span></div>' +
+                    '<div class="fate-item" title="' + esc(fate.hexDesc) + '"><span class="fate-tag">Hex</span><span class="fate-val">' + esc(fate.hexTitle) + '</span></div>' +
+                    '<div class="fate-item" title="' + esc(fate.twistDesc) + '"><span class="fate-tag">Twist</span><span class="fate-val">' + esc(fate.twistTitle) + '</span></div>' +
+                    (r2.eggs && r2.eggs.length ? '<div class="fate-item"><span class="fate-tag">Eggs</span><span class="fate-val">🎃 ' + r2.eggs.length + ' found</span></div>' : '') +
+                  '</div>' +
+                '</div>' +
+
+                '<!-- Col 4: Submitted Website & Code -->' +
+                '<div>' +
+                  '<span class="col-heading">Round 2 · Project Submission</span>' +
+                  '<div class="links-stack">' + linksHtml + '</div>' +
+                  (r2.submittedAt ? '<div class="r1-sub-detail">Submitted at ' + new Date(r2.submittedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + '</div>' : '') +
+                '</div>' +
+
+                '<!-- Col 5: Judging Panel (0-10 Score + Description) -->' +
+                '<div class="judge-box">' +
+                  '<div class="judge-top-row">' +
+                    '<div class="judge-score-input-wrap">' +
+                      '<label class="col-heading" style="margin:0;">Judge (0–10):</label>' +
+                      '<input type="number" class="judge-score-input" min="0" max="10" step="0.5" placeholder="0–10" value="' + esc(judgeScoreVal) + '">' +
+                    '</div>' +
+                    '<span class="total-score-badge" title="Round 1 Marks (/20) + Round 2 Judge Score (/10)">Total: ' + Number(t.totalCombinedScore || 0) + ' / 30</span>' +
+                  '</div>' +
+                  '<div class="quick-score-chips">' +
+                    [5, 6, 7, 8, 8.5, 9, 9.5, 10].map(function (n) {
+                      return '<button type="button" class="score-chip" data-score="' + n + '">' + n + '</button>';
+                    }).join("") +
+                  '</div>' +
+                  '<textarea class="judge-desc-input" placeholder="Judge description / feedback (UI craft, Kapidhwaj integration, hex compliance)...">' + esc(judgeDescVal) + '</textarea>' +
+                  '<div class="judge-actions-row">' +
+                    '<span class="judge-save-status">' + (judging.updatedAt ? '✓ Saved' + (judging.judgeName ? ' by ' + esc(judging.judgeName) : '') : '') + '</span>' +
+                    '<button type="button" class="btn btn-primary btn-sm save-judge-btn">Save Score &amp; Notes</button>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+            '</article>'
+          );
+        }).join("");
+      }
+
+      // Event Delegation for Judging & Unlock Actions
+      teamsList.addEventListener("click", async function (e) {
+        var chip = e.target.closest(".score-chip");
+        if (chip) {
+          var card = chip.closest(".team-card");
+          var input = card ? card.querySelector(".judge-score-input") : null;
+          if (input) {
+            input.value = chip.getAttribute("data-score");
+            input.focus();
+          }
+          return;
+        }
+
+        var unlockBtn = e.target.closest(".unlock-r1-btn");
+        if (unlockBtn) {
+          var regId = unlockBtn.getAttribute("data-reg-id");
+          if (!regId || !window.confirm("Re-open Round 1 for this team so they can continue editing their quiz answers?")) return;
+          unlockBtn.disabled = true;
+          unlockBtn.textContent = "Unlocking…";
+          try {
+            var res = await fetch("/api/admin", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "unlock_r1", registrationId: regId })
+            });
+            if (res.ok) await fetchAdminData();
+          } finally {
+            unlockBtn.disabled = false;
+          }
+          return;
+        }
+
+        var saveBtn = e.target.closest(".save-judge-btn");
+        if (saveBtn) {
+          var cardEl = saveBtn.closest(".team-card");
+          if (!cardEl) return;
+          var scoreInp = cardEl.querySelector(".judge-score-input");
+          var descInp = cardEl.querySelector(".judge-desc-input");
+          var statusSpan = cardEl.querySelector(".judge-save-status");
+
+          var rawScore = scoreInp ? scoreInp.value.trim() : "";
+          var parsedScore = rawScore === "" ? null : Number(rawScore);
+          if (parsedScore !== null && (isNaN(parsedScore) || parsedScore < 0 || parsedScore > 10)) {
+            if (statusSpan) {
+              statusSpan.style.color = "#ff7864";
+              statusSpan.textContent = "⚠ Score must be 0 to 10";
+            }
+            return;
+          }
+
+          saveBtn.disabled = true;
+          saveBtn.textContent = "Saving…";
+          if (statusSpan) {
+            statusSpan.style.color = "#ffb347";
+            statusSpan.textContent = "Saving to database…";
+          }
+
+          try {
+            var res = await fetch("/api/admin", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                action: "save_judgment",
+                registrationId: cardEl.getAttribute("data-reg-id") || null,
+                teamKey: cardEl.getAttribute("data-team-key"),
+                teamName: cardEl.getAttribute("data-team-name"),
+                score: parsedScore,
+                description: descInp ? descInp.value.trim() : "",
+                judgeName: judgeNameInput ? judgeNameInput.value.trim() : ""
+              })
+            });
+            var data = await res.json();
+            if (res.ok && data.ok) {
+              if (statusSpan) {
+                statusSpan.style.color = "#38e070";
+                statusSpan.textContent = "✓ Saved!";
+              }
+              await fetchAdminData();
+            } else {
+              if (statusSpan) {
+                statusSpan.style.color = "#ff7864";
+                statusSpan.textContent = "⚠ " + (data.error || "Save failed");
+              }
+            }
+          } catch (err) {
+            if (statusSpan) {
+              statusSpan.style.color = "#ff7864";
+              statusSpan.textContent = "⚠ Network error";
+            }
+          } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = "Save Score & Notes";
+          }
+        }
+      });
+
+      // Login Handler
+      loginForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        loginError.hidden = true;
+        loginSubmitBtn.disabled = true;
+        loginSubmitBtn.textContent = "Verifying clearance…";
+
+        try {
+          var res = await fetch("/api/admin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "login",
+              password: loginPassword.value.trim()
+            })
+          });
+          var data = await res.json();
+          if (res.ok && data.authenticated) {
+            loginPassword.value = "";
+            await fetchAdminData();
+          } else {
+            loginError.hidden = false;
+            loginError.textContent = data.error || "Invalid credentials.";
+          }
+        } catch (err) {
+          loginError.hidden = false;
+          loginError.textContent = "Could not connect to server.";
+        } finally {
+          loginSubmitBtn.disabled = false;
+          loginSubmitBtn.textContent = "Unlock Master Portal →";
+        }
+      });
+
+      logoutBtn.addEventListener("click", async function () {
+        await fetch("/api/admin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "logout" })
+        });
+        showLogin();
+      });
+
+      refreshBtn.addEventListener("click", function () {
+        fetchAdminData();
+      });
+
+      if (printBoardBtn) {
+        printBoardBtn.addEventListener("click", function () {
+          window.print();
+        });
+      }
+
+      Array.prototype.forEach.call(document.querySelectorAll(".r2-delay-btn"), function (btn) {
+        btn.addEventListener("click", async function () {
+          var mins = Number(btn.getAttribute("data-delay"));
+          if (isNaN(mins)) return;
+          btn.disabled = true;
+          try {
+            var res = await fetch("/api/admin", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "set_r2_delay", delayMinutes: mins })
+            });
+            var data = await res.json();
+            if (res.ok && data.ok) {
+              if (r2DelayStatus) {
+                r2DelayStatus.textContent = mins === 0 ? "⚡ Unlocked (0m)" : ("⏱ " + mins + "m delay");
+              }
+              await fetchAdminData();
+            }
+          } finally {
+            btn.disabled = false;
+          }
+        });
+      });
+
+      filterTabs.addEventListener("click", function (e) {
+        var tab = e.target.closest(".filter-tab");
+        if (!tab) return;
+        currentFilter = tab.getAttribute("data-filter") || "all";
+        Array.prototype.forEach.call(filterTabs.querySelectorAll(".filter-tab"), function (b) {
+          b.classList.toggle("is-active", b === tab);
+        });
+        renderTeams();
+      });
+
+      searchInput.addEventListener("input", function () {
+        searchQuery = searchInput.value.trim().toLowerCase();
+        renderTeams();
+      });
+
+      sortSelect.addEventListener("change", function () {
+        sortBy = sortSelect.value;
+        renderTeams();
+      });
+
+      // CSV / Excel Spreadsheet Export
+      exportCsvBtn.addEventListener("click", function () {
+        var q = function (v) {
+          return '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
+        };
+        var headers = [
+          "Rank",
+          "Team Name",
+          "Registration Code",
+          "Leader Name",
+          "Leader Email",
+          "Leader Phone",
+          "Course / Branch",
+          "Academic Year",
+          "Member 2 Name",
+          "Member 2 Email",
+          "Member 2 Phone",
+          "Round 1 Status",
+          "Round 1 Seal",
+          "Round 1 Answered (/20)",
+          "Round 1 Marks (/20)",
+          "Round 2 Stage",
+          "Assigned Soul (Character)",
+          "Chosen Curse (Problem)",
+          "UI Hex",
+          "Final Twist",
+          "Easter Eggs Found",
+          "Live Website URL",
+          "GitHub Repo URL",
+          "ZIP Download URL",
+          "Cloud ZIP Link",
+          "Website Submitted At",
+          "Judge Score (/10)",
+          "Judge Description / Feedback",
+          "Judged By",
+          "Combined Total Score (/30)"
+        ];
+
+        var sorted = filterAndSortTeams();
+        var rows = [headers.map(q).join(",")];
+
+        sorted.forEach(function (t, idx) {
+          var fate = resolveFateDetails(t.r2);
+          var r2 = t.r2 || {};
+          var j = t.judging || {};
+          rows.push([
+            idx + 1,
+            t.teamName || "",
+            t.registrationCode || "",
+            t.leaderName || "",
+            t.leaderEmail || "",
+            t.leaderPhone || "",
+            t.course || "",
+            t.academicYear || "",
+            t.member2Name || "",
+            t.member2Email || "",
+            t.member2Phone || "",
+            t.r1Status || "not_started",
+            t.r1CurrentSeal || 1,
+            t.r1AnsweredCount || 0,
+            t.r1Score != null ? t.r1Score : 0,
+            fate.stage,
+            fate.charName.replace(/^[^\w]+/, "").trim(),
+            fate.problemTitle,
+            fate.hexTitle,
+            fate.twistTitle,
+            r2.eggs ? r2.eggs.length : 0,
+            r2.submissionUrl || "",
+            r2.repoUrl || "",
+            r2.zipUrl || "",
+            r2.zipCloudUrl || "",
+            r2.submittedAt ? new Date(r2.submittedAt).toLocaleString() : "",
+            typeof j.score === "number" ? j.score : "",
+            j.description || "",
+            j.judgeName || "",
+            t.totalCombinedScore != null ? t.totalCombinedScore : 0
+          ].map(q).join(","));
+        });
+
+        var csvContent = "\ufeff" + rows.join("\r\n");
+        var blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement("a");
+        var stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+        link.href = url;
+        link.download = "mtc-spookathon-master-results-" + stamp + ".csv";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+      });
+
+      // Initial check on page load
+      fetchAdminData();
+    })();
+  </script>
+</body>
+</html>
+

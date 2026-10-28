@@ -1,5 +1,6 @@
-import { getSessionFromRequest } from '../_lib/session.js';
-import { getSupabaseAdmin } from '../_lib/supabase.js';
+import { getSessionFromRequest, getRuntimeSessionSecret } from '../_lib/session.js';
+import { getSupabaseAdmin, normalizeTeamKey, extractSealAnswers, extractAnswerMeta } from '../_lib/supabase.js';
+import { gradeSubmission } from '../_lib/evaluator.js';
 import { QUESTION_DEFINITIONS } from '../../server/questions.master.js';
 
 export default async function handler(req, res) {
@@ -8,7 +9,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const session = getSessionFromRequest(req);
+  const secret = getRuntimeSessionSecret();
+  const session = getSessionFromRequest(req, secret);
   if (!session || !session.registrationId) {
     return res.status(401).json({ error: 'Authentication required' });
   }
@@ -58,19 +60,34 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'Quiz has already been finalized and cannot be modified.' });
     }
 
-    // Merge answers into the single JSONB answers object
-    const currentAnswers = existing?.answers || {};
-    // Merge only supplied question keys so incremental answer saves cannot erase
-    // earlier answers from the same seal.
+    const now = new Date().toISOString();
+    const currentAnswers = { ...(existing?.answers || {}) };
+    const existingMeta = extractAnswerMeta(currentAnswers);
+
+    // Merge only supplied question keys so incremental answer saves cannot erase earlier answers
     currentAnswers[`seal_${sealNumber}`] = {
       ...(currentAnswers[`seal_${sealNumber}`] || {}),
       ...sealAnswers
     };
 
-    const now = new Date().toISOString();
+    const { sealAnswers: cleanSeals, answeredCount } = extractSealAnswers(currentAnswers);
+    const draftEvaluation = gradeSubmission(QUESTION_DEFINITIONS, cleanSeals);
+
+    currentAnswers._meta = {
+      ...existingMeta,
+      registrationId: session.registrationId,
+      teamName: existingMeta.teamName || session.teamName || null,
+      teamKey: existingMeta.teamKey || session.teamKey || normalizeTeamKey(session.teamName || ''),
+      leaderName: existingMeta.leaderName || session.leaderName || null,
+      leaderEmail: existingMeta.leaderEmail || session.email || null,
+      startedAt: existingMeta.startedAt || now,
+      lastActiveAt: now,
+      currentSeal: Math.max(existingMeta.currentSeal || 1, sealNumber),
+      answeredCount,
+      liveScore: draftEvaluation.score
+    };
 
     if (existing) {
-      // Conditional update: only update if status is still 'draft'
       const { data: updatedRows, error: updateError } = await supabase
         .from('team_answers')
         .update({
@@ -91,7 +108,6 @@ export default async function handler(req, res) {
         return res.status(409).json({ error: 'Quiz has already been finalized and draft cannot be saved.' });
       }
     } else {
-      // Insert initial draft row
       const { error: insertError } = await supabase
         .from('team_answers')
         .insert({
@@ -103,7 +119,6 @@ export default async function handler(req, res) {
         });
 
       if (insertError) {
-        // Unique violation means another request created the row concurrently
         if (insertError.code === '23505') {
           return res.status(409).json({ error: 'Draft conflict: Please retry.' });
         }
@@ -115,6 +130,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       saved: true,
       sealNumber,
+      answeredCount,
       savedAt: now
     });
   } catch (err) {

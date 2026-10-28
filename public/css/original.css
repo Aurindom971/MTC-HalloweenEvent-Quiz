@@ -143,24 +143,38 @@ body.lit .circuit-grid {
   height: clamp(110px, 17vw, 230px);
 }
 .moon {
+  position: relative;
   width: 100%; height: 100%;
   border-radius: 50%;
+  overflow: hidden;
   background:
-    radial-gradient(circle at 30% 34%, rgba(160, 120, 100, .45) 0 8%, transparent 9%),
-    radial-gradient(circle at 62% 58%, rgba(160, 120, 100, .4) 0 12%, transparent 13%),
-    radial-gradient(circle at 54% 26%, rgba(160, 120, 100, .3) 0 5%, transparent 6%),
-    radial-gradient(circle at 26% 68%, rgba(160, 120, 100, .3) 0 6%, transparent 7%),
-    radial-gradient(circle at 74% 34%, rgba(160, 120, 100, .25) 0 4%, transparent 5%),
-    radial-gradient(circle at 38% 38%, #f7d2bd 0%, #dc8a6c 45%, #ac3a2b 75%, #5e0f0c 100%);
+    radial-gradient(circle at 50% 50%, rgba(16, 3, 4, 0) 42%, rgba(45, 7, 9, 0.5) 68%, rgba(14, 2, 3, 0.92) 92%, #0a0203 100%),
+    radial-gradient(circle at 50% 50%, rgba(217, 56, 30, 0.18) 0%, rgba(120, 18, 14, 0.32) 72%, rgba(10, 2, 3, 0.85) 100%),
+    url("../assets/moon-meme.gif") center center / cover no-repeat;
   box-shadow:
-    0 0 40px 6px rgba(255, 150, 110, .25),
-    0 0 140px 30px rgba(200, 40, 30, .2),
-    inset -22px -16px 46px rgba(60, 5, 5, .65);
+    0 0 42px 8px rgba(240, 95, 65, .26),
+    0 0 140px 32px rgba(190, 28, 20, .22),
+    inset 0 0 32px 12px rgba(10, 2, 3, .9),
+    inset -18px -14px 38px rgba(45, 4, 5, .7);
   animation: moonBreath 9s ease-in-out infinite alternate;
 }
+.moon::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    transparent 45%,
+    rgba(30, 4, 6, 0.35) 68%,
+    rgba(12, 2, 3, 0.84) 88%,
+    rgba(10, 2, 3, 0.98) 100%
+  );
+  pointer-events: none;
+}
 @keyframes moonBreath {
-  from { box-shadow: 0 0 36px 6px rgba(255,150,110,.2), 0 0 120px 24px rgba(200,40,30,.16), inset -22px -16px 46px rgba(60,5,5,.65); }
-  to   { box-shadow: 0 0 56px 10px rgba(255,150,110,.3), 0 0 190px 44px rgba(220,30,20,.26), inset -22px -16px 46px rgba(60,5,5,.7); }
+  from { box-shadow: 0 0 36px 6px rgba(240,95,65,.2), 0 0 120px 24px rgba(190,28,20,.16), inset 0 0 32px 12px rgba(10,2,3,.9), inset -18px -14px 38px rgba(45,4,5,.68); }
+  to   { box-shadow: 0 0 56px 10px rgba(240,95,65,.32), 0 0 190px 44px rgba(220,30,20,.26), inset 0 0 32px 12px rgba(10,2,3,.92), inset -18px -14px 38px rgba(45,4,5,.75); }
 }
 
 .cloud {
