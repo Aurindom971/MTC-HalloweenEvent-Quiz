@@ -1,4 +1,3 @@
-import dotenv from 'dotenv';
 import {
   createSessionToken,
   serializeAdminCookie,
@@ -20,9 +19,10 @@ import { QUESTION_DEFINITIONS } from '../../server/questions.master.js';
 
 async function verifyAdminCredentials(supabase, email, password) {
   try {
-    dotenv.config({ override: true });
+    const dotenv = await import('dotenv');
+    dotenv.default?.config?.({ override: true });
   } catch {
-    // ignore dotenv errors in serverless runtime
+    // ignore dotenv errors in serverless runtime (Vercel injects process.env natively)
   }
   const cleanPass = String(password || email || '').trim();
   const cleanEmail = String(email || '').trim().toLowerCase();

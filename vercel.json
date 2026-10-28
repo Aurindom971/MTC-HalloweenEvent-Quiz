@@ -6,6 +6,10 @@
   "outputDirectory": "public",
   "cleanUrls": true,
   "trailingSlash": false,
+  "rewrites": [
+    { "source": "/judges", "destination": "/admin.html" },
+    { "source": "/round2", "destination": "/round2/index.html" }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",
