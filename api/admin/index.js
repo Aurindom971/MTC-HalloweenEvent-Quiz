@@ -12,7 +12,10 @@ import {
   normalizeTeamKey,
   extractSealAnswers,
   extractAnswerMeta,
-  buildMembersList
+  buildMembersList,
+  fetchR2Teams,
+  getEventConfig,
+  setEventConfig
 } from '../_lib/supabase.js';
 import { gradeSubmission } from '../_lib/evaluator.js';
 import { QUESTION_DEFINITIONS } from '../../server/questions.master.js';
@@ -145,13 +148,7 @@ export default async function handler(req, res) {
         supabase.from('questions').select('question_key, seal_number, question_type, answer_key, points').eq('is_active', true)
       ]);
 
-      let r2Rows = [];
-      try {
-        const { data } = await supabase.from('r2_teams').select('*');
-        r2Rows = data || [];
-      } catch {
-        // ignore if r2_teams not present
-      }
+      const r2Rows = await fetchR2Teams(supabase);
 
       let dbWarning = null;
       if (regRes.error) {
@@ -391,17 +388,7 @@ export default async function handler(req, res) {
         judgedCount: unifiedTeams.filter(t => typeof t.judging?.score === 'number').length
       };
 
-      let r2DelayMinutes = 15;
-      let round2Unlocked = false;
-      try {
-        const { data: cfgData } = await supabase.from('r2_config').select('*').eq('id', 'event').maybeSingle();
-        if (cfgData) {
-          if (typeof cfgData.delay_minutes === 'number') r2DelayMinutes = cfgData.delay_minutes;
-          if (typeof cfgData.round2_unlocked === 'boolean') round2Unlocked = cfgData.round2_unlocked;
-        }
-      } catch {
-        // ignore if r2_config not present
-      }
+      const { delayMinutes: r2DelayMinutes, round2Unlocked } = await getEventConfig(supabase);
 
       return res.status(200).json({
         authenticated: true,
@@ -445,27 +432,15 @@ export default async function handler(req, res) {
       const nowIso = new Date().toISOString();
 
       if (action === 'set_r2_access') {
-        const unlocked = Boolean(body?.unlocked);
-        try {
-          await supabase
-            .from('r2_config')
-            .upsert({ id: 'event', round2_unlocked: unlocked, updated_at: nowIso }, { onConflict: 'id' });
-        } catch {
-          // ignore if column not present yet
-        }
-        return res.status(200).json({ ok: true, round2Unlocked: unlocked });
+        const targetUnlocked = Boolean(body?.unlocked);
+        const saved = await setEventConfig(supabase, { round2Unlocked: targetUnlocked });
+        return res.status(200).json({ ok: true, round2Unlocked: saved.round2Unlocked, delayMinutes: saved.delayMinutes });
       }
 
       if (action === 'set_r2_delay') {
         const mins = Math.max(0, Math.min(600, Number(body?.delayMinutes) || 0));
-        try {
-          await supabase
-            .from('r2_config')
-            .upsert({ id: 'event', delay_minutes: mins, updated_at: nowIso }, { onConflict: 'id' });
-        } catch {
-          // ignore if r2_config table not present
-        }
-        return res.status(200).json({ ok: true, delayMinutes: mins });
+        const saved = await setEventConfig(supabase, { delayMinutes: mins });
+        return res.status(200).json({ ok: true, delayMinutes: saved.delayMinutes, round2Unlocked: saved.round2Unlocked });
       }
 
       if (action === 'unlock_r1' && registrationId) {

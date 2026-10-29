@@ -2,6 +2,44 @@ import { createClient } from '@supabase/supabase-js';
 import { createLocalPreviewSupabaseClient } from './local-preview-db.js';
 
 let cachedClient = null;
+let cachedAnonClient = null;
+
+/**
+ * Returns a public/anon Supabase client.
+ * This client has explicit SELECT permissions granted to public.r2_teams and public.r2_config.
+ */
+export function getSupabaseAnon() {
+  if (cachedAnonClient) return cachedAnonClient;
+
+  const supabaseUrl = (
+    process.env.SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.VITE_SUPABASE_URL ||
+    ''
+  ).trim();
+
+  const anonKey = (
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_KEY ||
+    ''
+  ).trim();
+
+  if (!supabaseUrl || !anonKey) {
+    return getSupabaseAdmin();
+  }
+
+  cachedAnonClient = createClient(supabaseUrl, anonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false
+    }
+  });
+
+  return cachedAnonClient;
+}
 
 /**
  * Returns a trusted Supabase client using Service-Role or Secret key from server environment.
@@ -258,5 +296,113 @@ export function buildRound2Roster(reg, meta = {}) {
       email: meta.leaderEmail || ''
     },
     members: Array.isArray(meta.r2Members) ? meta.r2Members : []
+  };
+}
+
+/**
+ * Robust fetch for r2_teams.
+ * Tries service_role client first; if blocked by Postgres permission 42501,
+ * falls back to the anon client which has granted SELECT permissions.
+ */
+export async function fetchR2Teams(supabase) {
+  try {
+    const res = await supabase.from('r2_teams').select('*');
+    if (!res.error && Array.isArray(res.data) && res.data.length > 0) {
+      return res.data;
+    }
+  } catch {}
+
+  try {
+    const anon = getSupabaseAnon();
+    const resAnon = await anon.from('r2_teams').select('*');
+    if (!resAnon.error && Array.isArray(resAnon.data)) {
+      return resAnon.data;
+    }
+  } catch {}
+
+  return [];
+}
+
+/**
+ * Reads persistent event configuration.
+ * Defaults round2Unlocked to true so participants are never blocked by missing config.
+ */
+export async function getEventConfig(supabase) {
+  let delayMinutes = 15;
+  let round2Unlocked = true; // Default unlocked so all participants have immediate access
+
+  // 1. Read persistent configuration stored in questions row '__EVENT_CONFIG__'
+  try {
+    const { data: qConfig } = await supabase
+      .from('questions')
+      .select('answer_key')
+      .eq('question_key', '__EVENT_CONFIG__')
+      .maybeSingle();
+
+    if (qConfig && qConfig.answer_key) {
+      if (typeof qConfig.answer_key.delay_minutes === 'number') {
+        delayMinutes = qConfig.answer_key.delay_minutes;
+      }
+      if (typeof qConfig.answer_key.round2_unlocked === 'boolean') {
+        round2Unlocked = qConfig.answer_key.round2_unlocked;
+      }
+      return { delayMinutes, round2Unlocked };
+    }
+  } catch {}
+
+  // 2. Fall back to r2_config if available via anon client
+  try {
+    const anon = getSupabaseAnon();
+    const { data: r2Cfg } = await anon.from('r2_config').select('*').eq('id', 'event').maybeSingle();
+    if (r2Cfg) {
+      if (typeof r2Cfg.delay_minutes === 'number') delayMinutes = r2Cfg.delay_minutes;
+      if (typeof r2Cfg.round2_unlocked === 'boolean') round2Unlocked = r2Cfg.round2_unlocked;
+    }
+  } catch {}
+
+  return { delayMinutes, round2Unlocked };
+}
+
+/**
+ * Persists event configuration.
+ * Writes to the questions row '__EVENT_CONFIG__' which service_role can reliably read/write,
+ * and makes a best-effort update to r2_config.
+ */
+export async function setEventConfig(supabase, patch = {}) {
+  const current = await getEventConfig(supabase);
+  const updated = {
+    round2_unlocked: patch.round2Unlocked !== undefined ? Boolean(patch.round2Unlocked) : current.round2Unlocked,
+    delay_minutes: patch.delayMinutes !== undefined ? Math.max(0, Math.min(600, Number(patch.delayMinutes))) : current.delayMinutes,
+    updated_at: new Date().toISOString()
+  };
+
+  try {
+    await supabase.from('questions').upsert({
+      question_key: '__EVENT_CONFIG__',
+      seal_number: 1,
+      question_type: 'predict_output',
+      question_text: 'EVENT_CONFIG_METADATA',
+      options: null,
+      answer_key: updated,
+      display_order: 999,
+      points: 0,
+      is_active: false
+    }, { onConflict: 'question_key' });
+  } catch (err) {
+    console.error('setEventConfig failed writing to questions:', err?.message);
+  }
+
+  try {
+    await supabase.from('r2_config').upsert({
+      id: 'event',
+      delay_minutes: updated.delay_minutes,
+      round2_unlocked: updated.round2_unlocked,
+      updated_at: updated.updated_at
+    }, { onConflict: 'id' });
+  } catch {}
+
+  return {
+    round2Unlocked: updated.round2_unlocked,
+    delayMinutes: updated.delay_minutes
   };
 }

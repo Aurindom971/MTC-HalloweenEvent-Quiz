@@ -1,0 +1,1596 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <base href="/round2/">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0203">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Creep. Code. Create. Round 2 of the Microsoft Tech Community Halloween build.">
+  <title>Microsoft Tech Community · Round 2</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%83%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+  <!-- the shared ledger (Supabase): open these connections early so phones don't wait on them -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://fnubekbfadspsctsmdwl.supabase.co" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rye&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Oswald:wght@400;500;600;700&family=Pixelify+Sans:wght@500;700&family=Special+Elite&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/creepy.css">
+  <link rel="stylesheet" href="css/cutscene.css">
+  <link rel="preload" as="video" href="portal%20animation.mp4" type="video/mp4">
+  <link rel="preload" as="image" href="assets/scares/face.jpg">
+</head>
+<body>
+  <!--
+    ☠  So. You read the source.
+    The Other Side rewards the curious. Anywhere on the page (not inside a text box),
+    type the only word the Raven ever spoke.        — Quoth the Raven, “…”
+    Elsewhere, pumpkins hide in plain sight. Look between the words.
+  -->
+
+  <!-- ============ ATMOSPHERE (purely decorative) ============ -->
+  <div class="atmo" aria-hidden="true">
+    <div class="sky"></div>
+    <div class="circuit-grid" id="circuitGrid"></div>
+    <div class="stars" id="stars"></div>
+    <div class="moon-wrap">
+      <div class="moon"></div>
+    </div>
+    <div class="cloud cloud-1"></div>
+    <div class="cloud cloud-2"></div>
+    <div class="cloud cloud-3"></div>
+
+    <svg class="graveyard" viewBox="0 0 1440 360" preserveAspectRatio="xMidYMax slice">
+      <defs>
+        <linearGradient id="hillFar" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#2a0a0a"/>
+          <stop offset="1" stop-color="#120405"/>
+        </linearGradient>
+        <linearGradient id="hillNear" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#0d0304"/>
+          <stop offset="1" stop-color="#030102"/>
+        </linearGradient>
+        <radialGradient id="winGlow">
+          <stop offset="0" stop-color="#ffcf6b" stop-opacity=".9"/>
+          <stop offset="1" stop-color="#ff7a1a" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <!-- far hills -->
+      <path fill="url(#hillFar)" d="M0 250 C120 205 230 215 340 232 C470 252 560 190 700 196 C840 202 900 240 1010 222 C1110 205 1180 150 1290 160 C1360 166 1410 190 1440 200 L1440 360 L0 360Z"/>
+
+      <!-- haunted house on the far hill -->
+      <g class="house" fill="#0f0405">
+        <path d="M1200 170 L1200 120 L1192 120 L1226 70 L1260 120 L1252 120 L1252 170Z"/>
+        <path d="M1150 175 L1150 128 L1140 128 L1175 96 L1210 128 L1200 128 L1200 175Z"/>
+        <path d="M1252 172 L1252 140 L1244 140 L1270 112 L1296 140 L1288 140 L1288 172Z"/>
+        <rect x="1223" y="52" width="6" height="20"/>
+        <path d="M1226 46 l-4 8 h8z"/>
+      </g>
+      <g class="windows">
+        <circle class="glow g1" cx="1226" cy="108" r="22" fill="url(#winGlow)"/>
+        <rect class="win w1" x="1220" y="100" width="12" height="16" fill="#ffb347"/>
+        <rect class="win w2" x="1166" y="138" width="9" height="12" fill="#ffb347"/>
+        <rect class="win w3" x="1264" y="148" width="9" height="11" fill="#ff8c2b"/>
+        <rect class="win w4" x="1182" y="138" width="9" height="12" fill="#ffb347"/>
+      </g>
+
+      <!-- trees are generated in js/fx.js -->
+      <g id="treesFar" stroke="#170607" fill="none" stroke-linecap="round"></g>
+
+      <!-- near hill -->
+      <path fill="url(#hillNear)" d="M0 300 C160 262 300 282 440 290 C600 299 700 258 860 266 C1010 274 1120 300 1260 286 C1350 277 1400 270 1440 272 L1440 360 L0 360Z"/>
+
+      <g id="treesNear" stroke="#060203" fill="none" stroke-linecap="round"></g>
+
+      <!-- gravestones -->
+      <g fill="#070203">
+        <path d="M120 300 v-34 a18 18 0 0 1 36 0 v34z"/>
+        <path d="M190 296 v-22 a12 12 0 0 1 24 0 v22z"/>
+        <path d="M232 292 h6 v-30 h-10 v-7 h10 v-9 h6 v9 h10 v7 h-10 v30 h6z"/>
+        <path d="M540 296 v-28 a15 15 0 0 1 30 0 v28z" transform="rotate(-6 555 296)"/>
+        <path d="M610 290 h26 v-30 l-13 -8 l-13 8z"/>
+        <path d="M940 280 v-26 a14 14 0 0 1 28 0 v26z" transform="rotate(5 954 280)"/>
+        <path d="M990 284 v-18 a10 10 0 0 1 20 0 v18z"/>
+        <path d="M1320 286 h5 v-26 h-9 v-6 h9 v-8 h5 v8 h9 v6 h-9 v26 h5z"/>
+      </g>
+
+      <!-- iron fence -->
+      <g class="fence" stroke="#040102" stroke-width="3" fill="#040102">
+        <path d="M0 330 H1440" stroke-width="4"/>
+        <path d="M0 346 H1440" stroke-width="3"/>
+      </g>
+      <g id="fencePosts" fill="#040102"></g>
+    </svg>
+
+    <!-- figures that stand in the graveyard and watch (js/creatures.js) -->
+    <div class="shadows" id="shadows"></div>
+
+    <div class="fog fog-back"></div>
+    <div class="fog fog-front"></div>
+    <canvas class="motes" id="motes"></canvas>
+    <div class="bats" id="bats"></div>
+    <div class="flashlight"></div>
+    <div class="vignette"></div>
+    <div class="grain"></div>
+    <div class="lightning" id="lightning"></div>
+    <!-- the horde that stands in the graveyard, seen only in the lightning -->
+    <div class="horde" id="horde"></div>
+
+    <div class="spider" id="spider" title="">
+      <div class="thread"></div>
+      <svg class="spider-body" viewBox="0 0 60 60">
+        <g stroke="#0a0a0a" stroke-width="2.2" fill="none" stroke-linecap="round">
+          <path d="M24 28 Q12 18 6 24"/><path d="M24 31 Q10 28 4 36"/><path d="M25 34 Q14 40 8 50"/><path d="M26 36 Q20 46 18 56"/>
+          <path d="M36 28 Q48 18 54 24"/><path d="M36 31 Q50 28 56 36"/><path d="M35 34 Q46 40 52 50"/><path d="M34 36 Q40 46 42 56"/>
+        </g>
+        <ellipse cx="30" cy="36" rx="9" ry="11" fill="#0a0a0a"/>
+        <circle cx="30" cy="24" r="6" fill="#0a0a0a"/>
+        <circle cx="27.6" cy="23" r="1.4" fill="#ff2a2a"/><circle cx="32.4" cy="23" r="1.4" fill="#ff2a2a"/>
+      </svg>
+    </div>
+
+    <!-- cobwebs in the corners -->
+    <svg class="web web-tr" viewBox="0 0 200 200" aria-hidden="true">
+      <g stroke="rgba(240,215,205,.24)" stroke-width="1" fill="none">
+        <path d="M200 0 L60 200 M200 0 L0 120 M200 0 L110 200 M200 0 L0 40 M200 0 L170 200"/>
+        <path d="M168 0 Q172 26 200 32"/><path d="M128 0 Q140 52 200 64 "/><path d="M86 0 Q104 82 200 102"/><path d="M44 0 Q66 118 200 146"/><path d="M8 4 Q30 150 200 190"/>
+      </g>
+    </svg>
+    <svg class="web web-bl" viewBox="0 0 200 200" aria-hidden="true">
+      <g stroke="rgba(240,215,205,.17)" stroke-width="1" fill="none">
+        <path d="M0 200 L140 0 M0 200 L200 80 M0 200 L90 0 M0 200 L200 160"/>
+        <path d="M0 160 Q30 170 36 200"/><path d="M0 116 Q56 128 70 200"/><path d="M0 70 Q86 92 110 200"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- creatures that peek in from the dark (js/creatures.js) -->
+  <div class="creatures" id="creatures" aria-hidden="true"></div>
+
+  <!-- ============ ENTRY GATE (also unlocks audio & starts cutscene) ============ -->
+  <div class="gate" id="gate">
+    <div class="gate-dim" aria-hidden="true"></div>
+    <div class="gate-inner">
+      <svg class="pixel-pumpkin" data-pixel-pumpkin viewBox="0 0 15 13" aria-hidden="true"></svg>
+      <p class="gate-kicker">Microsoft Tech Community</p>
+      <h1 class="gate-title logo">Welcome to the Other Side</h1>
+      <p class="motto">Creep. Code. Create.</p>
+      <p class="ransom" data-ransom>Spooky Stories. Killer Interfaces.</p>
+      <p class="gate-text">Round 2 is upon you. The spirits are restless tonight.<br>Turn your sound up…<button class="egg" type="button" tabindex="-1" data-egg="gate" aria-label="pumpkin">🎃</button> and enter, if you dare.</p>
+      <button class="btn btn-blood gate-btn gate-other-side-btn" id="gateEnter" type="button">
+        <span class="btn-glow-pulse" aria-hidden="true"></span>
+        <span>ENTER THE OTHER SIDE</span>
+      </button>
+      <button class="gate-quiet" id="gateQuiet" type="button">enter quietly (no sound)</button>
+      <p class="gate-when"><span>29 Oct '26</span><i aria-hidden="true"></i><span>2:30 PM onwards</span></p>
+    </div>
+  </div>
+
+  <!-- ============ TOP BAR ============ -->
+  <header class="topbar">
+    <div class="brand">
+      <img class="brand-logo" src="assets/brand/mlsa-shield.png" alt="Microsoft Student Ambassador Shield" width="36" height="38">
+      <span class="brand-text">Microsoft Tech Community<small>Amity Noida</small></span>
+    </div>
+
+    <!-- 60-Minute Build Countdown Timer (visible once registered in ledger) -->
+    <div class="topbar-timer" id="topbarTimer" hidden role="timer" aria-live="off" title="Round 2 Build Window: 60 Minutes Remaining">
+      <span class="topbar-timer-icon" aria-hidden="true">⏱️</span>
+      <div class="topbar-timer-wrap">
+        <span class="topbar-timer-digits" id="topbarTimerDigits">60:00</span>
+        <span class="topbar-timer-label">BUILD TIMER</span>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <button class="icon-btn" id="githubTopBtn" type="button" data-guide="start" aria-label="Help: GitHub and hosting guide" title="Help: GitHub and hosting guide">
+        <span class="help-mark">?</span>
+      </button>
+      <button class="icon-btn" id="decreeTopBtn" type="button" aria-label="The Decree of the Other Side" title="The Decree of the Other Side">
+        <span>📜</span>
+      </button>
+      <button class="icon-btn" id="cutsceneTopBtn" type="button" aria-label="Replay Other Side Transmission" title="Replay Other Side Transmission">
+        <span>⚡</span>
+      </button>
+      <button class="icon-btn" id="scareBtn" type="button" aria-pressed="true" aria-label="Jump scares on" title="Jump scares">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path class="ghost" d="M12 3a7 7 0 0 0-7 7v10l2.3-1.6L9.7 20l2.3-1.6 2.3 1.6 2.4-1.6L19 20V10a7 7 0 0 0-7-7z"/><circle class="ghost-eye" cx="9.5" cy="10" r="1.2"/><circle class="ghost-eye" cx="14.5" cy="10" r="1.2"/><path class="mute" d="M3 3l18 18"/></svg>
+      </button>
+      <button class="icon-btn" id="soundBtn" type="button" aria-pressed="false" aria-label="Turn sound on">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9h4l5-4v14l-5-4H4z"/><path class="wave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/><path class="mute" d="M16 9l5 6M21 9l-5 6"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Persistent 5-Minute Shutdown Banner -->
+  <div class="system-shutdown-banner" id="systemShutdownBanner" hidden>
+    <span class="shutdown-pulse">⚠️</span>
+    <span class="shutdown-text" id="shutdownBannerText">SYSTEM SHUTDOWN IN <span id="shutdownCountdown">05:00</span> · SUBMIT YOUR PROJECT</span>
+    <span class="shutdown-pulse">⚠️</span>
+  </div>
+
+  <main class="altar" id="app">
+
+    <section class="hero">
+      <h1 class="title logo" data-text="Your Fate Awaits"><span class="title-line">Your Fate Awaits</span></h1>
+      <p class="motto">Creep. Code. Create.</p>
+      <p class="tagline"><b>Round 2 · The Build</b> Spin for a soul, inherit its dilemma, and build the web experience that sets it free.</p>
+    </section>
+
+    <ol class="seals" id="seals" aria-label="Ritual progress">
+      <li data-step="1"><span class="seal-num">I</span><span class="seal-name">The Wheel of Evil</span></li>
+      <li data-step="2"><span class="seal-num">II</span><span class="seal-name">The Curse</span></li>
+      <li data-step="3"><span class="seal-num">III</span><span class="seal-name">The Hex</span><button class="egg" type="button" tabindex="-1" data-egg="seals" aria-label="pumpkin">🎃</button></li>
+      <li data-step="4"><span class="seal-num">IV</span><span class="seal-name">The Twist</span></li>
+    </ol>
+
+    <!-- View Switcher (Active when Round 2 Build is unlocked) -->
+    <nav class="view-tabs" id="viewTabs" aria-label="Ritual views" hidden>
+      <button class="view-tab" id="tabWheel" type="button" data-view="wheel" hidden>
+        <span class="tab-icon">⛓️</span>
+        <span class="tab-label">Wheel of Twist</span>
+      </button>
+      <button class="view-tab is-active" id="tabGrimoire" type="button" data-view="grimoire">
+        <span class="tab-icon">📜</span>
+        <span class="tab-label">Your Grimoire</span>
+      </button>
+      <button class="view-tab" id="tabSubmit" type="button" data-view="submit">
+        <span class="tab-icon">🚀</span>
+        <span class="tab-label">Submit Your Project</span>
+      </button>
+      <button class="view-tab" id="tabFaqs" type="button" data-view="faqs">
+        <span class="tab-icon">❓</span>
+        <span class="tab-label">FAQ's</span>
+      </button>
+    </nav>
+
+    <!-- ===== Stage: Round 2 Gate & Entrance ===== -->
+    <section class="panel ledger-panel" id="ledgerPanel" hidden>
+      <div class="parchment" style="max-width: 640px; margin: 0 auto; text-align: center;">
+        <p class="panel-kicker">Round 2 — The Build</p>
+        <h2 class="panel-title">The Altar of Curses</h2>
+
+        <!-- 1. HOST ACCESS LOCK BANNER (Shown if Host has not unlocked Round 2 yet) -->
+        <div class="r2-host-locked-card" id="r2HostLockedCard" hidden style="background: rgba(255, 75, 54, 0.08); border: 1px solid rgba(255, 75, 54, 0.45); border-radius: 12px; padding: 24px 20px; margin: 20px 0;">
+          <div style="font-size: 38px; margin-bottom: 10px;">🔒</div>
+          <h3 style="font-family: var(--f-display, serif); font-size: 20px; color: #ff5252; letter-spacing: 1.5px; text-transform: uppercase; margin: 0 0 10px;">
+            Wait for the Event Host to Continue
+          </h3>
+          <p style="font-size: 15px; color: #f4e3d7; line-height: 1.6; margin: 0 0 14px; max-width: 480px; margin-inline: auto;">
+            The Altar of Curses is currently sealed by the event organizers. Please stand by — your fate will be unlocked automatically the moment the host grants access.
+          </p>
+          <div style="display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: #ffb347; font-family: var(--f-mono, monospace); background: rgba(0,0,0,0.35); padding: 6px 14px; border-radius: 20px;">
+            <span class="status-pulse-dot" style="background:#ffb347;"></span> Checking clearance with event server…
+          </div>
+        </div>
+
+        <!-- 2. STREAMLINED TEAM ENTRANCE (No redundant questions about phone/branch/year/member2) -->
+        <div class="r2-enter-wrap" id="r2EnterWrap">
+          <p class="panel-lede" style="margin-bottom: 24px;">
+            Enter your official <b>Team Name</b> from Round 1 to enter the Altar. Your verified squad roster will be linked automatically.
+          </p>
+
+          <form id="r2QuickEntryForm" autocomplete="off" novalidate style="display: flex; flex-direction: column; gap: 14px; max-width: 460px; margin: 0 auto;">
+            <label class="field" style="margin-bottom: 0; text-align: left;">
+              <span class="field-label">Official Team Name *</span>
+              <input id="quickResumeTeamInput" type="text" maxlength="48" required placeholder="Type your registered Team Name..." spellcheck="false" autocomplete="off" style="font-size: 16px; padding: 14px;">
+            </label>
+            <p class="field-error" id="teamError" role="alert" style="margin: 0; text-align: left;"></p>
+            <button type="submit" class="btn btn-blood" id="quickResumeBtn" style="padding: 14px; font-size: 15px; justify-content: center; width: 100%;">
+              <span id="quickResumeLabel">Enter the Wheel of Curses →</span>
+            </button>
+          </form>
+        </div>
+
+        <ul class="rules" style="margin-top: 32px; text-align: left;">
+          <li><b>I.</b><span>The Wheel of Evil binds your team to a monster — and that entity commands the wheel thereafter.</span></li>
+          <li><b>II.</b><span>Choose one of your monster's dilemmas: the web experience you must craft to exploit its weakness.</span></li>
+          <li><b>III.</b><span>A randomized UI Hex will corrupt your project with a mandatory design constraint.</span></li>
+          <li><b>IV.</b><span>A game-changing Twist awakens <span id="rulesDelay">15</span> minutes later, revealed mid-build by the event host.</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===== Stage: the wheel ===== -->
+    <section class="panel wheel-panel" id="wheelPanel" hidden>
+      <div class="wheel-col">
+        <header class="wheel-head">
+          <p class="wheel-kicker" id="wheelKicker">Wheel I · The Wheel of Evil</p>
+          <div class="wheel-title-row">
+            <h2 class="wheel-title" id="wheelTitle">The Wheel of Evil</h2>
+            <button class="prologue-pill" id="prologuePill" type="button" title="View The Decree of Fate">📜 The Decree</button>
+          </div>
+          <p class="wheel-sub" id="wheelSub"></p>
+        </header>
+
+        <div class="wheel-stage" id="wheelStage">
+          <div class="wheel-aura"></div>
+          <div class="wheel-rotor" id="wheelRotor">
+            <canvas id="wheelCanvas" aria-hidden="true"></canvas>
+          </div>
+
+          <!-- pointer -->
+          <svg class="pointer" id="pointer" viewBox="0 0 60 90" aria-hidden="true">
+            <defs>
+              <linearGradient id="blade" x1="0" x2="1">
+                <stop offset="0" stop-color="#8f8a99"/><stop offset=".5" stop-color="#f2eef8"/><stop offset="1" stop-color="#77717f"/>
+              </linearGradient>
+            </defs>
+            <path d="M30 88 L19 30 H41 Z" fill="url(#blade)" stroke="#1a1020" stroke-width="1.5"/>
+            <path d="M30 86 L30 32" stroke="#ffffff" stroke-opacity=".5" stroke-width="1"/>
+            <path d="M30 88 L27 70 Q30 76 33 70Z" fill="#a50f25"/>
+            <rect x="10" y="22" width="40" height="9" rx="4" fill="#3a2a12" stroke="#1a1020" stroke-width="1.5"/>
+            <rect x="24" y="2" width="12" height="22" rx="4" fill="#2b1a0b" stroke="#1a1020" stroke-width="1.5"/>
+            <circle cx="30" cy="5" r="5" fill="#a50f25" stroke="#1a1020" stroke-width="1.5"/>
+          </svg>
+
+          <!-- the eye in the centre -->
+          <button class="hub" id="hub" type="button" aria-label="Spin the wheel">
+            <svg viewBox="0 0 100 100" aria-hidden="true">
+              <defs>
+                <radialGradient id="sclera" cx=".5" cy=".45" r=".6">
+                  <stop offset="0" stop-color="#fff6e8"/><stop offset=".7" stop-color="#e9d9c4"/><stop offset="1" stop-color="#b98f86"/>
+                </radialGradient>
+                <radialGradient id="irisGrad">
+                  <stop offset="0" stop-color="#ffd25a"/><stop offset=".45" stop-color="#d9480f"/><stop offset="1" stop-color="#5a0d0d"/>
+                </radialGradient>
+                <clipPath id="eyeClip"><path d="M8 50 Q50 14 92 50 Q50 86 8 50Z"/></clipPath>
+              </defs>
+              <circle cx="50" cy="50" r="48" fill="#140506" stroke="#4a1512" stroke-width="3"/>
+              <circle cx="50" cy="50" r="44" fill="none" stroke="#ff3326" stroke-opacity=".45" stroke-width="1"/>
+              <g clip-path="url(#eyeClip)">
+                <rect x="0" y="0" width="100" height="100" fill="url(#sclera)"/>
+                <g stroke="#b3122e" stroke-width=".8" fill="none" opacity=".55">
+                  <path d="M10 50 q10 -3 16 2 t10 -2"/><path d="M90 50 q-9 4 -15 0 t-10 3"/><path d="M14 44 q8 0 12 4"/><path d="M86 56 q-8 0 -12 -4"/>
+                </g>
+                <g class="iris" id="iris">
+                  <circle cx="50" cy="50" r="17" fill="url(#irisGrad)"/>
+                  <ellipse class="pupil" id="pupil" cx="50" cy="50" rx="3.6" ry="12" fill="#050203"/>
+                  <circle cx="44" cy="44" r="3" fill="#fff" opacity=".85"/>
+                </g>
+                <g class="lids" id="lids">
+                  <path class="lid-top" d="M0 0 H100 V50 Q50 14 0 50Z" fill="#1f0a0a"/>
+                  <path class="lid-bot" d="M0 100 H100 V50 Q50 86 0 50Z" fill="#1f0a0a"/>
+                </g>
+              </g>
+              <path d="M8 50 Q50 14 92 50 Q50 86 8 50Z" fill="none" stroke="#050205" stroke-width="2.5"/>
+            </svg>
+          </button>
+
+          <!-- locked overlay for the twist wheel -->
+          <div class="chains" id="chains" hidden>
+            <svg class="chain-svg" viewBox="0 0 400 400" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <pattern id="links" width="34" height="16" patternUnits="userSpaceOnUse">
+                  <rect x="2" y="3" width="22" height="10" rx="5" fill="none" stroke="#8a8394" stroke-width="3.5"/>
+                  <rect x="19" y="5.5" width="14" height="5" rx="2.5" fill="none" stroke="#5e5868" stroke-width="3"/>
+                </pattern>
+              </defs>
+              <g class="chain c1"><rect x="-60" y="192" width="520" height="16" fill="url(#links)" transform="rotate(45 200 200)"/></g>
+              <g class="chain c2"><rect x="-60" y="192" width="520" height="16" fill="url(#links)" transform="rotate(-45 200 200)"/></g>
+            </svg>
+            <div class="lock">
+              <svg viewBox="0 0 64 80" aria-hidden="true">
+                <path d="M16 36 V24 a16 16 0 0 1 32 0 V36" fill="none" stroke="#8a8394" stroke-width="7"/>
+                <rect x="6" y="34" width="52" height="42" rx="7" fill="#3c2f22" stroke="#140c08" stroke-width="2"/>
+                <circle cx="32" cy="52" r="5" fill="#0b0604"/><path d="M30 54 h4 l2 12 h-8z" fill="#0b0604"/>
+              </svg>
+              <div class="countdown" id="countdown" role="timer" aria-live="off">15:00</div>
+              <div class="countdown-label">until the twist awakens</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- the haunted spinner: The Eye at first, then the team's own soul -->
+        <div class="spinner" id="spinner">
+          <div class="spinner-face" id="spinnerFace" aria-hidden="true">👁️</div>
+          <div class="spinner-bubble">
+            <p class="spinner-name" id="spinnerName">The Eye</p>
+            <p class="spinner-line" id="spinnerLine" aria-live="polite">Let me look… let me choose.</p>
+          </div>
+        </div>
+
+        <div class="wheel-actions">
+          <button class="btn btn-blood btn-spin" id="spinBtn" type="button">
+            <span id="spinLabel">Spin the Wheel</span>
+          </button>
+          <p class="spin-hint" id="spinHint">or tap the <button class="egg" type="button" tabindex="-1" data-egg="whisper" aria-label="pumpkin">🎃</button>eye</p>
+        </div>
+      </div>
+
+      <!-- ===== VIEW 1: THE GRIMOIRE ===== -->
+      <aside class="grimoire view-pane view-pane-grimoire" id="paneGrimoire" aria-labelledby="grimoireTitle">
+        <div class="grimoire-inner">
+          <p class="grimoire-team" id="grimoireTeam"></p>
+          <p class="grimoire-roster" id="grimoireRoster" hidden></p>
+          <h2 class="grimoire-title" id="grimoireTitle">Your <button class="egg" type="button" tabindex="-1" data-egg="grimoire" aria-label="pumpkin">🎃</button>Grimoire</h2>
+          <ol class="fate-list" id="fateList">
+            <li class="fate" data-slot="1">
+              <span class="fate-num">I</span>
+              <div class="fate-body"><p class="fate-label">The Wheel of Evil</p><p class="fate-name">???</p><p class="fate-desc"></p></div>
+            </li>
+            <li class="fate" data-slot="2">
+              <span class="fate-num">II</span>
+              <div class="fate-body"><p class="fate-label">The Curse</p><p class="fate-name">???</p><p class="fate-desc"></p></div>
+            </li>
+            <li class="fate" data-slot="3">
+              <span class="fate-num">III</span>
+              <div class="fate-body">
+                <p class="fate-label">The Hex</p>
+                <p class="fate-name">???</p>
+                <p class="fate-desc"></p>
+                <div class="fate-must-have" hidden>
+                  <span class="must-tag">Must-Have:</span> <span class="must-text"></span>
+                </div>
+              </div>
+            </li>
+            <li class="fate" data-slot="4">
+              <span class="fate-num">IV</span>
+              <div class="fate-body"><p class="fate-label">The Twist</p><p class="fate-name">???</p><p class="fate-desc"></p></div>
+            </li>
+            <li class="fate fate-sponsor" data-slot="5" id="fateSlot5" hidden>
+              <span class="fate-num">V</span>
+              <div class="fate-body">
+                <div class="fate-sponsor-header">
+                  <p class="fate-label">🌀 Sponsor Twist · Alliance</p>
+                  <span class="fate-compulsory-badge">Compulsory</span>
+                </div>
+                <p class="fate-name">The Alliance Protocol</p>
+                <p class="fate-desc">Creatively integrate official sponsor KAPIDHWAJ's Instagram into your world.</p>
+                <div class="fate-must-have">
+                  <span class="must-tag">Must-Have:</span> <span class="must-text">@kapidhwaj.innovations on Instagram + themed integration</span>
+                </div>
+              </div>
+            </li>
+          </ol>
+          <p class="egg-count" id="eggCount" hidden></p>
+          <div class="grimoire-foot" id="grimoireFoot" hidden>
+            <p class="sealed-msg">Your fate is sealed. The ritual is complete.</p>
+            <p class="sealed-sub">This phone is bound to your team. Craft your world and establish the alliance below.</p>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ===== THE ALLIANCE PROTOCOL (KAPIDHWAJ SHOWCASE): sits under the wheel, not in the sidebar ===== -->
+      <div class="alliance-protocol-banner" id="allianceProtocolCard">
+        <div class="ap-header">
+          <div class="ap-emblem-wrap">
+            <img src="assets/sponsor/kapidhwaj.png" alt="Kapidhwaj Official Emblem" class="ap-emblem sponsor-logo" draggable="false">
+          </div>
+          <div class="ap-title-wrap">
+            <div class="ap-badge-row">
+              <span class="ap-badge">🌀 COMPULSORY SPONSOR TWIST · ROUND 2 BUILD</span>
+              <span class="ap-tier-badge">OFFICIAL EVENT PARTNER</span>
+            </div>
+            <h4 class="ap-title">THE ALLIANCE PROTOCOL · KAPIDHWAJ</h4>
+            <p class="ap-subtitle">Your website must creatively integrate our official sponsor, <strong>KAPIDHWAJ</strong>.</p>
+          </div>
+        </div>
+
+        <div class="ap-body">
+          <div class="ap-quote">
+            <p>“A boring logo in the footer won't save your website. The sponsor must become a meaningful part of your world.”</p>
+          </div>
+
+          <div class="ap-grid">
+            <div class="ap-rules-col">
+              <h5 class="ap-col-title">📜 Rules of the Alliance</h5>
+              <ul class="ap-rules-list">
+                <li><strong>1.</strong> The official Kapidhwaj Instagram account must be clearly featured.</li>
+                <li><strong>2.</strong> Include a clickable link to the official Instagram page (<a href="https://www.instagram.com/kapidhwaj.innovations/" target="_blank" rel="noopener">@kapidhwaj.innovations ↗</a>).</li>
+                <li><strong>3.</strong> The integration must visually match your website's theme and character aesthetic.</li>
+                <li><strong>4.</strong> It must feel intentional and creative — not like an unrelated advertisement.</li>
+              </ul>
+            </div>
+
+            <div class="ap-ideas-col">
+              <h5 class="ap-col-title">💡 Creative Integration Blueprints</h5>
+              <ul class="ap-ideas-list">
+                <li><strong>Fictional Partnership:</strong> A dedicated allies section matching your character's universe.</li>
+                <li><strong>Themed Instagram Card:</strong> Styled with your character's colors, fonts, and dark aesthetic.</li>
+                <li><strong>In-Universe Lore:</strong> An ancient guild, high-tech weapon dealer, or containment ward supplier.</li>
+                <li><strong>Interactive Portal:</strong> A creative call-to-action linking to @kapidhwaj.innovations.</li>
+                <li><strong>Character Shoutout:</strong> Fourth-wall break or in-universe story honoring the alliance.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="ap-actions">
+            <a href="https://www.instagram.com/kapidhwaj.innovations/" target="_blank" rel="noopener" class="btn btn-ap-ig" id="apIgLink">
+              <span class="ig-icon">📸</span> View @kapidhwaj.innovations on Instagram ↗
+            </a>
+            <button type="button" class="btn btn-ap-copy" id="apCopyHandleBtn" title="Copy Instagram handle">
+              <span>📋</span> Copy Handle
+            </button>
+            <button type="button" class="btn btn-ap-replay" id="replayAllianceCutsceneBtn">
+              <span>📽️</span> Replay Alliance Protocol Transmission
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== VIEW 2: SUBMIT YOUR PROJECT ===== -->
+      <section class="view-pane view-pane-submit" id="paneSubmit" hidden>
+        <div class="sub-panel" id="submissionCard">
+          <div class="sub-header">
+            <div class="sub-header-text">
+              <span class="sub-tag">Round 2 · The Build</span>
+              <h3 class="sub-title">Submit Your Project</h3>
+              <p class="sub-lead">Deploy your web application online and provide your live link and code repository for the judges.</p>
+            </div>
+            <div class="sub-status-pill" id="subStatusPill">
+              <span class="status-pulse-dot" aria-hidden="true"></span>
+              <span id="subStatusText">Awaiting Submission</span>
+            </div>
+          </div>
+
+          <div class="sub-body">
+            <!-- Left Column: Hosting Cheatsheet & Platform Badges -->
+            <div class="sub-left">
+              <div class="sub-instructions">
+                <p class="sub-notice">⚡ <b>The Submission Window is Active!</b> Check your links and verify your build before sealing your fate.</p>
+                <ol class="sub-steps">
+                  <li><strong>Build:</strong> Craft your web experience incorporating your Soul, Curse, Hex, and Twist.</li>
+                  <li><strong>Host:</strong> Deploy your website online and ensure it is publicly accessible via HTTPS.</li>
+                  <li><strong>Submit:</strong> Paste your live hosted link and provide your source code (GitHub repo, .zip upload, or Drive link) below.</li>
+                </ol>
+                <div class="sub-guide-buttons">
+                  <button class="gh-open" type="button" data-guide="github">🐙 Never used GitHub? Step-by-step account &amp; push guide</button>
+                  <button class="gh-open" type="button" data-guide="git">💻 Already on GitHub? How to commit and push updates</button>
+                  <button class="gh-open" type="button" data-guide="start">🌐 How do I put my site online? Open the hosting guide</button>
+                </div>
+                <div class="sub-platforms">
+                  <span class="sub-platforms-title">Recommended Free Hosting Platforms: <span class="sub-platforms-hint">tap one for a step-by-step guide</span></span>
+                  <div class="host-badges">
+                    <button class="host-pill" type="button" data-guide="vercel">▲ Vercel</button>
+                    <button class="host-pill host-pill-highlight" type="button" data-guide="netlify">💎 Netlify (Drag &amp; Drop)</button>
+                    <button class="host-pill" type="button" data-guide="github" data-guide-section="ghPagesStep">🐙 GitHub Pages</button>
+                    <button class="host-pill" type="button" data-guide="render">⚡ Render</button>
+                    <button class="host-pill" type="button" data-guide="cloudflare">☁️ Cloudflare</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column: Form for entering links & code -->
+            <div class="sub-right">
+              <form class="sub-form" id="submissionForm" novalidate autocomplete="off">
+                <label class="sub-label">
+                  <span class="sub-label-text">🌐 Live Hosted Website URL <span class="sub-req">*</span> <button class="sub-help" type="button" data-guide="start">? How do I get this</button></span>
+                  <input type="url" id="subUrl" class="sub-input" placeholder="https://your-team.vercel.app" required spellcheck="false" autocomplete="off">
+                </label>
+                <label class="sub-label">
+                  <span class="sub-label-text">📁 GitHub Repository URL <span class="sub-opt">(optional)</span> <button class="sub-help" type="button" data-guide="github">? How do I get this</button></span>
+                  <input type="url" id="subRepo" class="sub-input" placeholder="https://github.com/username/project" spellcheck="false" autocomplete="off">
+                </label>
+
+                <!-- Source code zip archive & cloud link -->
+                <div class="sub-zip-section">
+                  <div class="sub-zip-header">
+                    <span class="sub-label-text">📦 Source Code Archive (.zip) <span class="sub-opt">(optional)</span></span>
+                  </div>
+
+                  <div class="sub-dropzone" id="subDropzone" tabindex="0" role="button" aria-label="Upload source code zip file">
+                    <input type="file" id="subZipFile" accept=".zip,application/zip,application/x-zip-compressed" class="sr-only">
+                    <div class="sub-dropzone-content" id="subDropzoneContent">
+                      <span class="sub-dropzone-icon" aria-hidden="true">🗜️</span>
+                      <div class="sub-dropzone-text">
+                        <p class="sub-dropzone-title"><b>Choose a .zip file</b> or drag &amp; drop</p>
+                        <p class="sub-dropzone-desc">Max 50MB · Attach project source code</p>
+                      </div>
+                    </div>
+                    <div class="sub-file-chosen" id="subFileChosen" hidden>
+                      <span class="sub-file-icon" aria-hidden="true">📦</span>
+                      <div class="sub-file-info">
+                        <span class="sub-file-name" id="subFileName">project.zip</span>
+                        <span class="sub-file-size" id="subFileSize">0 KB</span>
+                      </div>
+                      <button type="button" class="sub-file-remove" id="subFileRemove" title="Remove attached zip" aria-label="Remove attached zip file">✕</button>
+                    </div>
+                  </div>
+
+                  <label class="sub-label sub-label-inline">
+                    <span class="sub-label-text">☁️ Or Drive / Cloud ZIP Link <span class="sub-opt">(Google Drive, OneDrive, etc.)</span></span>
+                    <input type="url" id="subZipLink" class="sub-input" placeholder="https://drive.google.com/file/d/... or direct zip link" spellcheck="false" autocomplete="off">
+                  </label>
+                </div>
+
+                <p class="sub-error" id="subError" role="alert" hidden></p>
+                <button type="submit" class="btn btn-blood sub-btn" id="subSubmitBtn">
+                  <span id="subSubmitLabel">Submit Project</span>
+                </button>
+              </form>
+
+              <!-- State when project has been submitted -->
+              <div class="sub-result" id="subResult" hidden>
+                <div class="sub-result-card">
+                  <div class="sub-result-icon" aria-hidden="true">⚡</div>
+                  <div class="sub-result-details">
+                    <p class="sub-result-status">Project Submitted</p>
+                    <p class="sub-result-time" id="subResultTime"></p>
+                    <div class="sub-result-links">
+                      <a class="sub-live-link" id="subLiveLink" href="#" target="_blank" rel="noopener">🌐 Open Live Site ↗</a>
+                      <a class="sub-repo-link" id="subRepoLink" href="#" target="_blank" rel="noopener" hidden>📁 View Code ↗</a>
+                      <a class="sub-zip-download" id="subZipDownload" href="#" download="project-source.zip" hidden>📦 Download ZIP ⤓</a>
+                      <a class="sub-zip-link" id="subZipCloudLink" href="#" target="_blank" rel="noopener" hidden>☁️ Cloud ZIP ↗</a>
+                    </div>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-ghost btn-sm sub-edit-btn" id="subEditBtn">Update Submission</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== VIEW 3: FAQ'S ===== -->
+      <section class="view-pane view-pane-faqs" id="paneFaqs" hidden>
+        <div class="faq-hub" id="faqCard">
+          <header class="faq-header">
+            <span class="faq-kicker">Exorcist's Codex · Knowledge Base</span>
+            <h3 class="faq-title">Frequently Asked Questions</h3>
+            <p class="faq-sub">Everything you need to know about rules, AI policies, UI hexes, twists, Kapidhwaj alliance, and project submissions.</p>
+
+            <!-- Search Bar -->
+            <div class="faq-search-wrap">
+              <span class="faq-search-glyph" aria-hidden="true">🔍</span>
+              <input type="text" id="faqSearchInput" class="faq-search-input" placeholder="Search questions, rules, hexes, alliance, hosting..." aria-label="Search FAQs">
+              <button type="button" id="faqSearchClear" class="faq-search-clear" hidden aria-label="Clear search">✕</button>
+            </div>
+
+            <!-- Category Filter Chips -->
+            <div class="faq-category-chips" id="faqCategoryChips" role="tablist" aria-label="FAQ Categories">
+              <button type="button" class="faq-chip is-active" data-cat="all" role="tab" aria-selected="true">
+                <span class="chip-glyph">✨</span> All Questions
+              </button>
+              <button type="button" class="faq-chip" data-cat="event-rules" role="tab" aria-selected="false">
+                <span class="chip-glyph">⚔️</span> Event &amp; Rules
+              </button>
+              <button type="button" class="faq-chip" data-cat="ai-tools" role="tab" aria-selected="false">
+                <span class="chip-glyph">🤖</span> AI &amp; Tech Stack
+              </button>
+              <button type="button" class="faq-chip" data-cat="hex-twist" role="tab" aria-selected="false">
+                <span class="chip-glyph">🔮</span> Hexes &amp; Twists
+              </button>
+              <button type="button" class="faq-chip" data-cat="alliance" role="tab" aria-selected="false">
+                <span class="chip-glyph">🌀</span> Kapidhwaj Alliance
+              </button>
+              <button type="button" class="faq-chip" data-cat="submission-hosting" role="tab" aria-selected="false">
+                <span class="chip-glyph">🚀</span> Submissions &amp; Hosting
+              </button>
+              <button type="button" class="faq-chip" data-cat="judging-scoring" role="tab" aria-selected="false">
+                <span class="chip-glyph">⚖️</span> Judging &amp; Evaluation
+              </button>
+            </div>
+          </header>
+
+          <!-- Accordion Container -->
+          <div class="faq-list" id="faqList" aria-live="polite">
+            <!-- Populated dynamically via js/app.js from FAQ_DATA -->
+          </div>
+
+          <div class="faq-empty" id="faqEmpty" hidden>
+            <span class="faq-empty-icon">🕯️</span>
+            <p class="faq-empty-title">No answers found in the crypt</p>
+            <p class="faq-empty-sub">Try searching with a different keyword or reset the filter.</p>
+            <button type="button" class="btn btn-ghost btn-sm" id="faqResetBtn">Show All Questions</button>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="site-foot">
+    <p>Microsoft Tech Community · <button class="egg" type="button" tabindex="-1" data-egg="footer" aria-label="pumpkin">🎃</button>Build for the other side · <span id="year">2026</span></p>
+  </footer>
+
+  <!-- ============ FATE CARD (result reveal) ============ -->
+  <div class="reveal" id="reveal" hidden>
+    <div class="reveal-backdrop"></div>
+    <div class="card-scene" role="dialog" aria-modal="true" aria-labelledby="cardName" aria-describedby="cardDesc">
+      <div class="card" id="card">
+        <div class="card-face card-back" aria-hidden="true">
+          <div class="card-back-art"><span>✠</span></div>
+        </div>
+        <div class="card-face card-front">
+          <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span><button class="egg" type="button" tabindex="-1" data-egg="card" aria-label="pumpkin">🎃</button>
+          <p class="card-kicker" id="cardKicker">The Wheel of Evil Has Chosen</p>
+
+          <!-- Character Portrait / Visual Media -->
+          <div class="card-media-wrap" id="cardMediaWrap">
+            <div class="card-portrait-frame" id="cardPortraitFrame" hidden>
+              <img class="card-portrait-img" id="cardPortraitImg" src="" alt="Character portrait">
+              <div class="card-portrait-badge" id="cardPortraitBadge" aria-hidden="true"></div>
+              <div class="card-portrait-vignette"></div>
+            </div>
+            <!-- Fallback Glyph / Non-Soul Stage Icon -->
+            <div class="card-glyph" id="cardGlyph" aria-hidden="true"></div>
+          </div>
+
+          <!-- Archetype Tag Badge -->
+          <div class="card-archetype-wrap" id="cardArchetypeWrap" hidden>
+            <span class="card-archetype-tag" id="cardArchetypeTag"></span>
+          </div>
+
+          <h3 class="card-name" id="cardName"></h3>
+          <p class="card-lore" id="cardLore"></p>
+
+          <!-- Prepared Mission Brief Box (Wheel of Evil only) -->
+          <div class="card-brief-box" id="cardBriefBox" hidden>
+            <span class="card-brief-label">⚡ MISSION BRIEF</span>
+            <p class="card-brief-text" id="cardBriefText"></p>
+          </div>
+
+          <!-- Character Voice Line / Quote Block -->
+          <blockquote class="card-quote" id="cardQuote" hidden>
+            <span class="card-quote-text" id="cardQuoteText"></span>
+          </blockquote>
+
+          <p class="card-desc" id="cardDesc"></p>
+          <div class="card-must-have" id="cardMustHave" hidden>
+            <span class="must-have-badge-label">⚡ MUST-HAVE REQUIREMENT</span>
+            <p class="must-have-badge-text" id="cardMustHaveText"></p>
+          </div>
+          <p class="card-scope" id="cardScope"></p>
+          <button class="btn btn-blood card-btn" id="cardBtn" type="button">Accept your destiny</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ GITHUB GUIDE (for first-timers) ============ -->
+  <div class="modal gh-modal" id="githubModal" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-box gh-box" role="dialog" aria-modal="true" aria-labelledby="ghTitle">
+      <header class="host-head">
+        <h2 id="ghTitle">Hosting Guide</h2>
+        <button class="icon-btn" type="button" data-close aria-label="Close the hosting guide">✕</button>
+      </header>
+      <div class="gh-tabs" role="tablist" aria-label="Choose a guide">
+        <button class="gh-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="ghPanelStart" data-guide="start">🧭 Start here</button>
+        <button class="gh-tab" type="button" role="tab" aria-selected="false" aria-controls="ghPanelGithub" data-guide="github">🐙 GitHub</button>
+        <button class="gh-tab" type="button" role="tab" aria-selected="false" aria-controls="ghPanelGit" data-guide="git">💻 Commit &amp; Push</button>
+        <button class="gh-tab" type="button" role="tab" aria-selected="false" aria-controls="ghPanelVercel" data-guide="vercel">▲ Vercel</button>
+        <button class="gh-tab" type="button" role="tab" aria-selected="false" aria-controls="ghPanelNetlify" data-guide="netlify">💎 Netlify</button>
+        <button class="gh-tab" type="button" role="tab" aria-selected="false" aria-controls="ghPanelRender" data-guide="render">⚡ Render</button>
+        <button class="gh-tab" type="button" role="tab" aria-selected="false" aria-controls="ghPanelCloudflare" data-guide="cloudflare">☁️ Cloudflare</button>
+      </div>
+      <div class="gh-body">
+       <div class="gh-panel" id="ghPanelStart" role="tabpanel" data-panel="start">
+        <p class="gh-lead">To submit, you need two things:</p>
+        <ol class="gh-need">
+          <li><b>A live link</b> that anyone can open: your website, put online with one of the hosts below.</li>
+          <li><b>Your code</b>: a GitHub repository link, or a .zip / Google Drive link.</li>
+        </ol>
+
+        <section class="gh-sec">
+          <h3>Which host should we use?</h3>
+          <p>All five are free and all work. Pick one:</p>
+          <div class="gh-hosts">
+            <div class="gh-host">
+              <p class="gh-host-name">🐙 GitHub Pages</p>
+              <p>Simplest if your code is already on GitHub. Link looks like <code>username.github.io/project</code>.</p>
+              <button class="gh-host-go" type="button" data-guide="github" data-guide-section="ghPagesStep">Open guide →</button>
+            </div>
+            <div class="gh-host">
+              <p class="gh-host-name">▲ Vercel</p>
+              <p>Clean link like <code>project.vercel.app</code>. Updates by itself every time you update GitHub.</p>
+              <button class="gh-host-go" type="button" data-guide="vercel">Open guide →</button>
+            </div>
+            <div class="gh-host">
+              <p class="gh-host-name">💎 Netlify</p>
+              <p>You can just <b>drag and drop your folder</b>, no GitHub needed. Link like <code>project.netlify.app</code>.</p>
+              <button class="gh-host-go" type="button" data-guide="netlify">Open guide →</button>
+            </div>
+            <div class="gh-host">
+              <p class="gh-host-name">⚡ Render</p>
+              <p>Connects to your GitHub repo. Link like <code>project.onrender.com</code>.</p>
+              <button class="gh-host-go" type="button" data-guide="render">Open guide →</button>
+            </div>
+            <div class="gh-host">
+              <p class="gh-host-name">☁️ Cloudflare Pages</p>
+              <p>Upload your folder or connect GitHub. Link like <code>project.pages.dev</code>.</p>
+              <button class="gh-host-go" type="button" data-guide="cloudflare">Open guide →</button>
+            </div>
+          </div>
+          <p class="gh-tip"><b>New to all this?</b> Put your code on GitHub (the <b>GitHub</b> tab), then turn on GitHub Pages. That gives you both links. In a hurry? Drag your folder onto <b>Netlify</b> for the live link, and upload a .zip of your folder in the Submit form for the code.</p>
+        </section>
+
+        <section class="gh-sec">
+          <h3>Before you submit, check:</h3>
+          <ul>
+            <li>Your link opens on a phone that isn't on your laptop's Wi-Fi.</li>
+            <li>The design, images and buttons all load. Nothing should point to <code>C:\Users\...</code> on your laptop.</li>
+            <li>The link starts with <code>https://</code>.</li>
+          </ul>
+        </section>
+       </div>
+
+       <div class="gh-panel" id="ghPanelGithub" role="tabpanel" data-panel="github" hidden>
+        <p class="gh-lead">Never used GitHub? No problem. Follow these steps in order: you'll send your project to GitHub with a few typed commands, then get a live link you can submit. Copy the commands exactly as shown.</p>
+
+        <div class="gh-quick">
+          <p class="gh-quick-title">The short version</p>
+          <ol>
+            <li>Make a free GitHub account</li>
+            <li>Install Git on your laptop</li>
+            <li>Create a new, empty <b>public</b> repository</li>
+            <li>Open a terminal inside your project folder</li>
+            <li>Push your code with a few commands</li>
+            <li>Turn on <b>GitHub Pages</b> to get a live link</li>
+          </ol>
+        </div>
+
+        <section class="gh-sec">
+          <h3>What is GitHub?</h3>
+          <p>GitHub is like Google Drive, but for code. It stores your project online so judges can see it, and it can also turn your files into a real website for free.</p>
+          <dl class="gh-words">
+            <dt>Repository (repo)</dt><dd>A project folder on GitHub. One repo per project.</dd>
+            <dt>Terminal</dt><dd>A window where you type commands instead of clicking. Windows calls it Command Prompt; on a Mac it's called Terminal.</dd>
+            <dt>Commit</dt><dd>A save point of your files, with a short note about what changed.</dd>
+            <dt>Push</dt><dd>Sending your commits from your laptop up to GitHub.</dd>
+            <dt>GitHub Pages</dt><dd>GitHub's free hosting. It turns your repo into a live website link.</dd>
+          </dl>
+        </section>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">1</span> Create your account</h3>
+          <ol>
+            <li>Go to <a href="https://github.com/signup" target="_blank" rel="noopener">github.com/signup</a>.</li>
+            <li>Enter your email, a password and a <b>username</b>. Your username appears in your website link, so keep it simple.</li>
+            <li>Open the email GitHub sends you and enter the code to verify your account.</li>
+          </ol>
+          <p class="gh-tip">One account per team is enough. Whoever pushes the code can use their account.</p>
+        </section>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">2</span> Install Git</h3>
+          <ul>
+            <li><b>Windows:</b> download Git from <a href="https://git-scm.com/downloads" target="_blank" rel="noopener">git-scm.com/downloads</a>, run the installer and keep clicking <b>Next</b>. The default options are fine.</li>
+            <li><b>Mac:</b> open Terminal (press <kbd>Cmd</kbd>+<kbd>Space</kbd>, type <code>Terminal</code>, press <kbd>Enter</kbd>), type <code>git --version</code> and press <kbd>Enter</kbd>. If Git isn't installed yet, your Mac offers to install it. Click <b>Install</b>.</li>
+          </ul>
+          <p>To check it worked, open a terminal (step 4) and type <code>git --version</code>. You should see something like <code>git version 2.47.0</code>.</p>
+        </section>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">3</span> Create an empty repository</h3>
+          <ol>
+            <li>On github.com click the <b>+</b> at the top right → <b>New repository</b>.</li>
+            <li>Give it a name with no spaces, for example <code>deadpool-job-board</code>.</li>
+            <li>Choose <b>Public</b>. Free hosting only works on public repos, and judges need to see your code.</li>
+            <li>Leave everything else <b>unticked</b>: no README, no .gitignore, no license. The repo must be empty.</li>
+            <li>Click <b>Create repository</b> and keep that page open. You'll need its link, which looks like <code>https://github.com/your-username/deadpool-job-board.git</code></li>
+          </ol>
+        </section>
+
+        <section class="gh-sec" id="ghTerminalStep">
+          <h3><span class="gh-step">4</span> Open a terminal in your project folder</h3>
+          <p>The terminal has to be “inside” your project folder: the folder that has your <code>index.html</code> in it. Pick whichever way suits you:</p>
+
+          <p><b>Windows, the quick way</b></p>
+          <ol>
+            <li>Open your project folder in File Explorer.</li>
+            <li>Click the address bar at the top (where the folder's path is shown), type <code>cmd</code> and press <kbd>Enter</kbd>. A black window opens, already inside your folder.</li>
+          </ol>
+          <p class="gh-tip">On Windows 11 you can also right-click an empty space inside the folder and choose <b>Open in Terminal</b>.</p>
+
+          <p><b>Windows, typing the path</b></p>
+          <ol>
+            <li>Right-click your project folder and choose <b>Copy as path</b> (on Windows 10, hold <kbd>Shift</kbd> while you right-click). This copies the folder's path with quote marks around it.</li>
+            <li>Open the Start menu, type <code>cmd</code> and open <b>Command Prompt</b>.</li>
+            <li>Type <code>cd /d </code> (with a space at the end), paste the path with <kbd>Ctrl</kbd>+<kbd>V</kbd>, and press <kbd>Enter</kbd>. It looks like this:
+              <pre><code>cd /d "C:\Users\YourName\Desktop\my project"</code></pre>
+            </li>
+          </ol>
+          <p class="gh-tip"><b>Why the quote marks?</b> If a folder name has a space in it (like <code>my project</code>), the terminal splits it in two without them. The <code>/d</code> lets it jump to another drive, such as <code>D:</code>.</p>
+
+          <p><b>Mac</b></p>
+          <ol>
+            <li>Open Terminal (<kbd>Cmd</kbd>+<kbd>Space</kbd>, type <code>Terminal</code>, press <kbd>Enter</kbd>).</li>
+            <li>Type <code>cd </code> (with a space at the end), then drag your project folder from Finder into the Terminal window. Its path appears. Press <kbd>Enter</kbd>. It looks like this:
+              <pre><code>cd "/Users/yourname/Desktop/my project"</code></pre>
+            </li>
+          </ol>
+
+          <p><b>VS Code</b>: open your project folder, then choose <b>Terminal</b> → <b>New Terminal</b>. It opens in the folder automatically.</p>
+
+          <p class="gh-tip"><b>Check you're in the right place:</b> type <code>dir</code> (Windows) or <code>ls</code> (Mac) and press <kbd>Enter</kbd>. You should see <code>index.html</code> in the list.</p>
+        </section>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">5</span> Push your code (first time)</h3>
+          <p>In that terminal, type these one at a time and press <kbd>Enter</kbd> after each. Put in your own name, email and repo link.</p>
+          <pre><code>git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+git init
+git add .
+git commit -m "first version"
+git branch -M main
+git remote add origin https://github.com/your-username/your-repo-name.git
+git push -u origin main</code></pre>
+          <ul>
+            <li>The two <code>git config</code> lines tell Git who you are. You only need them once per laptop.</li>
+            <li><code>git add .</code> picks up every file in the folder. The dot means “everything here”.</li>
+            <li>For <code>git remote add origin</code>, use your own repo link from step 3. Your empty repo's page on GitHub shows these exact commands with your link already filled in, under <b>“…or push an existing repository from the command line”</b>. You can copy them from there.</li>
+            <li>On the first push a window asks you to sign in to GitHub. Choose <b>Sign in with your browser</b> and approve it.</li>
+          </ul>
+          <p>Now refresh your repo page on GitHub. All your files should be there. 🎉</p>
+        </section>
+
+        <section class="gh-sec" id="ghPagesStep">
+          <h3><span class="gh-step">6</span> Put it online with GitHub Pages</h3>
+          <ol>
+            <li>In your repo, click <b>Settings</b> (top menu), then <b>Pages</b> (left menu).</li>
+            <li>Under <b>Build and deployment</b>, set <b>Source</b> to <b>Deploy from a branch</b>.</li>
+            <li>Set <b>Branch</b> to <code>main</code> and the folder to <code>/ (root)</code>, then click <b>Save</b>.</li>
+            <li>Wait 1–3 minutes and refresh the page. A link appears at the top: <code>https://your-username.github.io/your-repo-name/</code></li>
+            <li>Open the link and check that your site works.</li>
+          </ol>
+        </section>
+
+        <section class="gh-sec" id="ghUpdateStep">
+          <h3><span class="gh-step">7</span> Changed something? Update it</h3>
+          <ol>
+            <li>Save your files.</li>
+            <li>Open a terminal in your project folder again (step 4).</li>
+            <li>Run these three commands:
+              <pre><code>git add .
+git commit -m "describe what you changed"
+git push</code></pre>
+            </li>
+          </ol>
+          <p>That's it. GitHub updates straight away, and your live site within a minute or two. If you still see the old version, press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> (<kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> on a Mac).</p>
+        </section>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">8</span> Submit your links</h3>
+          <ul>
+            <li><b>Live Hosted Website URL:</b> your GitHub Pages link, <code>https://your-username.github.io/your-repo-name/</code></li>
+            <li><b>GitHub Repository URL:</b> the address of your repo page, <code>https://github.com/your-username/your-repo-name</code></li>
+          </ul>
+        </section>
+
+        <section class="gh-sec">
+          <h3>Common problems</h3>
+          <details>
+            <summary>“git is not recognized” / “command not found: git”</summary>
+            <p>Git isn't installed yet, or the terminal was open while you installed it. Install Git (step 2), close the terminal, and open a new one.</p>
+          </details>
+          <details>
+            <summary>“The system cannot find the path specified” / “no such file or directory”</summary>
+            <p>The <code>cd</code> path has a typo or is missing its quote marks. Use <b>Copy as path</b> (Windows) or drag the folder into Terminal (Mac) so the path is exactly right, and keep the quotes.</p>
+          </details>
+          <details>
+            <summary>“not a git repository”</summary>
+            <p>The terminal isn't inside your project folder. Go back to step 4, then check with <code>dir</code> / <code>ls</code> that you can see <code>index.html</code>.</p>
+          </details>
+          <details>
+            <summary>“Please tell me who you are” / “Author identity unknown”</summary>
+            <p>Run the two <code>git config --global</code> lines from step 5, then run the <code>git commit</code> line again.</p>
+          </details>
+          <details>
+            <summary>“src refspec main does not match any”</summary>
+            <p>Nothing has been committed yet. Run <code>git add .</code> and <code>git commit -m "first version"</code>, then <code>git push -u origin main</code> again.</p>
+          </details>
+          <details>
+            <summary>“remote origin already exists”</summary>
+            <p>You've already added a link. To replace it, run <code>git remote set-url origin https://github.com/your-username/your-repo-name.git</code> and push again.</p>
+          </details>
+          <details>
+            <summary>Push “rejected” / “fetch first”</summary>
+            <p>GitHub has something your laptop doesn't. This usually means a README was ticked when the repo was created, or a teammate pushed. Run this, then push again:</p>
+            <pre><code>git pull --no-rebase --no-edit --allow-unrelated-histories origin main
+git push</code></pre>
+          </details>
+          <details>
+            <summary>On a Mac, it asks for a password and won't accept mine</summary>
+            <p>GitHub doesn't accept your normal password in the terminal. On github.com go to <b>Settings</b> → <b>Developer settings</b> → <b>Personal access tokens</b> → <b>Tokens (classic)</b> → <b>Generate new token (classic)</b>, tick <b>repo</b>, generate it and copy it. Paste that token when the terminal asks for the password. Nothing shows on screen while you paste or type the password. That's normal.</p>
+          </details>
+          <details>
+            <summary>My link says “404: There isn't a GitHub Pages site here”</summary>
+            <p>Wait 2–3 minutes and refresh. Check that your main file is named exactly <code>index.html</code> (all lowercase) and is at the top of the repo, that Pages is set to <code>main</code> and <code>/ (root)</code>, and that the repo is Public.</p>
+          </details>
+          <details>
+            <summary>All my files are inside one folder in the repo</summary>
+            <p>The terminal was opened one folder too high. Open it in the folder that directly contains <code>index.html</code>, and push from there.</p>
+          </details>
+          <details>
+            <summary>My site loads but the design or images are missing</summary>
+            <p>GitHub cares about capital letters: <code>Logo.png</code> and <code>logo.png</code> are different files, so the name in your code must match exactly. Use paths like <code>images/logo.png</code>, never <code>C:\Users\...</code>.</p>
+          </details>
+          <details>
+            <summary>I pushed a huge <code>node_modules</code> folder</summary>
+            <p>Create a file called <code>.gitignore</code> in your project folder containing the line <code>node_modules/</code>, then run <code>git rm -r --cached node_modules</code>, commit and push again.</p>
+          </details>
+          <details>
+            <summary>I really can't get the terminal working</summary>
+            <p>As a last resort, on your repo's page click <b>uploading an existing file</b> (or <b>Add file</b> → <b>Upload files</b>), drag in the files <b>inside</b> your project folder, not the folder itself, and click <b>Commit changes</b>. Or ask an organiser to help you with the terminal.</p>
+          </details>
+          <details>
+            <summary>How do I make a .zip of my project?</summary>
+            <p><b>Windows:</b> right-click your project folder → <b>Compress to ZIP file</b> (or <b>Send to</b> → <b>Compressed (zipped) folder</b>). <b>Mac:</b> right-click the folder → <b>Compress</b>.</p>
+          </details>
+          <details>
+            <summary>Do we have to pay for anything?</summary>
+            <p>No. A GitHub account, public repos and GitHub Pages are all free.</p>
+          </details>
+        </section>
+       </div>
+
+       <div class="gh-panel" id="ghPanelGit" role="tabpanel" data-panel="git" hidden>
+        <p class="gh-lead">Your code is on GitHub (the <button class="gh-inline" type="button" data-guide="github">🐙 GitHub</button> tab, steps 1–5). This is how you keep it up to date while you build, and how to work on it as a team.</p>
+
+        <div class="gh-quick">
+          <p class="gh-quick-title">Three words you'll see</p>
+          <ul>
+            <li><b>Commit</b>: save a snapshot of your files, with a short note like “added the map”.</li>
+            <li><b>Push</b>: send your commits from your laptop up to GitHub.</li>
+            <li><b>Pull</b>: bring down changes a teammate pushed, so you have their work too.</li>
+          </ul>
+          <p>The routine is always: <b>save your files → commit → push</b>.</p>
+        </div>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">1</span> Open a terminal in your project folder</h3>
+          <p>Same as before: on Windows, type <code>cmd</code> in the File Explorer address bar of your project folder; on a Mac, type <code>cd </code> and drag the folder into Terminal; in VS Code, use <b>Terminal</b> → <b>New Terminal</b>. If you get stuck, see <button class="gh-inline" type="button" data-guide="github" data-guide-section="ghTerminalStep">step 4 of the GitHub tab</button>.</p>
+        </section>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">2</span> Commit and push</h3>
+          <pre><code>git add .
+git commit -m "describe what you changed"
+git push</code></pre>
+          <ul>
+            <li>Do this every time you finish a piece of work. Little and often is safer than one giant push at the end.</li>
+            <li>Good notes are short and say what changed: <code>added the incident map</code>, <code>fixed the mobile menu</code>, <code>new colours</code>.</li>
+            <li>“nothing to commit, working tree clean” means nothing has changed since your last commit. Did you save your files?</li>
+          </ul>
+        </section>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">3</span> Working as a team</h3>
+          <ol>
+            <li>The repo owner adds teammates: on github.com open the repo → <b>Settings</b> → <b>Collaborators</b> → <b>Add people</b>. Each teammate accepts the email invite.</li>
+            <li>A teammate gets the code once, in a terminal:
+              <pre><code>git clone https://github.com/owner-username/your-repo-name.git
+cd your-repo-name</code></pre>
+            </li>
+            <li><b>Always pull before you start working</b>, so you have everyone's latest changes:
+              <pre><code>git pull</code></pre>
+            </li>
+            <li>When you're done, commit and push as in step 2.</li>
+          </ol>
+          <p class="gh-tip">Try not to edit the same file at the same time as a teammate. It saves a lot of headaches.</p>
+        </section>
+
+        <section class="gh-sec">
+          <h3>Prefer buttons to typing?</h3>
+          <details>
+            <summary>GitHub Desktop (an app, no commands)</summary>
+            <ol>
+              <li>Install <a href="https://desktop.github.com" target="_blank" rel="noopener">GitHub Desktop</a> and sign in to GitHub.</li>
+              <li><b>File</b> → <b>Add local repository…</b> → choose your project folder. If it says it isn't a repository yet, click <b>create a repository</b>.</li>
+              <li>Click <b>Publish repository</b> and untick <b>Keep this code private</b>.</li>
+              <li>After each change: write a <b>Summary</b> → <b>Commit to main</b> → <b>Push origin</b>.</li>
+            </ol>
+          </details>
+          <details>
+            <summary>VS Code's Source Control buttons</summary>
+            <ol>
+              <li>With Git installed, open your folder and click the <b>Source Control</b> icon in the left bar (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd>).</li>
+              <li>First time: <b>Initialize Repository</b> → type a message → <b>Commit</b> → <b>Publish Branch</b> → <b>Publish to GitHub public repository</b>.</li>
+              <li>After each change: type a message → <b>Commit</b> → <b>Sync Changes</b>.</li>
+            </ol>
+          </details>
+        </section>
+
+        <section class="gh-sec">
+          <h3>Common problems</h3>
+          <details>
+            <summary>Push “rejected” / “Updates were rejected”</summary>
+            <p>A teammate pushed something you don't have yet. Pull first, then push:</p>
+            <pre><code>git pull --no-rebase --no-edit
+git push</code></pre>
+          </details>
+          <details>
+            <summary>“CONFLICT” after pulling</summary>
+            <p>You and a teammate changed the same lines. Open the file it names, find the part between <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code> and <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>, keep the version you want, delete the marker lines, save, then run <code>git add .</code>, <code>git commit -m "fixed conflict"</code> and <code>git push</code>. VS Code shows buttons to pick a version, which makes this easier.</p>
+          </details>
+          <details>
+            <summary>“Permission denied” or error 403 when pushing</summary>
+            <p>You're signed in with a GitHub account that doesn't own the repo. Ask the owner to add you as a collaborator (step 3), and accept the invite email.</p>
+          </details>
+          <details>
+            <summary>My push worked but the live site didn't change</summary>
+            <p>Hosts take a minute or two to update. Check your host's deployments page, then refresh your site with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> (<kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> on a Mac).</p>
+          </details>
+          <p>For setup errors (Git not found, wrong folder, signing in), see <b>Common problems</b> in the <button class="gh-inline" type="button" data-guide="github">🐙 GitHub</button> tab.</p>
+        </section>
+       </div>
+
+       <div class="gh-panel" id="ghPanelVercel" role="tabpanel" data-panel="vercel" hidden>
+        <p class="gh-lead">Vercel puts your site online for free and gives you a clean link like <code>your-project.vercel.app</code>. It reads your code from GitHub, so every time you update GitHub, your live site updates by itself.</p>
+
+        <div class="gh-quick">
+          <p class="gh-quick-title">The short version</p>
+          <ol>
+            <li>Push your code to GitHub (steps 1–5 in the <b>GitHub</b> tab)</li>
+            <li>Sign up to Vercel with your GitHub account</li>
+            <li>Import your repo</li>
+            <li>Click <b>Deploy</b></li>
+            <li>Paste your <code>.vercel.app</code> link in the Submit form</li>
+          </ol>
+        </div>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">1</span> Put your code on GitHub first</h3>
+          <p>Vercel takes your code from a GitHub repository. If you haven't yet, follow steps 1–5 in the <b>GitHub</b> tab: make an account, create a repo and push your code from the terminal. You can skip GitHub Pages.</p>
+        </section>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">2</span> Create your Vercel account</h3>
+          <ol>
+            <li>Go to <a href="https://vercel.com/signup" target="_blank" rel="noopener">vercel.com/signup</a>.</li>
+            <li>Choose the <b>Hobby</b> plan (it's free) and type your name.</li>
+            <li>Click <b>Continue with GitHub</b> and sign in with the same GitHub account that has your repo.</li>
+            <li>When GitHub asks, click <b>Authorize Vercel</b>.</li>
+          </ol>
+          <p class="gh-tip">Signing up with GitHub links the two accounts, so Vercel can see your repos. You don't need a separate password.</p>
+        </section>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">3</span> Import your repo</h3>
+          <ol>
+            <li>On your Vercel dashboard, click <b>Add New…</b> → <b>Project</b>.</li>
+            <li>Under <b>Import Git Repository</b>, find your repo and click <b>Import</b>.</li>
+            <li>Don't see it? Click <b>Adjust GitHub App Permissions</b> (or <b>Install</b>), choose your account, give Vercel access to that repo and save. Then it appears in the list.</li>
+          </ol>
+        </section>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">4</span> Deploy</h3>
+          <ol>
+            <li><b>Project Name:</b> this becomes your link, so keep it short, for example <code>deadpool-job-board</code>.</li>
+            <li><b>Framework Preset:</b> for a plain HTML/CSS/JavaScript site choose <b>Other</b>. If you used React or Vite, Vercel picks the right one for you.</li>
+            <li>Leave <b>Root Directory</b> and the build settings as they are.</li>
+            <li>Click <b>Deploy</b> and wait about a minute.</li>
+            <li>When you see the congratulations screen, click <b>Continue to Dashboard</b>. Your link is under <b>Domains</b>, for example <code>https://deadpool-job-board.vercel.app</code>. Open it and check your site works.</li>
+          </ol>
+        </section>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">5</span> Changed something? Update it</h3>
+          <p>Just update your files on GitHub (<b>Add file</b> → <b>Upload files</b> → <b>Commit changes</b>). Vercel notices and puts the new version online within a minute or two. You don't need to touch Vercel again.</p>
+        </section>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">6</span> Submit your links</h3>
+          <ul>
+            <li><b>Live Hosted Website URL:</b> your Vercel link, <code>https://your-project.vercel.app</code></li>
+            <li><b>GitHub Repository URL:</b> <code>https://github.com/your-username/your-repo-name</code></li>
+          </ul>
+        </section>
+
+        <section class="gh-sec">
+          <h3>Common problems</h3>
+          <details>
+            <summary>My link shows “404: NOT_FOUND”</summary>
+            <p>Vercel can't find your main page. It must be named exactly <code>index.html</code> (all lowercase) and sit at the top of your repo. If it's inside a folder, open your project in Vercel → <b>Settings</b> → <b>Build and Deployment</b> → set <b>Root Directory</b> to that folder, then redeploy (or move the files to the top of the repo on GitHub).</p>
+          </details>
+          <details>
+            <summary>My repo isn't in the import list</summary>
+            <p>Vercel only sees repos you've given it access to. On the import page click <b>Adjust GitHub App Permissions</b>, pick your account, allow the repo and save. Also check you signed in to Vercel with the same GitHub account that owns the repo.</p>
+          </details>
+          <details>
+            <summary>The deployment says “Build failed”</summary>
+            <p>For a plain HTML/CSS/JavaScript site, open the project's <b>Settings</b> → <b>Build and Deployment</b>, set <b>Framework Preset</b> to <b>Other</b>, turn off any custom <b>Build Command</b>, save and redeploy. For React/Vite, open the failed deployment and read the red error lines. It's usually a missing file or a typo, and fixing it on GitHub redeploys automatically.</p>
+          </details>
+          <details>
+            <summary>My changes aren't showing on the live site</summary>
+            <p>Check that you clicked <b>Commit changes</b> on GitHub, then look at the <b>Deployments</b> tab in Vercel: the newest one should say <b>Ready</b>. Then press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> (<kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> on a Mac) on your site.</p>
+          </details>
+          <details>
+            <summary>Is it really free? Does everyone in the team need an account?</summary>
+            <p>Yes, the Hobby plan is free. Only the person who owns the GitHub repo needs a Vercel account. Everyone else just uses the link.</p>
+          </details>
+        </section>
+       </div>
+
+       <div class="gh-panel" id="ghPanelNetlify" role="tabpanel" data-panel="netlify" hidden>
+        <p class="gh-lead">Netlify can put your site online in two ways: <b>drag and drop your folder</b> (easiest, no GitHub needed), or <b>connect your GitHub repo</b> so it updates by itself.</p>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">1</span> Create your Netlify account</h3>
+          <ol>
+            <li>Go to <a href="https://app.netlify.com/signup" target="_blank" rel="noopener">app.netlify.com/signup</a>.</li>
+            <li>Sign up with GitHub or with your email. The free plan is all you need.</li>
+            <li>If it asks a few setup questions, answer them or skip them.</li>
+          </ol>
+        </section>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">2</span> Easiest: drag and drop your folder</h3>
+          <ol>
+            <li>On your Netlify dashboard, click <b>Add new site</b> (or <b>Add new project</b>) → <b>Deploy manually</b>.</li>
+            <li>Drag your <b>project folder</b> (the folder that contains <code>index.html</code>) onto the box.</li>
+            <li>Wait a few seconds. Your link appears at the top, for example <code>https://random-name-123.netlify.app</code>.</li>
+            <li><b>To update it later:</b> open your site in Netlify → <b>Deploys</b> → drag the folder onto the box again.</li>
+          </ol>
+          <p class="gh-tip">With drag and drop there's no GitHub repo, so for your code upload a .zip of your folder in the Submit form.</p>
+        </section>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">3</span> Or: connect your GitHub repo</h3>
+          <ol>
+            <li>Push your code to GitHub first (steps 1–5 in the <b>GitHub</b> tab).</li>
+            <li>Click <b>Add new site</b> → <b>Import an existing project</b> → <b>GitHub</b>, allow Netlify to access GitHub, and pick your repo.</li>
+            <li>For a plain HTML/CSS/JavaScript site, leave <b>Build command</b> and <b>Publish directory</b> empty. For React/Vite, use <code>npm run build</code> and <code>dist</code> (Netlify usually fills these in).</li>
+            <li>Click <b>Deploy</b>. From now on, every change you commit on GitHub goes live by itself.</li>
+          </ol>
+        </section>
+
+        <section class="gh-sec">
+          <h3>Nicer link and common problems</h3>
+          <details>
+            <summary>How do I change the random link name?</summary>
+            <p>Open your site in Netlify, go to its settings and look for <b>Change site name</b>. The name you choose becomes <code>your-name.netlify.app</code>.</p>
+          </details>
+          <details>
+            <summary>My link says “Page not found”</summary>
+            <p>Your main page must be called exactly <code>index.html</code> and sit at the top of the folder you dragged in (or the top of your repo). If you dragged a folder that only contains another folder, drag the inner one instead.</p>
+          </details>
+          <details>
+            <summary>The design or images are missing</summary>
+            <p>Capital letters matter online: <code>Logo.png</code> and <code>logo.png</code> are different. Use paths like <code>images/logo.png</code>, never <code>C:\Users\...</code>.</p>
+          </details>
+        </section>
+       </div>
+
+       <div class="gh-panel" id="ghPanelRender" role="tabpanel" data-panel="render" hidden>
+        <p class="gh-lead">Render hosts your site for free as a <b>Static Site</b> and gives you a link like <code>your-project.onrender.com</code>. It reads your code from GitHub.</p>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">1</span> Put your code on GitHub first</h3>
+          <p>Follow steps 1–5 in the <b>GitHub</b> tab: make an account, create a repo and push your code from the terminal.</p>
+        </section>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">2</span> Create your Render account</h3>
+          <ol>
+            <li>Go to <a href="https://dashboard.render.com/register" target="_blank" rel="noopener">dashboard.render.com/register</a>.</li>
+            <li>Choose <b>GitHub</b> to sign up, and allow Render to access your account.</li>
+          </ol>
+        </section>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">3</span> Create a Static Site</h3>
+          <ol>
+            <li>In your dashboard, click <b>New</b> (or <b>+ New</b>) → <b>Static Site</b>.</li>
+            <li>Pick your repo from the list and click <b>Connect</b>. If it's not there, click the link to configure GitHub access and allow that repo.</li>
+            <li><b>Name:</b> this becomes your link, for example <code>deadpool-job-board</code>.</li>
+            <li><b>Branch:</b> <code>main</code>.</li>
+            <li><b>Build Command:</b> leave it empty for plain HTML. For React/Vite use <code>npm install &amp;&amp; npm run build</code>.</li>
+            <li><b>Publish Directory:</b> <code>.</code> (just a dot) for plain HTML. For Vite use <code>dist</code>.</li>
+            <li>Click the button at the bottom to create and deploy the site, and wait 1–3 minutes.</li>
+            <li>Your link appears near the top of the page, for example <code>https://deadpool-job-board.onrender.com</code>.</li>
+          </ol>
+          <p class="gh-tip">Every change you commit on GitHub redeploys your site by itself.</p>
+        </section>
+
+        <section class="gh-sec">
+          <h3>Common problems</h3>
+          <details>
+            <summary>Render won't let me leave Build Command empty</summary>
+            <p>Type <code>echo done</code> as the build command. It does nothing, which is exactly what a plain HTML site needs.</p>
+          </details>
+          <details>
+            <summary>My link says “Not Found”</summary>
+            <p>Check the <b>Publish Directory</b> in the site's settings. It must be the folder that contains <code>index.html</code>: <code>.</code> if it's at the top of the repo. Then trigger a new deploy.</p>
+          </details>
+          <details>
+            <summary>The deploy failed</summary>
+            <p>Open the deploy's <b>Logs</b> and read the red lines. For plain HTML the usual cause is a build command that tries to run <code>npm</code>. Clear it (or use <code>echo done</code>) and redeploy.</p>
+          </details>
+        </section>
+       </div>
+
+       <div class="gh-panel" id="ghPanelCloudflare" role="tabpanel" data-panel="cloudflare" hidden>
+        <p class="gh-lead">Cloudflare Pages hosts your site for free with a link like <code>your-project.pages.dev</code>. You can <b>upload your folder</b> directly or <b>connect GitHub</b>.</p>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">1</span> Create your Cloudflare account</h3>
+          <ol>
+            <li>Go to <a href="https://dash.cloudflare.com/sign-up" target="_blank" rel="noopener">dash.cloudflare.com/sign-up</a>, enter your email and a password, and verify your email.</li>
+            <li>You don't need a domain name or a paid plan. Skip anything that asks you to add a website or domain.</li>
+          </ol>
+        </section>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">2</span> Start a Pages project</h3>
+          <ol>
+            <li>In the left menu open <b>Workers &amp; Pages</b> (it may be inside <b>Compute</b>), then click <b>Create</b>.</li>
+            <li>Choose <b>Pages</b>. If it shows Workers first, look for the <b>Pages</b> tab or a “Get started” link for Pages.</li>
+          </ol>
+        </section>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">3</span> Easiest: upload your folder</h3>
+          <ol>
+            <li>Choose <b>Upload assets</b> (drag and drop).</li>
+            <li>Give your project a name. It becomes <code>your-name.pages.dev</code>. Click <b>Create project</b>.</li>
+            <li>Drag your <b>project folder</b> (the one that contains <code>index.html</code>) onto the box, then click <b>Deploy site</b>.</li>
+            <li><b>To update it later:</b> open the project → <b>Create deployment</b> → drag the folder again.</li>
+          </ol>
+          <p class="gh-tip">With an upload there's no GitHub repo, so for your code upload a .zip of your folder in the Submit form.</p>
+        </section>
+
+        <section class="gh-sec">
+          <h3><span class="gh-step">4</span> Or: connect your GitHub repo</h3>
+          <ol>
+            <li>Push your code to GitHub first (steps 1–5 in the <b>GitHub</b> tab).</li>
+            <li>Choose <b>Connect to Git</b> (or <b>Import an existing Git repository</b>), connect your GitHub account, pick your repo and click <b>Begin setup</b>.</li>
+            <li><b>Framework preset:</b> <b>None</b> for plain HTML. Leave <b>Build command</b> and <b>Build output directory</b> empty. For React/Vite use <code>npm run build</code> and <code>dist</code>.</li>
+            <li>Click <b>Save and Deploy</b>. Every change you commit on GitHub goes live by itself.</li>
+          </ol>
+        </section>
+
+        <section class="gh-sec">
+          <h3>Common problems</h3>
+          <details>
+            <summary>My new link shows an error</summary>
+            <p>A brand-new <code>.pages.dev</code> link can take a minute or two to start working. Wait, then refresh.</p>
+          </details>
+          <details>
+            <summary>It says the page can't be found</summary>
+            <p>Your main page must be called exactly <code>index.html</code> and sit at the top of the folder you uploaded (or the top of your repo).</p>
+          </details>
+        </section>
+       </div>
+
+        <p class="gh-foot">Button names on these sites change now and then. If something looks a little different, look for the closest match. Still stuck? Ask any organiser. We're happy to help.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ HOST PANEL ============ -->
+  <div class="modal host" id="hostModal" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-box host-box" role="dialog" aria-modal="true" aria-labelledby="hostTitle">
+      <header class="host-head">
+        <h2 id="hostTitle">Host Ledger</h2>
+        <button class="icon-btn" type="button" data-close aria-label="Close host ledger">✕</button>
+      </header>
+      <div class="host-body">
+        <p class="host-mode" id="hostMode"></p>
+        <section class="host-auth" id="hostAuth" hidden>
+          <form id="hostLogin" class="host-login" autocomplete="on">
+            <div id="hostSignedOut">
+              <p class="host-hint">Anyone can view the ledger. Sign in as the host to change the timer or wipe the event.</p>
+              <div class="host-login-row">
+                <input id="hostEmail" type="email" placeholder="Host email" autocomplete="username" required>
+                <input id="hostPass" type="password" placeholder="Password" autocomplete="current-password" required>
+                <button class="btn btn-ghost btn-sm" type="submit">Sign in</button>
+              </div>
+            </div>
+            <div id="hostSignedIn" hidden>
+              <p class="host-hint">Signed in as host: <b id="hostWho"></b>. Don't spin for a team on this phone while signed in.</p>
+              <button class="btn btn-ghost btn-sm" id="hostLogout" type="button">Sign out</button>
+            </div>
+          </form>
+        </section>
+        <section>
+          <h3>Teams per soul</h3>
+          <div class="host-stats" id="hostStats"></div>
+        </section>
+        <section>
+          <h3>Teams <span id="hostCount"></span></h3>
+          <div class="host-table-wrap"><table class="host-table" id="hostTable"></table></div>
+        </section>
+        <section class="host-tools">
+          <h3>Tools</h3>
+          <label class="host-inline">Twist delay (minutes)
+            <input id="hostDelay" type="number" min="0" max="120" step="0.5">
+            <span class="host-hint" id="hostDelayHint"></span>
+          </label>
+          <div class="host-btns">
+            <a class="btn btn-blood btn-sm" id="hostJudges" href="judges.html" target="_blank" rel="noopener">Open judges' board ↗</a>
+            <button class="btn btn-ghost btn-sm" id="hostExport" type="button">Export ledger (.json)</button>
+            <button class="btn btn-ghost btn-sm" id="hostCsv" type="button">Export spreadsheet (.csv)</button>
+            <label class="btn btn-ghost btn-sm file-btn" id="hostImportLabel">Merge ledger from another device
+              <input id="hostImport" type="file" accept="application/json,.json">
+            </label>
+            <button class="btn btn-ghost btn-sm" id="hostFree" type="button">Free this phone for a new team</button>
+            <button class="btn btn-blood btn-sm" id="hostTriggerCorruption" type="button">⚡ Trigger 15-Min Corruption Alert</button>
+            <button class="btn btn-blood btn-sm" id="hostTriggerAlliance" type="button">🌀 Broadcast Sponsor Alliance Protocol</button>
+            <button class="btn btn-blood btn-sm" id="hostTriggerFiveMin" type="button">⏳ Trigger Final 5 Min Warning</button>
+            <button class="btn btn-blood btn-sm" id="hostTriggerZeroHour" type="button">🔒 Trigger Zero Hour (Lockdown)</button>
+            <button class="btn btn-ghost btn-sm" id="hostTestScare" type="button">👻 Preview Current Soul Jumpscare</button>
+            <button class="btn btn-blood btn-sm" id="hostReset" type="button">Wipe entire ledger</button>
+          </div>
+          <p class="host-note" id="hostNote"></p>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PROLOGUE DECREE MODAL ============ -->
+  <div class="modal prologue-modal" id="prologueModal" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-box prologue-box" role="dialog" aria-modal="true" aria-labelledby="prologueTitle">
+      <span class="corner tl"></span><span class="corner tr"></span>
+      <span class="corner bl"></span><span class="corner br"></span>
+
+      <header class="prologue-head">
+        <span class="prologue-kicker">⚡ THE OTHER SIDE SPEAKS</span>
+        <h2 class="prologue-title" id="prologueTitle">The Wheel of Evil</h2>
+        <p class="prologue-sub">The Official Decree of Fate &amp; Destiny</p>
+      </header>
+
+      <div class="prologue-body">
+        <div class="prologue-stanza">
+          <p>Every world has its monsters.</p>
+          <p>Every monster has a weakness.</p>
+          <p class="prologue-em">And every weakness is an opportunity for someone clever enough to exploit it.</p>
+        </div>
+
+        <div class="prologue-stanza prologue-highlight">
+          <p class="prologue-decree">The Wheel of Evil will now decide which character your team must help.</p>
+          <p>You cannot choose your favourite. You cannot negotiate with the darkness.</p>
+          <p class="prologue-destiny">Whatever the wheel gives you, that is your mission, that's your destiny!!</p>
+        </div>
+
+        <div class="prologue-stanza">
+          <p>You may get a clown. You may get a cursed spirit.</p>
+          <p>You may get a witch, a serial killer, or something that should never have existed in the first place.</p>
+        </div>
+
+        <div class="prologue-stanza">
+          <p>Your character will have a problem.</p>
+          <p class="prologue-creative">Find your problem, show your creativity.</p>
+          <p class="prologue-watching">And the Other Side will be watching.</p>
+        </div>
+
+        <p class="prologue-coda">Let's see who fate has chosen.</p>
+      </div>
+
+      <footer class="prologue-foot">
+        <button class="btn btn-blood btn-lg prologue-btn" id="prologueCloseBtn" type="button">
+          <span>🎡 Confront The Wheel of Evil</span>
+        </button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ============ SOUL JUMPSCARE VIDEO STAGE ============ -->
+  <div class="scare-video-layer" id="scareVideoLayer" hidden aria-hidden="true">
+    <div class="scare-video-backdrop" id="scareVideoBackdrop"></div>
+    <video class="scare-video-media" id="scareVideoPlayer" playsinline webkit-playsinline preload="auto"></video>
+    <div class="scare-video-overlay">
+      <div class="scare-video-scanlines"></div>
+      <div class="scare-video-vignette"></div>
+    </div>
+    <button class="scare-video-skip" id="scareVideoSkip" type="button" aria-label="Skip Jump Scare">
+      <span>SKIP</span> <kbd>ESC</kbd>
+    </button>
+  </div>
+
+  <!-- ============ THE OTHER SIDE: HORROR CUTSCENE ============ -->
+  <div class="cutscene-layer" id="cutsceneLayer" aria-hidden="true" hidden>
+    <!-- Camera Rig: Handles camera shudder, perspective zoom, and wormhole plunge -->
+    <div class="cutscene-rig" id="cutsceneRig">
+      <!-- Background Occult Void & Wormhole Canvas -->
+      <canvas class="cutscene-canvas" id="cutsceneCanvas"></canvas>
+
+      <!-- Portal Video: Replaces former procedural portal & hands dragging animation -->
+      <video class="cutscene-portal-video" id="cutscenePortalVideo" playsinline preload="auto" src="portal%20animation.mp4" hidden></video>
+
+      <!-- Distortion & Post-Processing Overlays -->
+      <div class="cutscene-vortex" id="cutsceneVortex"></div>
+      <div class="cutscene-scanlines"></div>
+      <div class="cutscene-chroma" id="cutsceneChroma"></div>
+      <div class="cutscene-vignette"></div>
+
+      <!-- Stage Container: Spooky Darkness & Figures + Big Glowing Cinema Text -->
+      <div class="cutscene-stage" id="cutsceneStage">
+        <!-- Background Spooky Figures Lurking in the Darkness & Mist -->
+        <div class="cutscene-void-figures" id="voidFigures" aria-hidden="true" hidden>
+          <!-- Figure 1: Towering Wraith on Far Left -->
+          <div class="void-shadow-fig fig-reaper">
+            <img src="assets/figures/reaper.svg" alt="" draggable="false">
+          </div>
+          <!-- Figure 2: Contorted Creature in Midground Right -->
+          <div class="void-shadow-fig fig-contorted">
+            <img src="assets/figures/contorted.png" alt="" draggable="false">
+          </div>
+          <!-- Figure 3: Zombie Horde lurking in distant fog -->
+          <div class="void-shadow-fig fig-horde">
+            <img src="assets/figures/zombie-horde.svg" alt="" draggable="false">
+          </div>
+          <!-- Figure 4: Nosferatu standing silently near center-left -->
+          <div class="void-shadow-fig fig-nosferatu">
+            <img src="assets/figures/nosferatu-stand.svg" alt="" draggable="false">
+          </div>
+
+          <!-- Eerie Glowing Eyes Staring from Darkness -->
+          <div class="spooky-eyes-wrap">
+            <div class="spooky-eye-pair eye-pair-1"><span class="eye"></span><span class="eye"></span></div>
+            <div class="spooky-eye-pair eye-pair-2"><span class="eye"></span><span class="eye"></span></div>
+            <div class="spooky-eye-pair eye-pair-3"><span class="eye"></span><span class="eye"></span></div>
+            <div class="spooky-eye-pair eye-pair-4"><span class="eye"></span><span class="eye"></span></div>
+          </div>
+        </div>
+
+        <!-- Big Cinematic Narrative Transmission (Centrally Staged, Red Ambient Glow) -->
+        <div class="cutscene-cinema-wrap" id="cutsceneCinemaWrap" hidden>
+          <div class="cinema-text-stage" id="cinemaTextStage">
+            <p class="cinema-text-kicker" id="cinemaTextKicker" hidden></p>
+            <h2 class="cinema-text-line" id="cinemaTextLine"></h2>
+          </div>
+        </div>
+
+        <!-- Climax End Card -->
+        <div class="cutscene-endcard" id="cutsceneEndcard" hidden>
+          <div class="endcard-inner">
+            <p class="endcard-kicker" id="endcardKicker">Microsoft Tech Community · Round 02</p>
+            <h1 class="endcard-title" id="endcardTitle">
+              MISSION 02<br><span class="highlight-glitch">WEBSITE RESURRECTION</span>
+            </h1>
+            <p class="endcard-desc" id="endcardDesc">
+              The realms have collapsed. Their digital homes have vanished.<br>
+              Your purpose is no longer destruction. <strong>It is resurrection.</strong>
+            </p>
+
+            <div class="endcard-actions">
+              <button type="button" class="btn btn-blood endcard-proceed-btn" id="cutsceneProceedBtn">
+                <span id="cutsceneProceedBtnText">PROCEED TO THE WHEEL OF EVIL →</span>
+              </button>
+              <button type="button" class="endcard-replay-btn" id="cutsceneReplayBtn">
+                ↺ Rewatch Transmission
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Blinding Supernova Wormhole Transition Flashbang -->
+    <div class="cutscene-flash" id="cutsceneFlash"></div>
+
+    <!-- Persistent Skip & Accessibility Controls -->
+    <div class="cutscene-controls">
+      <button type="button" class="cutscene-skip-btn" id="cutsceneSkipBtn" aria-label="Skip Cutscene">
+        <span>SKIP TRANSMISSION</span>
+        <kbd>ESC</kbd>
+      </button>
+    </div>
+  </div>
+
+  <svg class="sr-only" aria-hidden="true">
+    <filter id="dimensionalWarp">
+      <feTurbulence type="fractalNoise" id="warpNoise" baseFrequency="0.02 0.03" numOctaves="2" result="noise" />
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="40" xChannelSelector="R" yChannelSelector="G" result="displaced" />
+    </filter>
+  </svg>
+
+  <div class="sr-only" id="announcer" aria-live="polite"></div>
+
+  <!-- Animation & Motion Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+  <script src="js/data.js"></script>
+  <script src="js/faqs-data.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/ledger.js"></script>
+  <script src="js/wheel.js"></script>
+  <script src="js/fx.js"></script>
+  <script src="js/creatures.js"></script>
+  <script src="js/cutscene.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/eggs.js"></script>
+</body>
+</html>

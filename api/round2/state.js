@@ -10,7 +10,10 @@ import {
   normalizeTeamName,
   normalizeTeamKey,
   extractAnswerMeta,
-  buildRound2Roster
+  buildRound2Roster,
+  fetchR2Teams,
+  getEventConfig,
+  setEventConfig
 } from '../_lib/supabase.js';
 
 const ALLOWED_R2_KEYS = new Set([
@@ -41,7 +44,7 @@ let cachedAllR2Snapshot = null;
 let cachedAllR2At = 0;
 const ALL_R2_CACHE_TTL_MS = 2500;
 
-let cachedR2Unlocked = false;
+let cachedR2Unlocked = true;
 let cachedR2DelayMinutes = 15;
 let cachedConfigAt = 0;
 const CONFIG_CACHE_TTL_MS = 2000;
@@ -72,12 +75,10 @@ export default async function handler(req, res) {
       // Refresh config cache periodically (2s TTL to protect Supabase under 200+ concurrent requests)
       if (Date.now() - cachedConfigAt > CONFIG_CACHE_TTL_MS) {
         try {
-          const { data: cfg } = await supabase.from('r2_config').select('*').eq('id', 'event').maybeSingle();
-          if (cfg) {
-            if (typeof cfg.delay_minutes === 'number') cachedR2DelayMinutes = cfg.delay_minutes;
-            if (typeof cfg.round2_unlocked === 'boolean') cachedR2Unlocked = cfg.round2_unlocked;
-            cachedConfigAt = Date.now();
-          }
+          const cfg = await getEventConfig(supabase);
+          if (typeof cfg.delayMinutes === 'number') cachedR2DelayMinutes = cfg.delayMinutes;
+          if (typeof cfg.round2Unlocked === 'boolean') cachedR2Unlocked = cfg.round2Unlocked;
+          cachedConfigAt = Date.now();
         } catch {
           // keep in-memory cache
         }
@@ -95,13 +96,7 @@ export default async function handler(req, res) {
           supabase.from('registrations').select('*')
         ]);
 
-        let r2Rows = [];
-        try {
-          const { data } = await supabase.from('r2_teams').select('key, name, owner, data, created_at, updated_at');
-          r2Rows = data || [];
-        } catch {
-          // ignore if r2_teams not created
-        }
+        const r2Rows = await fetchR2Teams(supabase);
 
         const regMap = new Map((regRes.data || []).map(r => [String(r.id), r]));
         const teamsByKey = {};
@@ -193,7 +188,11 @@ export default async function handler(req, res) {
       }
 
       if (!matchedReg && !matchedAns && !r2Record) {
-        return res.status(200).json({ authenticated: false });
+        return res.status(200).json({
+          authenticated: false,
+          round2Unlocked: cachedR2Unlocked,
+          delayMinutes: cachedR2DelayMinutes
+        });
       }
 
       const { leader, members } = buildRound2Roster(matchedReg, meta);
@@ -253,13 +252,7 @@ export default async function handler(req, res) {
         cachedR2Unlocked = unlocked;
         cachedConfigAt = Date.now();
         cachedAllR2Snapshot = null;
-        try {
-          await supabase
-            .from('r2_config')
-            .upsert({ id: 'event', round2_unlocked: unlocked, updated_at: nowIso }, { onConflict: 'id' });
-        } catch {
-          // ignore
-        }
+        await setEventConfig(supabase, { round2Unlocked: unlocked });
         return res.status(200).json({ ok: true, round2Unlocked: unlocked });
       }
 

@@ -110,7 +110,8 @@ const server = http.createServer(async (req, res) => {
     // Serve static files from public/
     let relPath = decodeURIComponent(parsedUrl.pathname);
     if (relPath === '/') relPath = '/index.html';
-    else if (relPath === '/round2' || relPath === '/round2/') relPath = '/round2/index.html';
+    else if (relPath === '/round2' || relPath === '/round2/' || relPath === '/mtc-halloween-event' || relPath === '/mtc-halloween-event/') relPath = '/round2/index.html';
+    else if (relPath.startsWith('/mtc-halloween-event/')) relPath = '/round2/' + relPath.slice('/mtc-halloween-event/'.length);
     else if (relPath === '/admin') relPath = '/admin.html';
 
     const safePath = path.normalize(path.join(PUBLIC_DIR, relPath));

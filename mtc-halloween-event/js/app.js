@@ -499,7 +499,7 @@
     el.spinnerLine.appendChild(cnt);
   }, 1000);
 
-  var isRound2Unlocked = false;
+  var isRound2Unlocked = true;
 
   function updateGateUI() {
     var lockedCard = el.r2HostLockedCard || $("r2HostLockedCard");

@@ -165,18 +165,17 @@
       Object.keys(pending).forEach(function (k) { if (t[k]) Object.assign(t[k], pending[k]); });
       state.teams = t;
       if (!res[1].error && res[1].data) {
-        state.config = rowToConfig(res[1].data);
-      } else {
-        fetch("/api/round2/state").then(function (r) { return r.json(); }).then(function (d) {
-          if (d && typeof d.round2Unlocked === "boolean") {
-            state.config = Object.assign(state.config || {}, {
-              round2Unlocked: d.round2Unlocked,
-              delayMinutes: d.delayMinutes || 15
-            });
-            emit();
-          }
-        }).catch(function () {});
+        state.config = Object.assign(state.config || {}, rowToConfig(res[1].data));
       }
+      fetch("/api/round2/state").then(function (r) { return r.json(); }).then(function (d) {
+        if (d && typeof d.round2Unlocked === "boolean") {
+          state.config = Object.assign(state.config || {}, {
+            round2Unlocked: d.round2Unlocked,
+            delayMinutes: typeof d.delayMinutes === "number" ? d.delayMinutes : ((state.config && state.config.delayMinutes) || 15)
+          });
+          emit();
+        }
+      }).catch(function () {});
       state.status = "online";
       state.error = "";
       emit();
@@ -571,7 +570,7 @@
       if (state.config && typeof state.config.round2Unlocked === "boolean") {
         return state.config.round2Unlocked;
       }
-      return false;
+      return true;
     },
 
     registerTeam: function (name, meta) { return impl.registerTeam(name, meta); },
