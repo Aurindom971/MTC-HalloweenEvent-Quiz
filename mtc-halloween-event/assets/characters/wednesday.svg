@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 400" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="38%" r="65%">
+      <stop offset="0%" stop-color="#1b1d28"/>
+      <stop offset="70%" stop-color="#07080d"/>
+      <stop offset="100%" stop-color="#020104"/>
+    </radialGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="frameGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8d99ae" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#2a080c" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#8d99ae" stop-opacity="0.8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="320" height="400" fill="url(#bgGrad)"/>
+
+  <!-- Cyber-Occult Grid Pattern in Background -->
+  <g stroke="#8d99ae" stroke-width="0.5" opacity="0.12">
+    <line x1="0" y1="80" x2="320" y2="80"/>
+    <line x1="0" y1="160" x2="320" y2="160"/>
+    <line x1="0" y1="240" x2="320" y2="240"/>
+    <line x1="0" y1="320" x2="320" y2="320"/>
+    <line x1="80" y1="0" x2="80" y2="400"/>
+    <line x1="160" y1="0" x2="160" y2="400"/>
+    <line x1="240" y1="0" x2="240" y2="400"/>
+  </g>
+
+  <!-- Character Vector Features -->
+  <g id="character-artwork">
+    
+      <!-- Black Nevermore Blazer with Striped Trims -->
+      <path d="M 75 400 L 105 270 L 160 240 L 215 270 L 245 400 Z" fill="#12131a" stroke="#2b2d42" stroke-width="2"/>
+      <path d="M 105 270 L 160 350 L 215 270" fill="#0a0a0f"/>
+      <!-- Sharp White Pointed Peter Pan Collar -->
+      <polygon points="160,245 125,230 140,270 160,255" fill="#edf2f4" stroke="#2b2d42" stroke-width="1.5"/>
+      <polygon points="160,245 195,230 180,270 160,255" fill="#edf2f4" stroke="#2b2d42" stroke-width="1.5"/>
+      <polygon points="156,255 164,255 160,290" fill="#12131a"/>
+      <!-- Pale Cold Symmetrical Face -->
+      <path d="M 128 170 C 124 125 135 105 160 105 C 185 105 196 125 192 170 C 189 210 178 230 160 230 C 142 230 131 210 128 170 Z" fill="#e0e1dd"/>
+      <!-- Center-Parted Black Hair & Twin Braids -->
+      <path d="M 115 130 C 115 90 130 65 160 65 C 190 65 205 90 205 130 C 195 100 175 95 160 115 C 145 95 125 100 115 130 Z" fill="#0d0d11"/>
+      <!-- Left Braid -->
+      <path d="M 118 170 Q 100 240 110 330" stroke="#0d0d11" stroke-width="10" fill="none" stroke-linecap="round"/>
+      <circle cx="110" cy="330" r="4" fill="#2b2d42"/>
+      <!-- Right Braid -->
+      <path d="M 202 170 Q 220 240 210 330" stroke="#0d0d11" stroke-width="10" fill="none" stroke-linecap="round"/>
+      <circle cx="210" cy="330" r="4" fill="#2b2d42"/>
+      <!-- Cold Unblinking Dark Eyes & Straight Eyebrows -->
+      <line x1="135" y1="145" x2="152" y2="147" stroke="#0d0d11" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="144" cy="157" r="4.5" fill="#1b1d28"/>
+      <circle cx="143" cy="156" r="1.5" fill="#edf2f4"/>
+      <line x1="185" y1="145" x2="168" y2="147" stroke="#0d0d11" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="176" cy="157" r="4.5" fill="#1b1d28"/>
+      <circle cx="175" cy="156" r="1.5" fill="#edf2f4"/>
+      <!-- Deadpan Unimpressed Mouth -->
+      <line x1="150" y1="205" x2="170" y2="205" stroke="#415a77" stroke-width="2.2" stroke-linecap="round"/>
+      <!-- "Thing" (The Disembodied Hand) on Shoulder -->
+      <path d="M 220 270 Q 235 255 240 245 Q 245 255 235 275" stroke="#e0e1dd" stroke-width="3" fill="#e0e1dd"/>
+      <path d="M 228 250 L 232 258" stroke="#780000" stroke-width="1"/>
+    
+  </g>
+
+  <!-- Gothic Framing & Corner Brackets -->
+  <rect x="10" y="10" width="300" height="380" rx="4" fill="none" stroke="url(#frameGrad)" stroke-width="2"/>
+  <rect x="15" y="15" width="290" height="370" rx="2" fill="none" stroke="#8d99ae" stroke-width="0.8" opacity="0.4"/>
+
+  <!-- Ornate Corner Accents -->
+  <path d="M 10 35 L 35 10 M 10 22 L 22 10" stroke="#8d99ae" stroke-width="1.5"/>
+  <path d="M 310 35 L 285 10 M 310 22 L 298 10" stroke="#8d99ae" stroke-width="1.5"/>
+  <path d="M 10 365 L 35 390 M 10 378 L 22 390" stroke="#8d99ae" stroke-width="1.5"/>
+  <path d="M 310 365 L 285 390 M 310 378 L 298 390" stroke="#8d99ae" stroke-width="1.5"/>
+
+  <!-- Name Banner Plate at Bottom -->
+  <rect x="25" y="340" width="270" height="42" rx="3" fill="#0a0204" fill-opacity="0.88" stroke="#8d99ae" stroke-width="1.2"/>
+  <text x="160" y="360" text-anchor="middle" font-family="'Rye', 'Oswald', serif" font-size="14" font-weight="bold" fill="#f8f9fa" letter-spacing="1.5">WEDNESDAY ADDAMS</text>
+  <text x="160" y="374" text-anchor="middle" font-family="'Pixelify Sans', monospace" font-size="9" fill="#8d99ae" letter-spacing="1">OUTCAST PRODIGY OF NEVERMORE</text>
+</svg>

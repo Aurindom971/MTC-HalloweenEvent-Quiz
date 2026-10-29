@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 400" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="38%" r="65%">
+      <stop offset="0%" stop-color="#3d081b"/>
+      <stop offset="70%" stop-color="#0e0105"/>
+      <stop offset="100%" stop-color="#020104"/>
+    </radialGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="frameGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff4d6d" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#2a080c" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#ff4d6d" stop-opacity="0.8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="320" height="400" fill="url(#bgGrad)"/>
+
+  <!-- Cyber-Occult Grid Pattern in Background -->
+  <g stroke="#ff4d6d" stroke-width="0.5" opacity="0.12">
+    <line x1="0" y1="80" x2="320" y2="80"/>
+    <line x1="0" y1="160" x2="320" y2="160"/>
+    <line x1="0" y1="240" x2="320" y2="240"/>
+    <line x1="0" y1="320" x2="320" y2="320"/>
+    <line x1="80" y1="0" x2="80" y2="400"/>
+    <line x1="160" y1="0" x2="160" y2="400"/>
+    <line x1="240" y1="0" x2="240" y2="400"/>
+  </g>
+
+  <!-- Character Vector Features -->
+  <g id="character-artwork">
+    
+      <!-- White Silk Doll Dress with Red Sash -->
+      <path d="M 80 400 L 105 280 L 160 250 L 215 280 L 240 400 Z" fill="#f8f9fa" stroke="#e9ecef" stroke-width="2"/>
+      <rect x="110" y="315" width="100" height="18" fill="#c9184a"/>
+      <circle cx="160" cy="324" r="8" fill="#800f2f"/>
+      <!-- Porcelain Doll Face with Craquelure Cracks -->
+      <circle cx="160" cy="165" r="48" fill="#fff0f3" stroke="#ffccd5" stroke-width="1.5"/>
+      <path d="M 175 130 L 185 145 L 180 160 L 195 175" stroke="#590d22" stroke-width="1.5" fill="none"/>
+      <!-- Rosy Doll Cheeks -->
+      <circle cx="132" cy="180" r="9" fill="#ff758f" opacity="0.6"/>
+      <circle cx="188" cy="180" r="9" fill="#ff758f" opacity="0.6"/>
+      <!-- Twin Braided Brunette Pigtails & Red Ribbons -->
+      <path d="M 115 160 Q 95 120 120 110 Q 160 115 200 110 Q 225 120 205 160" fill="#3d2618"/>
+      <path d="M 115 160 Q 90 220 100 280" stroke="#3d2618" stroke-width="10" fill="none" stroke-linecap="round"/>
+      <circle cx="100" cy="240" r="6" fill="#c9184a"/>
+      <path d="M 205 160 Q 230 220 220 280" stroke="#3d2618" stroke-width="10" fill="none" stroke-linecap="round"/>
+      <circle cx="220" cy="240" r="6" fill="#c9184a"/>
+      <!-- Wide Unblinking Glass Eyes -->
+      <circle cx="142" cy="155" r="10" fill="#fff" stroke="#590d22" stroke-width="1"/>
+      <circle cx="142" cy="155" r="6" fill="#0077b6"/>
+      <circle cx="142" cy="155" r="2.5" fill="#000"/>
+      <circle cx="140" cy="153" r="1.5" fill="#fff"/>
+      <circle cx="178" cy="155" r="10" fill="#fff" stroke="#590d22" stroke-width="1"/>
+      <circle cx="178" cy="155" r="6" fill="#0077b6"/>
+      <circle cx="178" cy="155" r="2.5" fill="#000"/>
+      <circle cx="176" cy="153" r="1.5" fill="#fff"/>
+      <!-- Eerie Painted Red Doll Smirk -->
+      <path d="M 146 195 Q 160 208 174 195" stroke="#c9184a" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <!-- Warrens' Warning Sign Motif -->
+      <rect x="220" y="70" width="60" height="40" rx="3" fill="#ffe3e0" stroke="#c9184a" stroke-width="1.5"/>
+      <text x="226" y="86" font-size="8" font-weight="bold" fill="#800f2f">WARNING</text>
+      <text x="225" y="98" font-size="6" fill="#590d22">POSITIVELY</text>
+      <text x="225" y="106" font-size="6" fill="#590d22">DO NOT OPEN</text>
+    
+  </g>
+
+  <!-- Gothic Framing & Corner Brackets -->
+  <rect x="10" y="10" width="300" height="380" rx="4" fill="none" stroke="url(#frameGrad)" stroke-width="2"/>
+  <rect x="15" y="15" width="290" height="370" rx="2" fill="none" stroke="#ff4d6d" stroke-width="0.8" opacity="0.4"/>
+
+  <!-- Ornate Corner Accents -->
+  <path d="M 10 35 L 35 10 M 10 22 L 22 10" stroke="#ff4d6d" stroke-width="1.5"/>
+  <path d="M 310 35 L 285 10 M 310 22 L 298 10" stroke="#ff4d6d" stroke-width="1.5"/>
+  <path d="M 10 365 L 35 390 M 10 378 L 22 390" stroke="#ff4d6d" stroke-width="1.5"/>
+  <path d="M 310 365 L 285 390 M 310 378 L 298 390" stroke="#ff4d6d" stroke-width="1.5"/>
+
+  <!-- Name Banner Plate at Bottom -->
+  <rect x="25" y="340" width="270" height="42" rx="3" fill="#0a0204" fill-opacity="0.88" stroke="#ff4d6d" stroke-width="1.2"/>
+  <text x="160" y="360" text-anchor="middle" font-family="'Rye', 'Oswald', serif" font-size="14" font-weight="bold" fill="#f8f9fa" letter-spacing="1.5">ANNABELLE</text>
+  <text x="160" y="374" text-anchor="middle" font-family="'Pixelify Sans', monospace" font-size="9" fill="#ff4d6d" letter-spacing="1">THE CURSED CONDUIT</text>
+</svg>

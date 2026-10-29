@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 400" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="38%" r="65%">
+      <stop offset="0%" stop-color="#3d0306"/>
+      <stop offset="70%" stop-color="#0d0102"/>
+      <stop offset="100%" stop-color="#020104"/>
+    </radialGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="frameGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8f9fa" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#2a080c" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#f8f9fa" stop-opacity="0.8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="320" height="400" fill="url(#bgGrad)"/>
+
+  <!-- Cyber-Occult Grid Pattern in Background -->
+  <g stroke="#f8f9fa" stroke-width="0.5" opacity="0.12">
+    <line x1="0" y1="80" x2="320" y2="80"/>
+    <line x1="0" y1="160" x2="320" y2="160"/>
+    <line x1="0" y1="240" x2="320" y2="240"/>
+    <line x1="0" y1="320" x2="320" y2="320"/>
+    <line x1="80" y1="0" x2="80" y2="400"/>
+    <line x1="160" y1="0" x2="160" y2="400"/>
+    <line x1="240" y1="0" x2="240" y2="400"/>
+  </g>
+
+  <!-- Character Vector Features -->
+  <g id="character-artwork">
+    
+      <!-- Crossed katanas behind -->
+      <line x1="70" y1="90" x2="230" y2="330" stroke="#adb5bd" stroke-width="4"/>
+      <line x1="250" y1="90" x2="90" y2="330" stroke="#adb5bd" stroke-width="4"/>
+      <rect x="62" y="74" width="10" height="26" rx="2" transform="rotate(-34 67 87)" fill="#212529"/>
+      <rect x="248" y="74" width="10" height="26" rx="2" transform="rotate(34 253 87)" fill="#212529"/>
+      <!-- Suit body -->
+      <path d="M 80 400 L 105 260 L 160 238 L 215 260 L 240 400 Z" fill="#9d0208" stroke="#212529" stroke-width="3"/>
+      <path d="M 92 330 L 228 330 L 226 346 L 94 346 Z" fill="#212529"/>
+      <circle cx="160" cy="338" r="9" fill="#9d0208" stroke="#e5e5e5" stroke-width="2"/>
+      <!-- Masked head -->
+      <path d="M 118 172 C 114 112 132 88 160 88 C 188 88 206 112 202 172 C 198 218 182 238 160 238 C 138 238 122 218 118 172 Z" fill="#b5070f"/>
+      <!-- Black eye patches -->
+      <path d="M 120 135 Q 122 185 156 172 Q 154 140 120 135 Z" fill="#111"/>
+      <path d="M 200 135 Q 198 185 164 172 Q 166 140 200 135 Z" fill="#111"/>
+      <!-- White eyes, one squinting -->
+      <ellipse cx="141" cy="160" rx="9" ry="6" fill="#f8f9fa"/>
+      <path d="M 170 160 Q 180 155 190 160 Q 180 163 170 160 Z" fill="#f8f9fa"/>
+      <!-- Smirk under the mask -->
+      <path d="M 145 210 Q 163 218 178 206" stroke="#5c0105" stroke-width="2.5" fill="none"/>
+      <!-- Speech bubble -->
+      <rect x="208" y="40" width="88" height="34" rx="8" fill="#f8f9fa" opacity="0.92"/>
+      <path d="M 220 74 L 214 88 L 232 74 Z" fill="#f8f9fa" opacity="0.92"/>
+      <text x="252" y="62" text-anchor="middle" font-family="'Pixelify Sans', monospace" font-size="11" fill="#9d0208">HI, READER</text>
+    
+  </g>
+
+  <!-- Gothic Framing & Corner Brackets -->
+  <rect x="10" y="10" width="300" height="380" rx="4" fill="none" stroke="url(#frameGrad)" stroke-width="2"/>
+  <rect x="15" y="15" width="290" height="370" rx="2" fill="none" stroke="#f8f9fa" stroke-width="0.8" opacity="0.4"/>
+
+  <!-- Ornate Corner Accents -->
+  <path d="M 10 35 L 35 10 M 10 22 L 22 10" stroke="#f8f9fa" stroke-width="1.5"/>
+  <path d="M 310 35 L 285 10 M 310 22 L 298 10" stroke="#f8f9fa" stroke-width="1.5"/>
+  <path d="M 10 365 L 35 390 M 10 378 L 22 390" stroke="#f8f9fa" stroke-width="1.5"/>
+  <path d="M 310 365 L 285 390 M 310 378 L 298 390" stroke="#f8f9fa" stroke-width="1.5"/>
+
+  <!-- Name Banner Plate at Bottom -->
+  <rect x="25" y="340" width="270" height="42" rx="3" fill="#0a0204" fill-opacity="0.88" stroke="#f8f9fa" stroke-width="1.2"/>
+  <text x="160" y="360" text-anchor="middle" font-family="'Rye', 'Oswald', serif" font-size="14" font-weight="bold" fill="#f8f9fa" letter-spacing="1.5">DEADPOOL</text>
+  <text x="160" y="374" text-anchor="middle" font-family="'Pixelify Sans', monospace" font-size="9" fill="#f8f9fa" letter-spacing="1">THE MERC WITH A MOUTH</text>
+</svg>

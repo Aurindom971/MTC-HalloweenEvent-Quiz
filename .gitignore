@@ -1,6 +1,3 @@
-# Local authoring checkout; deployment files are tracked in public/.
-mtc-halloween-event/
-
 /halloween-quiz-vercel-fixed.zip
 .env
 .env.*

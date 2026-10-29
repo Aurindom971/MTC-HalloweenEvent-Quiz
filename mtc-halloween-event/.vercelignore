@@ -1,0 +1,7 @@
+# kept out of the live site (same list the Firebase deploy used to skip)
+serve.js
+tests/
+supabase/
+scripts/
+ui_ideas/
+*.md
