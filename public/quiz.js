@@ -243,11 +243,22 @@ function persistCurrentAnswer(immediate = false) {
 
 async function submitFinalQuiz(allAnswersBySeal) {
   try {
+    let startMs = 0;
+    try {
+      startMs = parseInt(localStorage.getItem('mtc_r1_start_ms') || '', 10) || 0;
+      if (!startMs && currentTeam?.startedAt) {
+        startMs = Date.parse(currentTeam.startedAt) || 0;
+      }
+    } catch {}
+    const nowMs = Date.now();
+    const timeTakenSeconds = startMs > 0 && nowMs >= startMs ? Math.max(1, Math.round((nowMs - startMs) / 1000)) : null;
+
     const res = await fetch('/api/quiz/submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        answers: allAnswersBySeal
+        answers: allAnswersBySeal,
+        timeTakenSeconds: timeTakenSeconds
       })
     });
     if (res.ok) {
@@ -905,6 +916,11 @@ function activateRound2Portal(submissionPromise) {
 
   if (!isBrowser) return;
 
+  if (round2RedirectTimer) {
+    clearInterval(round2RedirectTimer);
+    round2RedirectTimer = null;
+  }
+
   async function checkServerR2Gate() {
     try {
       const res = await fetch('/api/round2/state');
@@ -920,7 +936,10 @@ function activateRound2Portal(submissionPromise) {
     if (lockedCard) lockedCard.hidden = true;
     if (unlockedCard) unlockedCard.hidden = false;
 
-    if (round2RedirectTimer) clearInterval(round2RedirectTimer);
+    if (round2RedirectTimer) {
+      clearInterval(round2RedirectTimer);
+      round2RedirectTimer = null;
+    }
     let secondsLeft = 3;
     if (countdownEl) {
       countdownEl.textContent = `Host clearance granted! Opening Round 2 in ${secondsLeft}s...`;
@@ -1840,6 +1859,17 @@ if (isBrowser) {
     const teamPanelSub = $('team-display-sub');
 
     if (team.isSubmitted) {
+      if (teamProgressBadge) {
+        teamProgressBadge.hidden = false;
+        teamProgressBadge.textContent = 'ROUND 1 SEALED · ROUND 2 UNLOCKED';
+      }
+      if (teamPanelSub) {
+        teamPanelSub.textContent = 'Round 1 answers are sealed in the Crypt Ledger. Proceed to Round 2 (The Wheel of Curses)!';
+      }
+      if (proceedQuizBtn) {
+        proceedQuizBtn.disabled = false;
+        proceedQuizBtn.innerHTML = 'Proceed to Round 2 · Wheel of Curses <span>→</span>';
+      }
       fetch('/api/round2/state').then(r => r.json()).then(data => {
         const isUnlocked = Boolean(data && data.round2Unlocked);
         if (!isUnlocked) {
@@ -1851,7 +1881,14 @@ if (isBrowser) {
             teamPanelSub.textContent = 'Your Round 1 responses are sealed. Round 2 is currently locked by the event host. Please wait!';
           }
           if (proceedQuizBtn) {
-            proceedQuizBtn.disabled = true;
+            try {
+        if (!localStorage.getItem('mtc_r1_start_ms')) {
+          const initStart = currentTeam?.startedAt ? (Date.parse(currentTeam.startedAt) || Date.now()) : Date.now();
+          localStorage.setItem('mtc_r1_start_ms', String(initStart));
+        }
+      } catch {}
+
+      proceedQuizBtn.disabled = true;
             proceedQuizBtn.innerHTML = '🔒 Round 2 Locked by Host';
           }
           const p = setInterval(async () => {
@@ -2030,6 +2067,13 @@ if (isBrowser) {
         const ok = await saveCustomTeamName(typedName);
         if (!ok) return;
       }
+
+      try {
+        if (!localStorage.getItem('mtc_r1_start_ms')) {
+          const initStart = currentTeam?.startedAt ? (Date.parse(currentTeam.startedAt) || Date.now()) : Date.now();
+          localStorage.setItem('mtc_r1_start_ms', String(initStart));
+        }
+      } catch {}
 
       proceedQuizBtn.disabled = true;
       proceedQuizBtn.innerHTML = 'Entering... <span>→</span>';

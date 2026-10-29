@@ -571,7 +571,7 @@
       if (state.config && typeof state.config.round2Unlocked === "boolean") {
         return state.config.round2Unlocked;
       }
-      return null;
+      return false;
     },
 
     registerTeam: function (name, meta) { return impl.registerTeam(name, meta); },

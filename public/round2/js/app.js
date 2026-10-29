@@ -1631,10 +1631,22 @@
     save();
 
     var patch = {
+      stage: "done",
       submissionUrl: url,
       repoUrl: repo,
       submittedAt: now
     };
+    if (session.charId) patch.charId = session.charId;
+    if (typeof session.problem === "number") patch.problem = session.problem;
+    if (typeof session.hex === "number") { patch.hex = session.hex; patch.hexAt = session.hexAt; }
+    if (typeof session.twist === "number") {
+      patch.twist = session.twist;
+      patch.twistText = session.twistText || (D.twists[session.twist] ? fillTwist(D.twists[session.twist].d) : "");
+      patch.twistExtra = session.twistExtra;
+    }
+    if (session.eggs && session.eggs.length) patch.eggs = session.eggs.slice();
+    if (session.leader) patch.leader = session.leader;
+    if (session.members) patch.members = session.members;
     if (session.zipUrl) patch.zipUrl = session.zipUrl;
     if (session.zipName) patch.zipName = session.zipName;
     if (session.zipSize) patch.zipSize = session.zipSize;
@@ -1923,6 +1935,21 @@
     entered = true;
     setSound(withSound);
     resetIdle();
+    if (welcome === "none" && window.Creatures.scaresOn && withSound) {
+      welcome = "playing";
+      window.Creatures.welcome(function () {
+        welcome = "done";
+        if (window.OtherSideCutscene && typeof window.OtherSideCutscene.play === "function") {
+          window.OtherSideCutscene.play();
+        } else {
+          if (el.gate) el.gate.classList.add("gone");
+          document.documentElement.classList.remove("behind-gate");
+          document.documentElement.classList.add("gate-closed");
+          if (window.Creatures.opening) window.Creatures.opening();
+        }
+      });
+      return;
+    }
     if (el.gate) {
       el.gate.classList.add("gone");
       document.documentElement.classList.remove("behind-gate");
@@ -1931,7 +1958,9 @@
     if (window.OtherSideCutscene && typeof window.OtherSideCutscene.play === "function") {
       window.OtherSideCutscene.play();
     } else {
-      if (window.Creatures && window.Creatures.opening) setTimeout(function () { window.Creatures.opening(); }, 250);
+      if (welcome !== "playing" && window.Creatures && window.Creatures.opening) {
+        setTimeout(function () { window.Creatures.opening(); }, 250);
+      }
     }
   }
   $("gateEnter").addEventListener("click", function () { enter(true); });
