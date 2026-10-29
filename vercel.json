@@ -8,7 +8,8 @@
   "trailingSlash": false,
   "rewrites": [
     { "source": "/judges", "destination": "/admin.html" },
-    { "source": "/round2", "destination": "/round2/index.html" }
+    { "source": "/round2", "destination": "/round2/index.html" },
+    { "source": "/round2/", "destination": "/round2/index.html" }
   ],
   "headers": [
     {
@@ -34,6 +35,15 @@
       ]
     },
     {
+      "source": "/css/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, stale-while-revalidate=604800"
+        }
+      ]
+    },
+    {
       "source": "/round2/assets/(.*)",
       "headers": [
         {
@@ -43,7 +53,34 @@
       ]
     },
     {
-      "source": "/round2/media/(.*)",
+      "source": "/round2/css/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, stale-while-revalidate=604800"
+        }
+      ]
+    },
+    {
+      "source": "/round2/js/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, stale-while-revalidate=604800"
+        }
+      ]
+    },
+    {
+      "source": "/round2/soul jumpscares/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, stale-while-revalidate=604800"
+        }
+      ]
+    },
+    {
+      "source": "/round2/portal animation.mp4",
       "headers": [
         {
           "key": "Cache-Control",
